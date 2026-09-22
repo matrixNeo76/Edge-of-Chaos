@@ -4,6 +4,8 @@
 
 > **Piattaforma di Metrologia Computazionale e Hardware-in-the-Loop** per la verifica sperimentale della senzienza primaria, della valenza termodinamica $\Psi(t)$ e delle condizioni di demarcazione operativa nei substrati materiali continui (*Mortal Computation*), sviluppata secondo il programma di ricerca Lakatosiano (*P0_Distilled v0.1*).
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22895263.svg)](https://doi.org/10.5281/zenodo.22895263)
+
 ---
 
 ## 📌 Indice
@@ -18,7 +20,8 @@
    - [Visualizzazione e Dashboard (`valence_dashboard.py`)](#4-visualizzazione-e-dashboard)
 6. [Eseguibile Standalone (senza Docker)](#-eseguibile-standalone-senza-docker-per-pc-di-laboratorio)
 7. [Containerizzazione e Replicabilità (Docker)](#-containerizzazione-e-replicabilità-docker)
-8. [Bibliografie e Riferimenti](#-bibliografie-e-riferimenti)
+8. [Pubblicazioni Correlate](#-pubblicazioni-correlate)
+9. [Bibliografie e Riferimenti](#-bibliografie-e-riferimenti)
 
 ---
 
@@ -173,6 +176,24 @@ Per isolare ed eseguire l'ambiente metrologico in un container trasparente ed es
 # Build ed esecuzione del container
 docker-compose up --build
 ```
+
+---
+
+## 📚 Pubblicazioni Correlate
+
+Questo software è la piattaforma di metrologia digital-twin che accompagna il corpus
+del programma di ricerca **P0_Distilled**, pubblicato su Zenodo. Il paper distillato è
+il punto d'ingresso consigliato; gli altri sono companion/versioni estese.
+
+| Paper | DOI |
+|---|---|
+| **P0_Distilled_v0.1** (punto d'ingresso principale) | [10.5281/zenodo.22895485](https://doi.org/10.5281/zenodo.22895485) |
+| P1_Main (versione estesa/definitiva) | [10.5281/zenodo.22896027](https://doi.org/10.5281/zenodo.22896027) |
+| P2_SelfAgency (estensione self-agency) | [10.5281/zenodo.22896871](https://doi.org/10.5281/zenodo.22896871) |
+| P3_Critique (valutazione critica esterna) | [10.5281/zenodo.22896989](https://doi.org/10.5281/zenodo.22896989) |
+| C1_Philosophy (argomento per il Postulato 2) | [10.5281/zenodo.22897360](https://doi.org/10.5281/zenodo.22897360) |
+| C2_PowerAnalysis (power analysis Monte Carlo) | [10.5281/zenodo.22897563](https://doi.org/10.5281/zenodo.22897563) |
+| ES_Summary (sintesi esecutiva) | [10.5281/zenodo.22897733](https://doi.org/10.5281/zenodo.22897733) |
 
 ---
 

@@ -8,6 +8,8 @@
 > Computation*), developed as part of the Lakatosian research programme
 > (*P0_Distilled v0.1*).
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22895263.svg)](https://doi.org/10.5281/zenodo.22895263)
+
 ---
 
 ## 📌 Table of Contents
@@ -22,7 +24,8 @@
    - [Visualization and Dashboard (`valence_dashboard.py`)](#4-visualization-and-dashboard)
 6. [Standalone Executable (no Docker)](#-standalone-executable-no-docker-for-lab-pcs)
 7. [Containerization and Reproducibility (Docker)](#-containerization-and-reproducibility-docker)
-8. [Bibliography and References](#-bibliography-and-references)
+8. [Related Publications](#-related-publications)
+9. [Bibliography and References](#-bibliography-and-references)
 
 ---
 
@@ -190,6 +193,24 @@ dependency issues:
 # Build and run the container
 docker-compose up --build
 ```
+
+---
+
+## 📚 Related Publications
+
+This software is the digital-twin metrology platform accompanying the **P0_Distilled**
+research programme corpus, published on Zenodo. The distilled paper is the recommended
+entry point; the others are companion/extended papers.
+
+| Paper | DOI |
+|---|---|
+| **P0_Distilled_v0.1** (main entry point) | [10.5281/zenodo.22895485](https://doi.org/10.5281/zenodo.22895485) |
+| P1_Main (extended, definitive version) | [10.5281/zenodo.22896027](https://doi.org/10.5281/zenodo.22896027) |
+| P2_SelfAgency (self-agency extension) | [10.5281/zenodo.22896871](https://doi.org/10.5281/zenodo.22896871) |
+| P3_Critique (external critical assessment) | [10.5281/zenodo.22896989](https://doi.org/10.5281/zenodo.22896989) |
+| C1_Philosophy (argument for Postulate 2) | [10.5281/zenodo.22897360](https://doi.org/10.5281/zenodo.22897360) |
+| C2_PowerAnalysis (Monte Carlo power analysis) | [10.5281/zenodo.22897563](https://doi.org/10.5281/zenodo.22897563) |
+| ES_Summary (executive summary) | [10.5281/zenodo.22897733](https://doi.org/10.5281/zenodo.22897733) |
 
 ---
 

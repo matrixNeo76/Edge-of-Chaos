@@ -7,6 +7,8 @@
 > 以及运行性划界条件进行实验验证，作为拉卡托斯研究纲领
 > （*P0_Distilled v0.1*）的一部分开发。
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22895263.svg)](https://doi.org/10.5281/zenodo.22895263)
+
 ---
 
 ## 📌 目录
@@ -21,7 +23,8 @@
    - [可视化与仪表盘（`valence_dashboard.py`）](#4-可视化与仪表盘)
 6. [独立可执行文件（无需 Docker）](#-独立可执行文件无需-docker用于实验室电脑)
 7. [容器化与可复现性（Docker）](#-容器化与可复现性docker)
-8. [参考文献](#-参考文献)
+8. [相关出版物](#-相关出版物)
+9. [参考文献](#-参考文献)
 
 ---
 
@@ -180,6 +183,23 @@ python3 paper0_cli.py metrology|dashboard|demarcation|hardware|test
 # 构建并运行容器
 docker-compose up --build
 ```
+
+---
+
+## 📚 相关出版物
+
+本软件是 **P0_Distilled** 研究纲领语料库的配套数字孪生计量平台，已发布于 Zenodo。
+建议从蒸馏版论文开始阅读；其余为配套/扩展论文。
+
+| 论文 | DOI |
+|---|---|
+| **P0_Distilled_v0.1**（主要入口） | [10.5281/zenodo.22895485](https://doi.org/10.5281/zenodo.22895485) |
+| P1_Main（扩展/权威版本） | [10.5281/zenodo.22896027](https://doi.org/10.5281/zenodo.22896027) |
+| P2_SelfAgency（自我能动性扩展） | [10.5281/zenodo.22896871](https://doi.org/10.5281/zenodo.22896871) |
+| P3_Critique（外部批判性评估） | [10.5281/zenodo.22896989](https://doi.org/10.5281/zenodo.22896989) |
+| C1_Philosophy（公设2的论证） | [10.5281/zenodo.22897360](https://doi.org/10.5281/zenodo.22897360) |
+| C2_PowerAnalysis（蒙特卡洛功效分析） | [10.5281/zenodo.22897563](https://doi.org/10.5281/zenodo.22897563) |
+| ES_Summary（执行摘要） | [10.5281/zenodo.22897733](https://doi.org/10.5281/zenodo.22897733) |
 
 ---
 
