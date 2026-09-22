@@ -1,0 +1,13 @@
+{
+  "title": "Edge-of-Chaos",
+  "upload_type": "software",
+  "description": "Falsifiable research programme and digital-twin metrology platform (Python + Rust) testing the necessary physical conditions for primary interoceptive sentience in continuous neuromorphic substrates.",
+  "creators": [
+    {"name": "Iavarone, Francesco", "affiliation": "Independent Researcher", "orcid": "0009-0005-9773-8187"}
+  ],
+  "license": "MIT",
+  "keywords": ["neuromorphic computing", "memristors", "edge of chaos", "interoceptive sentience", "thermodynamic valence", "Rust", "Python"],
+  "related_identifiers": [
+    {"identifier": "https://github.com/matrixNeo76/Edge-of-Chaos", "relation": "isSupplementTo", "scheme": "url"}
+  ]
+}

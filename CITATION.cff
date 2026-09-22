@@ -9,6 +9,7 @@ authors:
   - family-names: Iavarone
     given-names: Francesco
     affiliation: Independent Researcher
+    orcid: "https://orcid.org/0009-0005-9773-8187"
 version: 0.1.0
 date-released: "2026-09-22"
 license:
@@ -44,6 +45,7 @@ preferred-citation:
     - family-names: Iavarone
       given-names: Francesco
       affiliation: Independent Researcher
+      orcid: "https://orcid.org/0009-0005-9773-8187"
   year: 2026
   notes: >-
     Manoscritto v0.1, settembre 2026 (docs/P0_Distilled_v0.1.tex). Aggiornare
