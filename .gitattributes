@@ -1,0 +1,14 @@
+# Normalizza i line ending per i file di testo, evita diff spuri tra Windows/Unix
+* text=auto eol=lf
+
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+
+# File binari: nessuna normalizzazione, nessun diff testuale
+*.png binary
+*.jpg binary
+*.pdf binary
+*.whl binary
+*.dll binary
+*.pyd binary
+*.exe binary

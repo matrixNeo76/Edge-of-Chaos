@@ -1,0 +1,25 @@
+# Ambienti virtuali Python
+venv/
+venv_build/
+__pycache__/
+*.pyc
+.ruff_cache/
+
+# Build Rust / Cargo
+target/
+
+# Output PyInstaller
+build/
+dist/
+dist_wheel/
+*.spec
+
+# Output runtime degli script (dashboard, frame acquisiti, ecc.)
+output/
+
+# Contenuto tenuto fuori dal repository pubblico per decisione esplicita
+# (manoscritti non ancora pubblicati, sintesi derivata, materiale divulgativo
+# pesante) — vedi docs_v0.2/06_ZENODO_PREPARATION.md per la motivazione.
+docs/
+docs_v0.2/
+media/

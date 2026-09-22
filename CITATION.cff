@@ -1,0 +1,51 @@
+cff-version: 1.2.0
+message: >-
+  Se utilizzi questo software, per favore citalo secondo i metadati
+  seguenti (aggiorna il campo `preferred-citation` con il DOI del
+  paper una volta reso pubblico/preregistrato).
+type: software
+title: Edge-of-Chaos
+authors:
+  - family-names: Iavarone
+    given-names: Francesco
+    affiliation: Independent Researcher
+version: 0.1.0
+date-released: "2026-09-22"
+license:
+  - MIT
+  - Apache-2.0
+repository-code: "https://github.com/matrixNeo76/Edge-of-Chaos"
+abstract: >-
+  Falsifiable research programme and digital-twin metrology platform
+  (Python + Rust) testing the necessary physical conditions for primary
+  interoceptive sentience in continuous neuromorphic substrates. Implements
+  the thermodynamic/allostatic valence functional Psi(t) and the three
+  operational demarcation tests (edge-of-chaos activity, spectral causal
+  degeneracy, finite-size scaling) of the P0_Distilled v0.1 research
+  programme.
+keywords:
+  - neuromorphic computing
+  - memristors
+  - edge of chaos
+  - interoceptive sentience
+  - consciousness research
+  - thermodynamic valence
+  - falsifiability
+  - digital twin
+  - Rust
+  - Python
+  - PyO3
+preferred-citation:
+  type: article
+  title: >-
+    Necessary Conditions for Primary Interoceptive Sentience in Continuous
+    Substrates: A Falsifiable Programme
+  authors:
+    - family-names: Iavarone
+      given-names: Francesco
+      affiliation: Independent Researcher
+  year: 2026
+  notes: >-
+    Manoscritto v0.1, settembre 2026 (docs/P0_Distilled_v0.1.tex). Aggiornare
+    con DOI/venue una volta disponibile una decisione editoriale o un DOI di
+    preprint.

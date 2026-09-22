@@ -1,0 +1,8 @@
+# Dipendenze runtime testate per Edge-of-Chaos (P0_Distilled v0.1).
+# Versioni verificate empiricamente il 2026-09-22 (Python 3.12, Windows 11).
+# Per lo sviluppo/build (maturin, pyinstaller) vedi requirements-dev.txt.
+
+numpy>=1.24,<3
+scipy>=1.10,<2
+matplotlib>=3.7,<4
+seaborn>=0.12,<1

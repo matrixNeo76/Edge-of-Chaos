@@ -1,0 +1,7 @@
+This project is dual-licensed under either of:
+
+- MIT License (see [LICENSE-MIT](LICENSE-MIT))
+- Apache License, Version 2.0 (see [LICENSE-APACHE](LICENSE-APACHE))
+
+at your option, consistent with the `license` field declared in `Cargo.toml`
+(`MIT OR Apache-2.0`).

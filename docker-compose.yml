@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  metrology-twin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: valenza_metrologia_twin
+    volumes:
+      - ./output:/app/output
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python3 dashboard_valenza.py
