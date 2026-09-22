@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 message: >-
-  Se utilizzi questo software, per favore citalo secondo i metadati
-  seguenti (aggiorna il campo `preferred-citation` con il DOI del
-  paper una volta reso pubblico/preregistrato).
+  If you use this software, please cite it using the metadata below.
+  The companion paper (preferred-citation) is published as a preprint
+  on Zenodo; update this field if a journal publication supersedes it.
 type: software
 title: Edge-of-Chaos
 authors:
@@ -47,7 +47,8 @@ preferred-citation:
       affiliation: Independent Researcher
       orcid: "https://orcid.org/0009-0005-9773-8187"
   year: 2026
+  doi: "10.5281/zenodo.22895485"
+  url: "https://doi.org/10.5281/zenodo.22895485"
   notes: >-
-    Manoscritto v0.1, settembre 2026 (docs/P0_Distilled_v0.1.tex). Aggiornare
-    con DOI/venue una volta disponibile una decisione editoriale o un DOI di
-    preprint.
+    Preprint v0.1, September 2026, published on Zenodo. Update with
+    journal/DOI once an editorial decision is available.
