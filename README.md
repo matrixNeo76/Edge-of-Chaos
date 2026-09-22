@@ -16,10 +16,10 @@
 3. [Core Mathematical Formulation](#-core-mathematical-formulation)
 4. [Requirements and Quick Install](#-requirements-and-quick-install)
 5. [Script Usage Guide](#-script-usage-guide)
-   - [Metrology and Digital Twin (`valenza_metrologia.py` / `.rs`)](#1-metrology-and-digital-twin)
+   - [Metrology and Digital Twin (`thermodynamic_valence.py` / `.rs`)](#1-metrology-and-digital-twin)
    - [Real Hardware Interfacing (`hardware_driver_v2.py`)](#2-real-hardware-interfacing)
    - [Operational Demarcation Tests (`demarcation_tests.py`)](#3-operational-demarcation-tests)
-   - [Visualization and Dashboard (`dashboard_valenza.py`)](#4-visualization-and-dashboard)
+   - [Visualization and Dashboard (`valence_dashboard.py`)](#4-visualization-and-dashboard)
 6. [Standalone Executable (no Docker)](#-standalone-executable-no-docker-for-lab-pcs)
 7. [Containerization and Reproducibility (Docker)](#-containerization-and-reproducibility-docker)
 8. [Bibliography and References](#-bibliography-and-references)
@@ -47,8 +47,8 @@ verifying:
 
 ```
 Edge-of-Chaos/
-├── valenza_metrologia.py         # Python metrology engine (Hatano-Sasa, k-NN KL-divergence, Psi(t))
-├── valenza_metrologia.rs         # High-performance native Rust metrology engine (zero-copy)
+├── thermodynamic_valence.py       # Python metrology engine (Hatano-Sasa, k-NN KL-divergence, Psi(t))
+├── thermodynamic_valence.rs       # High-performance native Rust metrology engine (zero-copy)
 ├── lib.rs                        # PyO3 FFI module to compile Rust into a native Python extension
 ├── Cargo.toml                    # Cargo / PyO3 configuration for the Rust infrastructure
 ├── demo_pyo3_integration.py      # Demo script for Rust/Python FFI integration and benchmarking
@@ -56,10 +56,10 @@ Edge-of-Chaos/
 ├── hardware_driver_v2.py         # PyVISA/SCPI driver for Keithley DMM and PicoScope with auto-compliance
 ├── test_hardware_session.py      # Extended test suite for hardware safety-limit verification
 ├── demarcation_tests.py          # Operational demarcation tests (Edge of Chaos, Degeneracy, FSS)
-├── dashboard_valenza.py          # 4-quadrant graphical dashboard generator (Seaborn/Matplotlib)
-├── dashboard_valenza.png         # High-resolution visual artifact from an example simulation run
+├── valence_dashboard.py          # 4-quadrant graphical dashboard generator (Seaborn/Matplotlib)
+├── valence_dashboard.png         # High-resolution visual artifact from an example simulation run
 │
-├── test_valenza_metrologia.py    # Unit tests validating the SDE math and Psi(t)
+├── test_thermodynamic_valence.py  # Unit tests validating the SDE math and Psi(t)
 ├── paper0_cli.py                 # Single CLI entry point with subcommands
 ├── references.bib                # Complete BibTeX database of 45 citations (IIT, FEP, Chua, Lakatos)
 │
@@ -123,12 +123,12 @@ $$\rho_{deg} = \frac{\dim\left(\ker(J - \lambda_0 I)\right)}{\|\Delta W_{therm}\
 ### 1. Metrology and Digital Twin
 To run the $A_1/A_2$ substrate simulation and compute the valence $\Psi(t)$:
 ```bash
-python3 valenza_metrologia.py
+python3 thermodynamic_valence.py
 ```
 
 To run the mathematical validation unit tests:
 ```bash
-python3 test_valenza_metrologia.py
+python3 test_thermodynamic_valence.py
 ```
 
 ### 2. Real Hardware Interfacing
@@ -154,16 +154,16 @@ python3 demarcation_tests.py
 ```
 
 ### 4. Visualization and Dashboard
-To generate the graphical dashboard `dashboard_valenza.png`:
+To generate the graphical dashboard `valence_dashboard.png`:
 ```bash
-python3 dashboard_valenza.py
+python3 valence_dashboard.py
 ```
 
 ### All-in-one CLI
 All four commands above are also available through a single entry point, which is
 also the one packaged by `build_exe.ps1` below:
 ```bash
-python3 paper0_cli.py metrologia|dashboard|demarcazione|hardware|test
+python3 paper0_cli.py metrology|dashboard|demarcation|hardware|test
 ```
 
 ---
@@ -176,7 +176,7 @@ is impractical (USB/GPIB access, admin permissions):
 
 ```powershell
 .\build_exe.ps1
-.\dist\paper0\paper0.exe metrologia   # or: dashboard | demarcazione | hardware | test
+.\dist\paper0\paper0.exe metrology   # or: dashboard | demarcation | hardware | test
 ```
 
 ---

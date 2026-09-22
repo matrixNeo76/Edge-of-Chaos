@@ -1,22 +1,22 @@
 [package]
-name = "valenza_metrologia"
+name = "thermodynamic_valence"
 version = "0.1.0"
 edition = "2021"
-authors = ["Programma di Ricerca Lakatosiano"]
-description = "Modulo di Metrologia e Digital Twin per Substrati Neuromorfici e Valenza Termodinamica (P0_Distilled v0.1)"
+authors = ["Lakatosian Research Programme"]
+description = "Metrology and Digital Twin module for neuromorphic substrates and thermodynamic valence (P0_Distilled v0.1)"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-# Nota: il binario valenza_metrologia.rs e' progettato per essere zero-dependencies (std-only)
-# per garantire la massima velocita' di esecuzione e facilità di compilazione cross-platform.
-# pyo3 e' richiesto solo dal target di libreria lib.rs (estensione Python).
+# Note: the thermodynamic_valence.rs binary is designed to be zero-dependencies
+# (std-only), for maximum execution speed and cross-platform build simplicity.
+# pyo3 is only required by the lib.rs library target (Python extension).
 pyo3 = { version = "0.20", features = ["extension-module"] }
 
 [lib]
-name = "valenza_metrologia_rust"
+name = "thermodynamic_valence_rust"
 crate-type = ["cdylib"]
 path = "lib.rs"
 
 [[bin]]
-name = "valenza_metrologia"
-path = "valenza_metrologia.rs"
+name = "thermodynamic_valence"
+path = "thermodynamic_valence.rs"

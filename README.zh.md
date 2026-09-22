@@ -15,10 +15,10 @@
 3. [核心数学公式](#-核心数学公式)
 4. [环境要求与快速安装](#-环境要求与快速安装)
 5. [脚本使用指南](#-脚本使用指南)
-   - [计量与数字孪生（`valenza_metrologia.py` / `.rs`）](#1-计量与数字孪生)
+   - [计量与数字孪生（`thermodynamic_valence.py` / `.rs`）](#1-计量与数字孪生)
    - [真实硬件接口（`hardware_driver_v2.py`）](#2-真实硬件接口)
    - [运行性划界测试（`demarcation_tests.py`）](#3-运行性划界测试)
-   - [可视化与仪表盘（`dashboard_valenza.py`）](#4-可视化与仪表盘)
+   - [可视化与仪表盘（`valence_dashboard.py`）](#4-可视化与仪表盘)
 6. [独立可执行文件（无需 Docker）](#-独立可执行文件无需-docker用于实验室电脑)
 7. [容器化与可复现性（Docker）](#-容器化与可复现性docker)
 8. [参考文献](#-参考文献)
@@ -44,8 +44,8 @@ on a Chip）约束）不同，本平台直接在**物质层面**评估基底，�
 
 ```
 Edge-of-Chaos/
-├── valenza_metrologia.py         # Python 计量引擎（Hatano-Sasa 分解、k-NN KL 散度、Psi(t)）
-├── valenza_metrologia.rs         # 高性能原生 Rust 计量引擎（零拷贝）
+├── thermodynamic_valence.py       # Python 计量引擎（Hatano-Sasa 分解、k-NN KL 散度、Psi(t)）
+├── thermodynamic_valence.rs       # 高性能原生 Rust 计量引擎（零拷贝）
 ├── lib.rs                        # PyO3 FFI 模块，将 Rust 编译为原生 Python 扩展
 ├── Cargo.toml                    # Rust 基础设施的 Cargo / PyO3 配置
 ├── demo_pyo3_integration.py      # Rust/Python FFI 集成与性能基准演示脚本
@@ -53,10 +53,10 @@ Edge-of-Chaos/
 ├── hardware_driver_v2.py         # 用于 Keithley DMM 与 PicoScope 的 PyVISA/SCPI 驱动，带自动合规保护
 ├── test_hardware_session.py      # 硬件安全限制验证的扩展测试套件
 ├── demarcation_tests.py          # 运行性划界测试（Edge of Chaos、简并度、有限尺寸标度）
-├── dashboard_valenza.py          # 四象限图形仪表盘生成器（Seaborn/Matplotlib）
-├── dashboard_valenza.png         # 示例仿真运行的高分辨率可视化结果
+├── valence_dashboard.py          # 四象限图形仪表盘生成器（Seaborn/Matplotlib）
+├── valence_dashboard.png         # 示例仿真运行的高分辨率可视化结果
 │
-├── test_valenza_metrologia.py    # 验证 SDE 数学与 Psi(t) 的单元测试
+├── test_thermodynamic_valence.py  # 验证 SDE 数学与 Psi(t) 的单元测试
 ├── paper0_cli.py                 # 统一的多子命令 CLI 入口
 ├── references.bib                # 完整的 BibTeX 参考文献数据库（45 条引用，涵盖 IIT、FEP、Chua、Lakatos）
 │
@@ -118,12 +118,12 @@ $$\rho_{deg} = \frac{\dim\left(\ker(J - \lambda_0 I)\right)}{\|\Delta W_{therm}\
 ### 1. 计量与数字孪生
 运行 $A_1/A_2$ 基底仿真并计算效价 $\Psi(t)$：
 ```bash
-python3 valenza_metrologia.py
+python3 thermodynamic_valence.py
 ```
 
 运行数学验证单元测试：
 ```bash
-python3 test_valenza_metrologia.py
+python3 test_thermodynamic_valence.py
 ```
 
 ### 2. 真实硬件接口
@@ -147,15 +147,15 @@ python3 demarcation_tests.py
 ```
 
 ### 4. 可视化与仪表盘
-生成图形仪表盘 `dashboard_valenza.png`：
+生成图形仪表盘 `valence_dashboard.png`：
 ```bash
-python3 dashboard_valenza.py
+python3 valence_dashboard.py
 ```
 
 ### 一体化 CLI
 以上四个命令也可通过统一入口调用，该入口同样是下方 `build_exe.ps1` 打包的对象：
 ```bash
-python3 paper0_cli.py metrologia|dashboard|demarcazione|hardware|test
+python3 paper0_cli.py metrology|dashboard|demarcation|hardware|test
 ```
 
 ---
@@ -167,7 +167,7 @@ python3 paper0_cli.py metrologia|dashboard|demarcazione|hardware|test
 
 ```powershell
 .\build_exe.ps1
-.\dist\paper0\paper0.exe metrologia   # 或：dashboard | demarcazione | hardware | test
+.\dist\paper0\paper0.exe metrology   # 或：dashboard | demarcation | hardware | test
 ```
 
 ---

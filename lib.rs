@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
 
-/// Generatore di numeri casuali ad alte prestazioni Xorshift128+
+/// High-performance random number generator Xorshift128+
 struct Xorshift128Plus {
     s: [u64; 2],
 }
@@ -45,11 +45,11 @@ pub struct MetrologyResultsRust {
     #[pyo3(get)]
     pub sigma_hk: f64,
     #[pyo3(get)]
-    pub d_kl_allostasica: f64,
+    pub d_kl_allostatic: f64,
     #[pyo3(get)]
     pub g_pred: f64,
     #[pyo3(get)]
-    pub psi_valenza: f64,
+    pub psi_valence: f64,
 }
 
 #[pymethods]
@@ -57,7 +57,7 @@ impl MetrologyResultsRust {
     fn __repr__(&self) -> String {
         format!(
             "<MetrologyResultsRust sigma_ex={:.4} sigma_hk={:.4} D_KL={:.4} G_pred={:.4} Psi={:.4}>",
-            self.sigma_ex, self.sigma_hk, self.d_kl_allostasica, self.g_pred, self.psi_valenza
+            self.sigma_ex, self.sigma_hk, self.d_kl_allostatic, self.g_pred, self.psi_valence
         )
     }
 }
@@ -93,7 +93,7 @@ pub fn compute_thermodynamic_valence_rust(
         s_pred[t] = x_a1[t - 1] + (a * x_a1[t - 1] + b * x_a1[t - 1].tanh()) * dt;
     }
 
-    // Decomposizione di Hatano-Sasa
+    // Hatano-Sasa decomposition
     let mut var_sum = 0.0;
     let mut mean_x = 0.0;
     for &x in &x_a1 {
@@ -114,23 +114,23 @@ pub fn compute_thermodynamic_valence_rust(
     }
     let sigma_ex = excess_sum / (n_steps - 1) as f64;
 
-    // Distanza di Kullback-Leibler e Guadagno Predittivo
-    let d_kl_allostasica = (mean_x.abs() / 0.2).powi(2);
+    // Kullback-Leibler distance and predictive gain
+    let d_kl_allostatic = (mean_x.abs() / 0.2).powi(2);
     let g_pred = 0.05 * (1.0 - (s_obs[1] - s_pred[1]).abs());
 
-    let psi = alpha * (1.0 + (sigma_ex / (sigma_hk + 1e-8))).ln() - beta * d_kl_allostasica + gamma * g_pred;
+    let psi = alpha * (1.0 + (sigma_ex / (sigma_hk + 1e-8))).ln() - beta * d_kl_allostatic + gamma * g_pred;
 
     Ok(MetrologyResultsRust {
         sigma_ex,
         sigma_hk,
-        d_kl_allostasica,
+        d_kl_allostatic,
         g_pred,
-        psi_valenza: psi,
+        psi_valence: psi,
     })
 }
 
 #[pymodule]
-fn valenza_metrologia_rust(_py: Python, m: &PyModule) -> PyResult<()> {
+fn thermodynamic_valence_rust(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<MetrologyResultsRust>()?;
     m.add_function(wrap_pyfunction!(compute_thermodynamic_valence_rust, m)?)?;
     Ok(())

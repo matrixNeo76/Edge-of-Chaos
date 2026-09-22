@@ -1,20 +1,20 @@
 """
 paper0_cli.py
 =============
-Entry-point unico a sottocomandi per la piattaforma di metrologia P0_Distilled v0.1.
+Single subcommand entry point for the P0_Distilled v0.1 metrology platform.
 
-Non duplica la logica degli script esistenti: importa le loro funzioni e le richiama.
-Ogni script (`valenza_metrologia.py`, `dashboard_valenza.py`, `demarcation_tests.py`,
-`hardware_driver_v2.py`) resta eseguibile standalone esattamente come prima — questo
-file è puramente additivo, pensato principalmente come punto di ingresso singolo per
-il packaging PyInstaller (vedi docs_v0.2/05_PACKAGING_PYINSTALLER.md).
+Does not duplicate the logic of the existing scripts: it imports their functions
+and calls them. Each script (`thermodynamic_valence.py`, `valence_dashboard.py`,
+`demarcation_tests.py`, `hardware_driver_v2.py`) remains runnable standalone
+exactly as before — this file is purely additive, designed mainly as a single
+entry point for PyInstaller packaging.
 
-Uso:
-    python paper0_cli.py metrologia
+Usage:
+    python paper0_cli.py metrology
     python paper0_cli.py dashboard
-    python paper0_cli.py demarcazione
+    python paper0_cli.py demarcation
     python paper0_cli.py hardware
-    python paper0_cli.py test [--suite metrologia|hardware|tutti]
+    python paper0_cli.py test [--suite metrology|hardware|all]
 """
 
 import argparse
@@ -22,30 +22,30 @@ import sys
 import unittest
 
 
-def cmd_metrologia(_args):
-    from valenza_metrologia import simulate_neuromorphic_substrate_sde, calculate_thermodynamic_valence
+def cmd_metrology(_args):
+    from thermodynamic_valence import simulate_neuromorphic_substrate_sde, calculate_thermodynamic_valence
     import numpy as np
 
-    print("=== ESECUZIONE METROLOGIA AVANZATA DIGITAL TWIN (P0_Distilled v0.1) ===")
+    print("=== RUNNING ADVANCED DIGITAL TWIN METROLOGY (P0_Distilled v0.1) ===")
     x_A1, s_obs, s_pred, dt = simulate_neuromorphic_substrate_sde(n_steps=10000)
     res = calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt)
-    print(f"Punti temporali processati: {len(x_A1)}")
-    print(f"Stato medio substrato A1 x(t): {np.mean(x_A1):.4f}")
-    print(f"Dissipazione in eccesso sigma_ex: {res['sigma_ex']:.4f}")
-    print(f"Dissipazione housekeeping sigma_hk: {res['sigma_hk']:.4f}")
-    print(f"Divergenza Allostasica D_KL(P||P_target): {res['d_kl_allostasica']:.4f}")
-    print(f"Guadagno Predittivo dell'Efference Copy G_pred: {res['g_pred']:.4f}")
-    print(f"-> FUNZIONALE DI VALENZA INTEGRATO Psi(t): {res['psi_valenza']:.4f}")
+    print(f"Time points processed: {len(x_A1)}")
+    print(f"Mean state of substrate A1 x(t): {np.mean(x_A1):.4f}")
+    print(f"Excess dissipation sigma_ex: {res['sigma_ex']:.4f}")
+    print(f"Housekeeping dissipation sigma_hk: {res['sigma_hk']:.4f}")
+    print(f"Allostatic divergence D_KL(P||P_target): {res['d_kl_allostatic']:.4f}")
+    print(f"Predictive gain of the efference copy G_pred: {res['g_pred']:.4f}")
+    print(f"-> INTEGRATED VALENCE FUNCTIONAL Psi(t): {res['psi_valence']:.4f}")
     return 0
 
 
 def cmd_dashboard(_args):
-    from dashboard_valenza import generate_metrology_dashboard
+    from valence_dashboard import generate_metrology_dashboard
     generate_metrology_dashboard()
     return 0
 
 
-def cmd_demarcazione(_args):
+def cmd_demarcation(_args):
     import numpy as np
     from demarcation_tests import (
         test_edge_of_chaos_admittance,
@@ -55,17 +55,17 @@ def cmd_demarcazione(_args):
 
     freqs = np.linspace(0.1, 100.0, 500)
     eoc = test_edge_of_chaos_admittance(freqs)
-    print("=== TEST DEMARCAZIONE 1: EDGE OF CHAOS ===")
-    print(f"Edge of Chaos Verificato: {eoc['is_edge_of_chaos']}")
-    print(f"Traccia Jacobiano: {eoc['trace_J']:.2f}, Determinante: {eoc['det_J']:.2f}")
+    print("=== DEMARCATION TEST 1: EDGE OF CHAOS ===")
+    print(f"Edge of Chaos Verified: {eoc['is_edge_of_chaos']}")
+    print(f"Jacobian Trace: {eoc['trace_J']:.2f}, Determinant: {eoc['det_J']:.2f}")
 
-    print("\n=== TEST DEMARCAZIONE 2: DEGENERAZIONE CAUSALE SPETTRALE ===")
+    print("\n=== DEMARCATION TEST 2: SPECTRAL CAUSAL DEGENERACY ===")
     J_mock = np.array([[-1.0, 0.5, 0.0], [0.5, -1.0, 0.0], [0.0, 0.0, -1.0]])
     deg = calculate_spectral_causal_degeneracy(J_mock)
-    print(f"Dimensione Nucleo: {deg['nullspace_dim']}, Rho Degenerazione: {deg['rho_deg']:.2f}")
-    print(f"Soglia Degenerazione Superata: {deg['passes_degeneracy_threshold']}")
+    print(f"Kernel Dimension: {deg['nullspace_dim']}, Degeneracy Rho: {deg['rho_deg']:.2f}")
+    print(f"Degeneracy Threshold Exceeded: {deg['passes_degeneracy_threshold']}")
 
-    print("\n=== TEST DEMARCAZIONE 3: FINITE-SIZE SCALING (FSS) ===")
+    print("\n=== DEMARCATION TEST 3: FINITE-SIZE SCALING (FSS) ===")
     for row in verify_finite_size_scaling():
         print(f"L={row['L']}: delta_p={row['delta_p']:.4f}, xi={row['xi']:.2f}")
     return 0
@@ -78,17 +78,17 @@ def cmd_hardware(_args):
     hw = NeuromorphicHardwareInterfaceV2(mock=True)
     print(hw.initialize_session())
     frame = hw.get_realtime_frame(n_samples=1000)
-    print(f"Frame acquisito: {len(frame['current_I'])} punti I(t) "
+    print(f"Frame acquired: {len(frame['current_I'])} I(t) points "
           f"[Mean I = {np.mean(frame['current_I'])*1e6:.2f} uA], "
-          f"{len(frame['voltage_V'])} punti V(t).")
+          f"{len(frame['voltage_V'])} V(t) points.")
     return 0
 
 
 def cmd_test(args):
     suite_map = {
-        "metrologia": ["test_valenza_metrologia"],
+        "metrology": ["test_thermodynamic_valence"],
         "hardware": ["test_hardware_session"],
-        "tutti": ["test_valenza_metrologia", "test_hardware_session"],
+        "all": ["test_thermodynamic_valence", "test_hardware_session"],
     }
     modules = suite_map[args.suite]
     loader = unittest.TestLoader()
@@ -102,26 +102,26 @@ def cmd_test(args):
 def main(argv=None):
     parser = argparse.ArgumentParser(
         prog="paper0",
-        description="Piattaforma di Metrologia per Substrati Neuromorfici (P0_Distilled v0.1)",
+        description="Metrology Platform for Neuromorphic Substrates (P0_Distilled v0.1)",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    sub.add_parser("metrologia", help="Esegue il digital twin e calcola Psi(t)")
-    sub.add_parser("dashboard", help="Genera la dashboard grafica a 4 quadranti")
-    sub.add_parser("demarcazione", help="Esegue i 3 test di demarcazione operativa")
-    sub.add_parser("hardware", help="Inizializza una sessione hardware mock e acquisisce un frame")
+    sub.add_parser("metrology", help="Runs the digital twin and computes Psi(t)")
+    sub.add_parser("dashboard", help="Generates the 4-quadrant graphical dashboard")
+    sub.add_parser("demarcation", help="Runs the 3 operational demarcation tests")
+    sub.add_parser("hardware", help="Initializes a mock hardware session and acquires a frame")
 
-    p_test = sub.add_parser("test", help="Esegue le suite di test")
+    p_test = sub.add_parser("test", help="Runs the test suites")
     p_test.add_argument(
-        "--suite", choices=["metrologia", "hardware", "tutti"], default="tutti",
-        help="Quale suite eseguire (default: tutti)",
+        "--suite", choices=["metrology", "hardware", "all"], default="all",
+        help="Which suite to run (default: all)",
     )
 
     args = parser.parse_args(argv)
     dispatch = {
-        "metrologia": cmd_metrologia,
+        "metrology": cmd_metrology,
         "dashboard": cmd_dashboard,
-        "demarcazione": cmd_demarcazione,
+        "demarcation": cmd_demarcation,
         "hardware": cmd_hardware,
         "test": cmd_test,
     }

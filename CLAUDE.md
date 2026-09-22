@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Le istruzioni per assistenti AI che lavorano su questo repository sono in
-[AGENTS.md](AGENTS.md) (convenzione condivisa tra strumenti, per evitare di
-duplicare e disallineare le istruzioni tra CLAUDE.md, GEMINI.md e AGENTS.md). Leggi
-quel file prima di iniziare.
+Instructions for AI assistants working on this repository are in
+[AGENTS.md](AGENTS.md) (a convention shared across tools, to avoid duplicating and
+drifting the instructions apart between CLAUDE.md, GEMINI.md, and AGENTS.md). Read
+that file before starting.

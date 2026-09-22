@@ -12,10 +12,10 @@
 3. [Formulazione Matematica Fondamentale](#-formulazione-matematica-fondamentale)
 4. [Requisiti e Installazione Rapida](#-requisiti-e-installazione-rapida)
 5. [Guida all'Uso degli Script](#-guida-alluso-degli-script)
-   - [Metrologia e Digital Twin (`valenza_metrologia.py` / `.rs`)](#1-metrologia-e-digital-twin)
+   - [Metrologia e Digital Twin (`thermodynamic_valence.py` / `.rs`)](#1-metrologia-e-digital-twin)
    - [Interfacciamento Hardware Reale (`hardware_driver_v2.py`)](#2-interfacciamento-hardware-reale)
    - [Test di Demarcazione Operativa (`demarcation_tests.py`)](#3-test-di-demarcazione-operativa)
-   - [Visualizzazione e Dashboard (`dashboard_valenza.py`)](#4-visualizzazione-e-dashboard)
+   - [Visualizzazione e Dashboard (`valence_dashboard.py`)](#4-visualizzazione-e-dashboard)
 6. [Eseguibile Standalone (senza Docker)](#-eseguibile-standalone-senza-docker-per-pc-di-laboratorio)
 7. [Containerizzazione e Replicabilità (Docker)](#-containerizzazione-e-replicabilità-docker)
 8. [Bibliografie e Riferimenti](#-bibliografie-e-riferimenti)
@@ -37,8 +37,8 @@ A differenza delle intelligenze artificiali digitali su architetture von Neumann
 
 ```
 Edge-of-Chaos/
-├── valenza_metrologia.py         # Engine metrologico Python (Hatano-Sasa, k-NN KL-divergence, Psi(t))
-├── valenza_metrologia.rs         # Engine metrologico in Rust nativo ad alte prestazioni (zero-copy)
+├── thermodynamic_valence.py       # Engine metrologico Python (Hatano-Sasa, k-NN KL-divergence, Psi(t))
+├── thermodynamic_valence.rs       # Engine metrologico in Rust nativo ad alte prestazioni (zero-copy)
 ├── lib.rs                        # Modulo PyO3 FFI per compilare Rust in estensione nativa Python
 ├── Cargo.toml                    # Configurazione Cargo / PyO3 per l'infrastruttura Rust
 ├── demo_pyo3_integration.py      # Script dimostrativo di integrazione e benchmark FFI Rust/Python
@@ -46,10 +46,10 @@ Edge-of-Chaos/
 ├── hardware_driver_v2.py         # Driver PyVISA/SCPI per Keithley DMM e PicoScope con auto-compliance
 ├── test_hardware_session.py      # Test suite estesa per la verifica dei limiti di sicurezza hardware
 ├── demarcation_tests.py          # Test operativi di demarcazione (Edge of Chaos, Degenerazione, FSS)
-├── dashboard_valenza.py          # Generatore della dashboard grafica a 4 quadranti (Seaborn/Matplotlib)
-├── dashboard_valenza.png         # Artifact visivo ad alta risoluzione di una simulazione di esempio
+├── valence_dashboard.py          # Generatore della dashboard grafica a 4 quadranti (Seaborn/Matplotlib)
+├── valence_dashboard.png         # Artifact visivo ad alta risoluzione di una simulazione di esempio
 │
-├── test_valenza_metrologia.py    # Test unitari per la validazione matematica delle SDE e di Psi(t)
+├── test_thermodynamic_valence.py  # Test unitari per la validazione matematica delle SDE e di Psi(t)
 ├── paper0_cli.py                 # Entry-point unico a sottocomandi
 ├── references.bib                # Database BibTeX completo di 45 citazioni (IIT, FEP, Chua, Lakatos)
 │
@@ -110,12 +110,12 @@ $$\rho_{deg} = \frac{\dim\left(\ker(J - \lambda_0 I)\right)}{\|\Delta W_{therm}\
 ### 1. Metrologia e Digital Twin
 Per eseguire la simulazione del substrato $A_1/A_2$ e calcolare la valenza $\Psi(t)$:
 ```bash
-python3 valenza_metrologia.py
+python3 thermodynamic_valence.py
 ```
 
 Per eseguire i test unitari di validazione matematica:
 ```bash
-python3 test_valenza_metrologia.py
+python3 test_thermodynamic_valence.py
 ```
 
 ### 2. Interfacciamento Hardware Reale
@@ -138,16 +138,16 @@ python3 demarcation_tests.py
 ```
 
 ### 4. Visualizzazione e Dashboard
-Per generare la dashboard grafica `dashboard_valenza.png`:
+Per generare la dashboard grafica `valence_dashboard.png`:
 ```bash
-python3 dashboard_valenza.py
+python3 valence_dashboard.py
 ```
 
 ### CLI tutto-in-uno
 I quattro comandi sopra sono disponibili anche tramite un unico entry-point, lo
 stesso impacchettato da `build_exe.ps1` più sotto:
 ```bash
-python3 paper0_cli.py metrologia|dashboard|demarcazione|hardware|test
+python3 paper0_cli.py metrology|dashboard|demarcation|hardware|test
 ```
 
 ---
@@ -160,7 +160,7 @@ Docker non è praticabile (accesso USB/GPIB, permessi admin):
 
 ```powershell
 .\build_exe.ps1
-.\dist\paper0\paper0.exe metrologia   # o: dashboard | demarcazione | hardware | test
+.\dist\paper0\paper0.exe metrology   # o: dashboard | demarcation | hardware | test
 ```
 
 ---

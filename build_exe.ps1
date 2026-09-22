@@ -1,55 +1,69 @@
 # ==============================================================================
-# build_exe.ps1 — Packaging standalone (PyInstaller) per l'uso in laboratorio
-# Progetto: Valenza Metrologia & Digital Twin (P0_Distilled v0.1)
+# build_exe.ps1 — Standalone packaging (PyInstaller) for lab use
+# Project: Thermodynamic Valence & Digital Twin (P0_Distilled v0.1)
 #
-# Produce un eseguibile Windows standalone (onedir) che non richiede Python
-# installato sulla macchina target. Pensato per il PC di laboratorio che
-# esegue hardware_driver_v2.py con strumentazione reale (Keithley/PicoScope),
-# dove Docker non è una buona opzione (accesso USB/GPIB, permessi admin).
+# Produces a standalone Windows executable (onedir) that does not require
+# Python installed on the target machine. Intended for the lab PC that runs
+# hardware_driver_v2.py with real instrumentation (Keithley/PicoScope), where
+# Docker is not a good option (USB/GPIB access, admin permissions).
 #
-# NON sostituisce install.sh/install.ps1 o Docker: quelli restano il percorso
-# per lo sviluppo e per la riproducibilità scientifica del digital twin (vedi
-# docs_v0.2/05_PACKAGING_PYINSTALLER.md per la motivazione della scelta).
+# It does NOT replace install.sh/install.ps1 or Docker: those remain the path
+# for development and for the scientific reproducibility of the digital twin
+# (see docs_v0.2/05_PACKAGING_PYINSTALLER.md for the rationale, if present in
+# your checkout).
 #
-# IMPORTANTE: costruisce sempre in un venv DEDICATO E ISOLATO. Buildare con
-# l'interprete Python "di sistema" (specie se ha centinaia di pacchetti non
-# correlati installati) può far esplodere i tempi di analisi di PyInstaller
-# da ~90 secondi a diversi minuti — verificato empiricamente in questo progetto.
+# IMPORTANT: always builds in a DEDICATED, ISOLATED venv. Building with the
+# "system" Python interpreter (especially if it has hundreds of unrelated
+# packages installed) can blow up PyInstaller's analysis time from ~90 seconds
+# to several minutes — verified empirically in this project.
 # ==============================================================================
 $ErrorActionPreference = "Stop"
+# NOTE: native tools invoked below (maturin, cargo, pyinstaller) write routine
+# status lines to stderr. With $ErrorActionPreference="Stop", PowerShell 5.1
+# turns those stderr lines into terminating NativeCommandError exceptions even
+# on success (exit code 0) — verified empirically in this project. Every call
+# to such a tool is therefore wrapped with a local 'Continue' preference and
+# an explicit $LASTEXITCODE check.
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "  Build Eseguibile Standalone (PyInstaller) - P0_Distilled" -ForegroundColor Cyan
+Write-Host "  Standalone Executable Build (PyInstaller) - P0_Distilled" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 $RepoRoot = $PSScriptRoot
 $BuildVenv = Join-Path $RepoRoot "venv_build"
 
-# 1. Verifica Python
+# 1. Check Python
 if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
-    Write-Host "[ERRORE] Python non e' installato o non e' presente nel PATH." -ForegroundColor Red
+    Write-Host "[ERROR] Python is not installed or not present in the PATH." -ForegroundColor Red
     exit 1
 }
 
-# 2. Venv di build dedicato e isolato (mai il Python di sistema)
-Write-Host "[1/5] Creazione del venv di build isolato ($BuildVenv)..." -ForegroundColor Yellow
+# 2. Dedicated, isolated build venv (never the system Python)
+Write-Host "[1/5] Creating the isolated build venv ($BuildVenv)..." -ForegroundColor Yellow
 if (Test-Path $BuildVenv) {
-    Write-Host "      Venv di build gia' esistente, riutilizzo." -ForegroundColor DarkYellow
+    Write-Host "      Build venv already exists, reusing it." -ForegroundColor DarkYellow
 } else {
     python -m venv $BuildVenv
 }
 $VenvPython = Join-Path $BuildVenv "Scripts\python.exe"
 
-# 3. Dipendenze minime (solo quelle del progetto, niente pacchetti extra)
-Write-Host "[2/5] Installazione delle sole dipendenze necessarie..." -ForegroundColor Yellow
+# 3. Minimal dependencies (only the project's own, no extra packages)
+Write-Host "[2/5] Installing only the required dependencies..." -ForegroundColor Yellow
+$ErrorActionPreference = "Continue"
 & $VenvPython -m pip install --upgrade pip --quiet
 & $VenvPython -m pip install numpy scipy matplotlib seaborn pyinstaller --quiet
+$ErrorActionPreference = "Stop"
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[ERROR] Dependency installation failed (exit $LASTEXITCODE)." -ForegroundColor Red
+    exit 1
+}
 
-# 4. Estensione nativa Rust (opzionale: se manca, il CLI funziona comunque
-#    con i soli script Python; il modulo valenza_metrologia_rust non e'
-#    importato da paper0_cli.py, quindi la sua assenza non blocca il build)
+# 4. Native Rust extension (optional: if missing, the CLI still works with the
+#    Python scripts alone; the thermodynamic_valence_rust module is not
+#    imported by paper0_cli.py, so its absence does not block the build)
 if (Get-Command "cargo" -ErrorAction SilentlyContinue) {
-    Write-Host "[3/5] Compilazione del modulo nativo Rust (maturin)..." -ForegroundColor Yellow
+    Write-Host "[3/5] Building the native Rust module (maturin)..." -ForegroundColor Yellow
+    $ErrorActionPreference = "Continue"
     & $VenvPython -m pip install maturin --quiet
     Push-Location $RepoRoot
     & $VenvPython -m maturin build --release --out dist_wheel
@@ -60,30 +74,33 @@ if (Get-Command "cargo" -ErrorAction SilentlyContinue) {
         }
     }
     Pop-Location
+    $ErrorActionPreference = "Stop"
 } else {
-    Write-Host "[3/5] [AVVISO] Toolchain Rust non trovata. Si procede senza il modulo nativo." -ForegroundColor Yellow
+    Write-Host "[3/5] [WARNING] Rust toolchain not found. Proceeding without the native module." -ForegroundColor Yellow
 }
 
-# 5. Build PyInstaller (onedir: avvio piu' rapido di --onefile, preferibile
-#    per uno strumento riavviato spesso in laboratorio)
-Write-Host "[4/5] Build eseguibile con PyInstaller (onedir)..." -ForegroundColor Yellow
+# 5. PyInstaller build (onedir: faster startup than --onefile, preferable for
+#    a tool that gets restarted often in a lab setting)
+Write-Host "[4/5] Building the executable with PyInstaller (onedir)..." -ForegroundColor Yellow
+$ErrorActionPreference = "Continue"
 Push-Location $RepoRoot
 & $VenvPython -m PyInstaller --onedir --noconfirm --name paper0 paper0_cli.py
 Pop-Location
+$ErrorActionPreference = "Stop"
 
-# 6. Esito
+# 6. Outcome
 $ExePath = Join-Path $RepoRoot "dist\paper0\paper0.exe"
 if (Test-Path $ExePath) {
-    Write-Host "[5/5] Build completata." -ForegroundColor Green
+    Write-Host "[5/5] Build completed." -ForegroundColor Green
     Write-Host "==========================================================" -ForegroundColor Green
-    Write-Host "  Eseguibile pronto: $ExePath" -ForegroundColor Green
-    Write-Host "  Esempi d'uso:" -ForegroundColor Green
-    Write-Host "    dist\paper0\paper0.exe metrologia" -ForegroundColor Green
+    Write-Host "  Executable ready: $ExePath" -ForegroundColor Green
+    Write-Host "  Usage examples:" -ForegroundColor Green
+    Write-Host "    dist\paper0\paper0.exe metrology" -ForegroundColor Green
     Write-Host "    dist\paper0\paper0.exe dashboard" -ForegroundColor Green
     Write-Host "    dist\paper0\paper0.exe hardware" -ForegroundColor Green
-    Write-Host "  Distribuire l'intera cartella dist\paper0\ (non solo l'exe)." -ForegroundColor Green
+    Write-Host "  Distribute the entire dist\paper0\ folder (not just the exe)." -ForegroundColor Green
     Write-Host "==========================================================" -ForegroundColor Green
 } else {
-    Write-Host "[ERRORE] Build fallita: eseguibile non trovato in $ExePath" -ForegroundColor Red
+    Write-Host "[ERROR] Build failed: executable not found at $ExePath" -ForegroundColor Red
     exit 1
 }

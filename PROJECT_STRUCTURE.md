@@ -1,110 +1,110 @@
-# Struttura del Progetto — Edge-of-Chaos (P0_Distilled v0.1)
+# Project Structure — Edge-of-Chaos (P0_Distilled v0.1)
 
-Generato: 2026-09-22, aggiornato dopo l'aggiunta di `AGENTS.md`/`CLAUDE.md`/`GEMINI.md`
-e il riordino di `media/`. Esclude artefatti di build rigenerabili (`venv_build/`,
-`target/`, `dist/`, `build/`, `dist_wheel/`, `output/`, `__pycache__/`,
-`.ruff_cache/`, `paper0.spec`) — vedi [.gitignore](.gitignore).
+Generated: 2026-09-22, updated after renaming the Italian-named scripts to English
+and adding `AGENTS.md`/`CLAUDE.md`/`GEMINI.md`. Excludes regenerable build artifacts
+(`venv_build/`, `target/`, `dist/`, `build/`, `dist_wheel/`, `output/`,
+`__pycache__/`, `.ruff_cache/`, `paper0.spec`) — see [.gitignore](.gitignore).
 
 ```
 Edge-of-Chaos/
 │
-├── docs/                              [3.5 MB]  MANOSCRITTI E MATERIALE DI SUBMISSION
-│   ├── P0_Distilled_v0.1.tex/.pdf               Paper distillato v0.1 (radice del repo)
-│   ├── P0_Distilled.tex                         Versione precedente del distillato
-│   ├── P1_Main.tex/.pdf                         Paper 1 — programma Lakatosiano principale (v16.2)
-│   ├── P2_SelfAgency.tex/.pdf                   Paper 2 — protocollo self-agency minimale (v2.0)
-│   ├── P3_Critique.tex/.pdf                     Paper 3 — valutazione critica esterna (v2.0)
-│   ├── C1_Philosophy.tex/.pdf                   Companion 1 — argomento filosofico per il Postulato 2
-│   ├── C2_PowerAnalysis.tex/.pdf                Companion 2 — power analysis Monte Carlo
-│   ├── AR_Response.tex/.pdf                     Risposta dell'autore a 4 round di revisione ⚠️ riservato
+├── docs/                              [3.5 MB]  MANUSCRIPTS AND SUBMISSION MATERIAL (not in the public repo)
+│   ├── P0_Distilled_v0.1.tex/.pdf               Distilled v0.1 paper (root of the repo)
+│   ├── P0_Distilled.tex                         Previous version of the distilled paper
+│   ├── P1_Main.tex/.pdf                         Paper 1 — main Lakatosian programme (v16.2)
+│   ├── P2_SelfAgency.tex/.pdf                   Paper 2 — minimal self-agency protocol (v2.0)
+│   ├── P3_Critique.tex/.pdf                     Paper 3 — external critical assessment (v2.0)
+│   ├── C1_Philosophy.tex/.pdf                   Companion 1 — philosophical argument for Postulate 2
+│   ├── C2_PowerAnalysis.tex/.pdf                Companion 2 — Monte Carlo power analysis
+│   ├── AR_Response.tex/.pdf                     Author's response to 4 rounds of review ⚠️ confidential
 │   ├── ES_Summary.tex/.pdf                      Executive summary
-│   ├── COVER_LETTER.md, cover_letter_editor.pdf Materiale di submission per rivista
+│   ├── COVER_LETTER.md, cover_letter_editor.pdf Journal submission material
 │   ├── DECLARATIONS.md, SIGNIFICANCE_STATEMENT.md, SUGGESTED_REVIEWERS.md
-│   ├── LAY_SUMMARY.md                           Sintesi divulgativa (195 parole)
+│   ├── LAY_SUMMARY.md                           Plain-language summary (195 words)
 │   ├── SUBMISSION_CHECKLIST.md, SUBMISSION_GUIDE.md, SUGGERIMENTI.txt
 │   ├── EMAILS_TO_EXPERTS.md, ONLINE_PRESENCE_SETUP.md
-│   ├── P0_Piano_Acquisti_e_BOM_Laboratorio.md   Piano acquisti / bill of materials laboratorio
+│   ├── P0_Piano_Acquisti_e_BOM_Laboratorio.md   Lab procurement plan / bill of materials
 │   ├── lista_strumentazione_hardware_lab.pdf
-│   ├── report_campagna_rumore_p0.pdf            Report campagna di simulazione rumore percolativo
-│   ├── articolo_medium_p0_distilled*.pdf        Articoli divulgativi (Medium)
-│   ├── document_relationships.txt               Diagramma ASCII delle dipendenze tra documenti
-│   └── README.md                                Indice del corpus, ordine di lettura consigliato
+│   ├── report_campagna_rumore_p0.pdf            Report on the percolative noise simulation campaign
+│   ├── articolo_medium_p0_distilled*.pdf        Popular-science articles (Medium)
+│   ├── document_relationships.txt               ASCII diagram of the dependencies between documents
+│   └── README.md                                Corpus index, suggested reading order
 │
-├── docs_v0.2/                         [156 KB]  DOCUMENTAZIONE DISTILLATA AI-ORIENTED (derivata, non ufficiale)
-│   ├── README.md                                Indice
-│   ├── 01_PROGRAMME_OVERVIEW.md                 Sintesi del programma Lakatosiano (da P0_Distilled)
-│   ├── 02_MATH_GLOSSARY.md                      Glossario simboli/equazioni
-│   ├── 03_CODE_ARCHITECTURE_MAP.md              Mappa script ↔ sezione del paper, fedeltà d'implementazione
-│   ├── 04_ENVIRONMENT_STATUS_AND_FIXES.md       Audit ambiente Python+Rust, bug e fix verificati
-│   ├── 05_PACKAGING_PYINSTALLER.md              Packaging standalone (PyInstaller) vs Docker
-│   ├── 06_ZENODO_PREPARATION.md                 Cosa separare per un deposito Zenodo
-│   ├── 07_KNOWLEDGE_GRAPH.md + graph.json       Grafo di conoscenza (nodi/relazioni), Markdown + JSON per LLM
-│   ├── 08_P1_MAIN_SYNTHESIS.md                  Sintesi di P1_Main (versione estesa/definitiva)
-│   ├── 09_P2_SELFAGENCY_SYNTHESIS.md            Sintesi di P2_SelfAgency (estensione self-agency)
-│   ├── 10_P3_CRITIQUE_SYNTHESIS.md              Sintesi di P3_Critique (valutazione critica esterna)
-│   ├── 11_C1_PHILOSOPHY_SYNTHESIS.md            Sintesi di C1_Philosophy (argomento per il Postulato 2)
-│   ├── 12_C2_POWERANALYSIS_SYNTHESIS.md         Sintesi di C2_PowerAnalysis (power analysis Monte Carlo)
-│   └── 13_AR_RESPONSE_SYNTHESIS.md              ⚠️ Riservato — storico revisione, mai pubblico
+├── docs_v0.2/                         [156 KB]  AI-ORIENTED DISTILLED DOCUMENTATION (derived, unofficial, not in the public repo)
+│   ├── README.md                                Index
+│   ├── 01_PROGRAMME_OVERVIEW.md                 Summary of the Lakatosian programme (from P0_Distilled)
+│   ├── 02_MATH_GLOSSARY.md                      Symbol/equation glossary
+│   ├── 03_CODE_ARCHITECTURE_MAP.md              Script ↔ paper-section map, implementation fidelity
+│   ├── 04_ENVIRONMENT_STATUS_AND_FIXES.md       Python+Rust environment audit, verified bugs and fixes
+│   ├── 05_PACKAGING_PYINSTALLER.md              Standalone packaging (PyInstaller) vs Docker
+│   ├── 06_ZENODO_PREPARATION.md                 What to separate for a Zenodo deposit
+│   ├── 07_KNOWLEDGE_GRAPH.md + graph.json       Knowledge graph (nodes/relations), Markdown + JSON for LLMs
+│   ├── 08_P1_MAIN_SYNTHESIS.md                  Synthesis of P1_Main (extended/definitive version)
+│   ├── 09_P2_SELFAGENCY_SYNTHESIS.md            Synthesis of P2_SelfAgency (self-agency extension)
+│   ├── 10_P3_CRITIQUE_SYNTHESIS.md              Synthesis of P3_Critique (external critical assessment)
+│   ├── 11_C1_PHILOSOPHY_SYNTHESIS.md            Synthesis of C1_Philosophy (argument for Postulate 2)
+│   ├── 12_C2_POWERANALYSIS_SYNTHESIS.md         Synthesis of C2_PowerAnalysis (Monte Carlo power analysis)
+│   └── 13_AR_RESPONSE_SYNTHESIS.md              ⚠️ Confidential — review history, never public
 │
-├── media/                             [383 MB]  MATERIALE MULTIMEDIALE DIVULGATIVO
+├── media/                             [383 MB]  PROMOTIONAL MULTIMEDIA MATERIAL (not in the public repo)
 │   ├── Decodificare_il_Paper_0.mp4
 │   ├── Il_Protocollo_del_Paper_0.mp4
 │   ├── La_Sentienza_Neuromorfica.mp4
 │   ├── Beyond_Digital_AI.mp4
 │   ├── Coscienza_Artificiale.mp4
-│   ├── How_dead_matter_becomes_sentient.m4a      ⚠️ 104 MB, supera il limite hard di GitHub (100 MB/file)
+│   ├── How_dead_matter_becomes_sentient.m4a      ⚠️ 104 MB, exceeds GitHub's hard limit (100 MB/file)
 │   ├── Architettura_della_Self-Agency.png
 │   ├── Il_Mistero_del_Rumore_1_f.png
 │   ├── Operational_Framework_for_Interoceptive_Sentience.png
 │   ├── Orchestrating_Memristive_Chaos.pptx
 │   └── Continuous_Sentience_Physics.pptx
 │
-├── (radice)                                      CODICE — DIGITAL TWIN E METROLOGIA
-│   ├── valenza_metrologia.py                    Engine metrologico Python (SDE, D_KL k-NN, Psi(t))
-│   ├── valenza_metrologia.rs                    Stesso engine, Rust puro (binario zero-dipendenze)
-│   ├── lib.rs                                   Estensione nativa Python via PyO3
-│   ├── Cargo.toml / Cargo.lock                  Config Cargo (bin + lib PyO3)
-│   ├── demo_pyo3_integration.py                 Demo del binding Rust→Python
+├── (root)                                        CODE — DIGITAL TWIN AND METROLOGY
+│   ├── thermodynamic_valence.py                 Python metrology engine (SDE, k-NN D_KL, Psi(t))
+│   ├── thermodynamic_valence.rs                 Same engine, pure Rust (zero-dependency binary)
+│   ├── lib.rs                                   Native Python extension via PyO3
+│   ├── Cargo.toml / Cargo.lock                  Cargo config (bin + lib PyO3)
+│   ├── demo_pyo3_integration.py                 Demo of the Rust→Python binding
 │   │
-│   ├── demarcation_tests.py                     Test delle 3 condizioni di demarcazione operativa
-│   ├── dashboard_valenza.py                     Dashboard grafica a 4 quadranti (matplotlib/seaborn)
-│   ├── dashboard_valenza.png                    Artifact visivo di esempio (checked-in, non generato)
+│   ├── demarcation_tests.py                     Tests for the 3 operational demarcation conditions
+│   ├── valence_dashboard.py                     4-quadrant graphical dashboard (matplotlib/seaborn)
+│   ├── valence_dashboard.png                    Example visual artifact (checked in, not generated)
 │   │
-│   ├── hardware_driver_v2.py                    Driver hardware (mock, Keithley/PicoScope, parametri di laboratorio preregistrati)
+│   ├── hardware_driver_v2.py                    Hardware driver (mock, Keithley/PicoScope, preregistered lab parameters)
 │   │
-│   ├── test_valenza_metrologia.py               Unit test motore di metrologia
-│   ├── test_hardware_session.py                 Unit test sessione hardware
+│   ├── test_thermodynamic_valence.py            Unit tests for the metrology engine
+│   ├── test_hardware_session.py                 Unit tests for the hardware session
 │   │
-│   ├── paper0_cli.py                            Entry-point unico a sottocomandi (per packaging)
+│   ├── paper0_cli.py                            Single subcommand entry point (for packaging)
 │   │
-│   ├── install.sh / install.ps1                 Setup automatico ambiente (venv + pip + maturin)
-│   ├── build_exe.ps1                            Build eseguibile standalone (PyInstaller, no Docker)
-│   ├── Dockerfile / docker-compose.yml          Containerizzazione per riproducibilità
+│   ├── install.sh / install.ps1                 Automated environment setup (venv + pip + maturin)
+│   ├── build_exe.ps1                            Standalone executable build (PyInstaller, no Docker)
+│   ├── Dockerfile / docker-compose.yml          Containerization for reproducibility
 │   │
-│   ├── requirements.txt / requirements-dev.txt  Dipendenze Python pinnate (runtime / build)
-│   ├── references.bib                           Bibliografia BibTeX (45 citazioni)
+│   ├── requirements.txt / requirements-dev.txt  Pinned Python dependencies (runtime / build)
+│   ├── references.bib                           BibTeX bibliography (45 citations)
 │   │
-│   ├── AGENTS.md                                Istruzioni per assistenti AI (standard cross-tool)
-│   ├── CLAUDE.md / GEMINI.md                    Stub che rimandano ad AGENTS.md
-│   ├── README.md / README.it.md / README.zh.md  Guida del repository (EN default, IT, ZH)
-│   ├── PROJECT_STRUCTURE.md                     Questo file
-│   ├── CHANGELOG.md                             Storico delle versioni del software
+│   ├── AGENTS.md                                Instructions for AI assistants (cross-tool standard)
+│   ├── CLAUDE.md / GEMINI.md                    Stubs pointing to AGENTS.md
+│   ├── README.md / README.it.md / README.zh.md  Repository guide (EN default, IT, ZH)
+│   ├── PROJECT_STRUCTURE.md                     This file
+│   ├── CHANGELOG.md                             Software version history
 │   ├── CONTRIBUTING.md / CODE_OF_CONDUCT.md / SECURITY.md
 │   ├── LICENSE / LICENSE-MIT / LICENSE-APACHE   Dual license MIT/Apache-2.0
-│   ├── CITATION.cff                             Metadati di citazione del software
-│   ├── .github/                                 Template issue/PR
+│   ├── CITATION.cff                             Software citation metadata
+│   ├── .github/                                 Issue/PR templates
 │   └── .gitignore / .gitattributes
 ```
 
-## Nota sulle dimensioni per un eventuale deposito Zenodo
+## Note on sizes for a possible Zenodo deposit
 
-| Componente | Dimensione | Considerazione |
+| Component | Size | Consideration |
 |---|---|---|
-| Codice (root, esclusi artefatti) | ~190 KB | Trascurabile |
-| `docs/` (manoscritti) | 3.5 MB | Trascurabile, ma esclusa dal repo pubblico (submission attiva a rivista) |
-| `docs_v0.2/` | 156 KB | Da decidere se includere (contiene sintesi di contenuto non ancora pubblico — vedi sotto) |
-| `media/` | **383 MB** | Dominante — un singolo file (104 MB) supera il limite hard di GitHub. Esclusa dal repo pubblico |
+| Code (root, excluding artifacts) | ~190 KB | Negligible |
+| `docs/` (manuscripts) | 3.5 MB | Negligible, but excluded from the public repo (active journal submission) |
+| `docs_v0.2/` | 156 KB | To be decided whether to include (contains a synthesis of not-yet-public content — see below) |
+| `media/` | **383 MB** | Dominant — a single file (104 MB) exceeds GitHub's hard limit. Excluded from the public repo |
 
-Vedi [docs_v0.2/06_ZENODO_PREPARATION.md](docs_v0.2/06_ZENODO_PREPARATION.md) per la
-raccomandazione completa su cosa includere in un deposito Zenodo/repository pubblico e
-cosa tenere separato.
+See [docs_v0.2/06_ZENODO_PREPARATION.md](docs_v0.2/06_ZENODO_PREPARATION.md) for the
+full recommendation on what to include in a Zenodo deposit/public repository and what
+to keep separate.

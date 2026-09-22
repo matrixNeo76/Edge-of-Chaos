@@ -1,10 +1,10 @@
-# Dockerfile per il Digital Twin e Metrologia P0_Distilled v0.1
+# Dockerfile for the Digital Twin and Metrology, P0_Distilled v0.1
 FROM python:3.11-slim
 
-LABEL maintainer="Programma di Ricerca Lakatosiano"
-LABEL description="Container per la Metrologia dei Substrati Neuromorfici e Calcolo della Valenza"
+LABEL maintainer="Lakatosian Research Programme"
+LABEL description="Container for Neuromorphic Substrate Metrology and Valence Computation"
 
-# Installa strumenti di sistema e compilatore Rust
+# Install system tools and the Rust compiler
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
@@ -12,24 +12,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Installa Rust per il modulo nativo
+# Install Rust for the native module
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 WORKDIR /app
 
-# Copia e installa requisiti Python
-COPY references.bib valenza_metrologia.py valenza_metrologia.rs test_valenza_metrologia.py dashboard_valenza.py ./
+# Copy and install Python requirements
+COPY references.bib thermodynamic_valence.py thermodynamic_valence.rs test_thermodynamic_valence.py valence_dashboard.py ./
 COPY hardware_driver_v2.py test_hardware_session.py demarcation_tests.py lib.rs Cargo.toml install.sh ./
 
 RUN pip install --no-cache-dir numpy scipy matplotlib seaborn pyvisa maturin
 
-# Compila il modulo Rust PyO3
+# Build the Rust PyO3 module
 RUN maturin build --release --out dist && pip install dist/*.whl
 
-# Test automatici al build
-RUN python3 -m unittest test_valenza_metrologia.py test_hardware_session.py
+# Automated tests at build time
+RUN python3 -m unittest test_thermodynamic_valence.py test_hardware_session.py
 
 EXPOSE 8080
 
-CMD ["python3", "dashboard_valenza.py"]
+CMD ["python3", "valence_dashboard.py"]
