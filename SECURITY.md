@@ -3,8 +3,8 @@
 ## Scope
 
 This repository contains research/metrology software, including drivers for lab
-instrumentation (Keithley DMM, PicoScope via PyVISA/SCPI, `hardware_driver.py` /
-`hardware_driver_v2.py`). By default those drivers run in **mock mode** — no network
+instrumentation (Keithley DMM, PicoScope via PyVISA/SCPI, `hardware_driver_v2.py`).
+By default the driver runs in **mock mode** — no network
 services are exposed, and no credentials or secrets are stored or required anywhere
 in this codebase.
 

@@ -20,7 +20,7 @@ WORKDIR /app
 
 # Copia e installa requisiti Python
 COPY references.bib valenza_metrologia.py valenza_metrologia.rs test_valenza_metrologia.py dashboard_valenza.py ./
-COPY hardware_driver.py hardware_driver_v2.py test_hardware_session.py demarcation_tests.py lib.rs Cargo.toml install.sh ./
+COPY hardware_driver_v2.py test_hardware_session.py demarcation_tests.py lib.rs Cargo.toml install.sh ./
 
 RUN pip install --no-cache-dir numpy scipy matplotlib seaborn pyvisa maturin
 

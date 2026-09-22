@@ -70,8 +70,7 @@ Edge-of-Chaos/
 │   ├── dashboard_valenza.py                     Dashboard grafica a 4 quadranti (matplotlib/seaborn)
 │   ├── dashboard_valenza.png                    Artifact visivo di esempio (checked-in, non generato)
 │   │
-│   ├── hardware_driver.py                       Driver hardware v1 (mock, Keithley/PicoScope)
-│   ├── hardware_driver_v2.py                    Driver hardware v2 (parametri di laboratorio preregistrati)
+│   ├── hardware_driver_v2.py                    Driver hardware (mock, Keithley/PicoScope, parametri di laboratorio preregistrati)
 │   │
 │   ├── test_valenza_metrologia.py               Unit test motore di metrologia
 │   ├── test_hardware_session.py                 Unit test sessione hardware
@@ -87,7 +86,7 @@ Edge-of-Chaos/
 │   │
 │   ├── AGENTS.md                                Istruzioni per assistenti AI (standard cross-tool)
 │   ├── CLAUDE.md / GEMINI.md                    Stub che rimandano ad AGENTS.md
-│   ├── README.md                                Guida del repository
+│   ├── README.md / README.it.md / README.zh.md  Guida del repository (EN default, IT, ZH)
 │   ├── PROJECT_STRUCTURE.md                     Questo file
 │   ├── CHANGELOG.md                             Storico delle versioni del software
 │   ├── CONTRIBUTING.md / CODE_OF_CONDUCT.md / SECURITY.md

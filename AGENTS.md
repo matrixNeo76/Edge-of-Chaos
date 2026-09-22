@@ -9,7 +9,7 @@ disallineare le istruzioni.
 
 **Edge-of-Chaos** è la piattaforma software (digital twin Python + estensione nativa
 Rust via PyO3) a supporto del programma di ricerca Lakatosiano *P0_Distilled v0.1* su
-sentienza interocettiva primaria in substrati neuromorfici continui. Il repository
+senzienza interocettiva primaria in substrati neuromorfici continui. Il repository
 contiene **solo il software**: i manoscritti scientifici vivono in `docs/` (se presente
 nel tuo checkout — non fa parte del repository pubblico, vedi sotto).
 

@@ -5,6 +5,22 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/), e il
 progetto aderisce a [Semantic Versioning](https://semver.org/lang/it/) per quanto
 applicabile a software di ricerca in evoluzione continua.
 
+## [Unreleased]
+
+### Aggiunto
+- README multilingua: `README.md` (inglese, ora versione di default), `README.it.md`
+  (italiano), `README.zh.md` (cinese), con collegamenti reciproci.
+
+### Rimosso
+- `hardware_driver.py` (v1): codice morto, mai importato da nessuno script del
+  repository — completamente superato da `hardware_driver_v2.py`.
+
+### Corretto
+- Refuso terminologico "sentienza" → "senzienza" (italiano corretto) in
+  `README.it.md` e `AGENTS.md`.
+- Riferimenti rotti nel README a file esclusi dal repository pubblico
+  (`docs_v0.2/...`, `report_campagna_rumore_p0.pdf`).
+
 ## [0.1.0] - 2026-09-22
 
 ### Aggiunto
