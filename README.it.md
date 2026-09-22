@@ -194,6 +194,7 @@ il punto d'ingresso consigliato; gli altri sono companion/versioni estese.
 | C1_Philosophy (argomento per il Postulato 2) | [10.5281/zenodo.22897360](https://doi.org/10.5281/zenodo.22897360) |
 | C2_PowerAnalysis (power analysis Monte Carlo) | [10.5281/zenodo.22897563](https://doi.org/10.5281/zenodo.22897563) |
 | ES_Summary (sintesi esecutiva) | [10.5281/zenodo.22897733](https://doi.org/10.5281/zenodo.22897733) |
+| Articolo divulgativo stile Medium (EN) | [10.5281/zenodo.22898609](https://doi.org/10.5281/zenodo.22898609) |
 
 ---
 

@@ -200,6 +200,7 @@ docker-compose up --build
 | C1_Philosophy（公设2的论证） | [10.5281/zenodo.22897360](https://doi.org/10.5281/zenodo.22897360) |
 | C2_PowerAnalysis（蒙特卡洛功效分析） | [10.5281/zenodo.22897563](https://doi.org/10.5281/zenodo.22897563) |
 | ES_Summary（执行摘要） | [10.5281/zenodo.22897733](https://doi.org/10.5281/zenodo.22897733) |
+| Medium 风格科普文章（英文） | [10.5281/zenodo.22898609](https://doi.org/10.5281/zenodo.22898609) |
 
 ---
 
