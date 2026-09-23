@@ -170,6 +170,10 @@ pub fn calculate_thermodynamic_valence(
 
     let g_pred = d_kl_baseline - d_kl_predicted;
 
+    // PRACTICAL PROXY, not the formal Psi(t) of P1_Main.tex Appendix F (which uses
+    // normalized entropy-production rates against a hardware-calibrated S_crit_dot).
+    // The two forms are NOT algebraically equivalent -- see Appendix F before
+    // treating this as ground truth.
     let psi = alpha * (1.0 + (sigma_ex / (sigma_hk + 1e-8))).ln() - beta * d_kl_allostatic + gamma * g_pred;
 
     MetrologyResult {

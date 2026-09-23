@@ -118,6 +118,8 @@ pub fn compute_thermodynamic_valence_rust(
     let d_kl_allostatic = (mean_x.abs() / 0.2).powi(2);
     let g_pred = 0.05 * (1.0 - (s_obs[1] - s_pred[1]).abs());
 
+    // PRACTICAL PROXY, not the formal Psi(t) of P1_Main.tex Appendix F -- see
+    // thermodynamic_valence.py for the full rationale. Not algebraically equivalent.
     let psi = alpha * (1.0 + (sigma_ex / (sigma_hk + 1e-8))).ln() - beta * d_kl_allostatic + gamma * g_pred;
 
     Ok(MetrologyResultsRust {

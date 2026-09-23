@@ -38,7 +38,31 @@ python paper0_cli.py metrology|dashboard|demarcation|hardware|test
 
 # Standalone executable build (no Docker)
 ./build_exe.ps1
+
+# Compile the LaTeX papers in docs/ to PDF (MiKTeX installed locally — see below)
+pdflatex -interaction=nonstopmode -halt-on-error docs/P1_Main.tex
+pdflatex -interaction=nonstopmode -halt-on-error docs/P1_Main.tex  # second pass for refs/TOC
 ```
+
+## Local LaTeX toolchain (MiKTeX)
+
+MiKTeX is installed locally on this machine (`winget install MiKTeX.MiKTeX`),
+with on-the-fly package auto-install enabled
+(`initexmf --set-config-value "[MPM]AutoInstall=1"`), so `pdflatex`/`xelatex`/
+`lualatex` are available without manual package management. Its `bin\x64` is on
+the user PATH; if a shell doesn't see it yet (stale environment in a long-lived
+session), use the full path:
+`C:\Users\<user>\AppData\Local\Programs\MiKTeX\miktex\bin\x64\pdflatex.exe`.
+
+**Before recompiling any paper in `docs/`:** those PDFs are the versions
+published on Zenodo with live DOIs — back up the current PDF first (e.g. into
+`docs/_pdf_backup_pre_v2/`) before overwriting it, and remember that publishing
+a corrected PDF to Zenodo requires a "New version" upload there, not just a
+local recompile — see `docs_v0.2/14_DISSEMINATION_OUTREACH_MAP.md` and
+`docs_v0.2/15_OUTREACH_DRAFTS.md` if present for the surrounding context.
+Compile twice (pdflatex reruns) to resolve cross-references/TOC/bookmarks, and
+clean up `.aux`/`.log`/`.out` afterwards — they're build artifacts, not
+sources.
 
 ## Code conventions
 
@@ -58,9 +82,15 @@ python paper0_cli.py metrology|dashboard|demarcation|hardware|test
 - `test_hardware_session.py::test_noise_calibration_edge_of_chaos` is a **known,
   unresolved failure** due to a tolerance threshold that is too tight — it is not a
   regression you introduced, see `docs_v0.2/04_ENVIRONMENT_STATUS_AND_FIXES.md`.
-- `thermodynamic_valence.py`, `thermodynamic_valence.rs`, and `lib.rs` implement
-  Psi(t) with **slightly different formulas** — a known misalignment, not a bug to
-  silently "fix" without flagging it.
+- `thermodynamic_valence.py`, `thermodynamic_valence.rs`, and `lib.rs` all
+  implement the **same practical proxy** of Psi(t) — a log-ratio of the raw
+  dissipative components plus a KL-divergence penalty — which is **not
+  algebraically equivalent** to the formal Psi(t) defined in `P1_Main.tex`
+  Appendix F (normalized entropy-production rates against a hardware-calibrated
+  `S_crit_dot`). This is documented explicitly in-line in all three code files
+  and in P1_Main/ES_Summary — it is a known, disclosed simplification (the
+  digital twin doesn't yet estimate `S_crit_dot`), not a bug to silently "fix"
+  by making the code match the paper without discussing it with the author first.
 
 ## What NOT to touch without explicitly asking
 

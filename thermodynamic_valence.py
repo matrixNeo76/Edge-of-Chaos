@@ -106,7 +106,14 @@ def calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt, alpha=1.0, beta=0.5
 
     g_pred = d_kl_baseline - d_kl_predicted
 
-    # 4. Integrated valence functional Psi(t)
+    # 4. Integrated valence functional Psi(t) -- PRACTICAL PROXY, not the formal
+    # definition in P1_Main.tex Appendix F (Psi = alpha*(S_ex_dot/S_crit_dot) -
+    # beta*(delta_S_hk_dot/S_crit_dot) + gamma*G_pred). The formal form requires a
+    # hardware-calibrated critical entropy-production rate (S_crit_dot) that this
+    # digital twin does not yet estimate; this proxy substitutes a log-ratio of the
+    # raw dissipative components and a KL-divergence from the target niche instead.
+    # The two forms are NOT algebraically equivalent -- see P1_Main Appendix F for
+    # the precise relation and rationale before treating this as ground truth.
     psi = alpha * np.log(1.0 + (sigma_ex / (sigma_hk + 1e-8))) - beta * d_kl_allostatic + gamma * g_pred
 
     return {
