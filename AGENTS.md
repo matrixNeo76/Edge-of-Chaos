@@ -8,10 +8,17 @@ drifting the instructions apart.
 ## What this repository is
 
 **Edge-of-Chaos** is the software platform (Python digital twin + native Rust
-extension via PyO3) supporting the Lakatosian research programme *P0_Distilled v0.1*
-on primary interoceptive sentience in continuous neuromorphic substrates. The
+extension via PyO3) supporting the research programme *P0_Distilled v0.1* on
+primary interoceptive sentience in continuous neuromorphic substrates. The
 repository contains **only the software**: the scientific manuscripts live in
-`docs/` (if present in your checkout — not part of the public repository, see below).
+`docs/` (if present in your checkout — not part of the public repository, see
+below). The canonical corpus in `docs/` uses a Lakatosian research-programme
+framing (hard core / protective belt / progressiveness criteria); a parallel,
+experimental reframing using Laudan's research-traditions framework
+(revisable core assumption / problem-solving effectiveness / pursuit versus
+acceptance) exists in `docs/laudan_variant/` (if present) — see that folder's
+own `README.md` for its status and how it relates to the canonical corpus.
+Neither supersedes the other unless the author says so.
 
 **Before doing anything**, read [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for the
 repository map, and if present `docs_v0.2/` for deeper context (scientific
@@ -91,6 +98,52 @@ sources.
   and in P1_Main/ES_Summary — it is a known, disclosed simplification (the
   digital twin doesn't yet estimate `S_crit_dot`), not a bug to silently "fix"
   by making the code match the paper without discussing it with the author first.
+
+## Rigorous Scientific Determinism for Paper Analysis
+
+This applies whenever you read, summarize, critique, or extract claims from
+any paper in `docs/` **and** `docs/laudan_variant/` — the risk below is not
+specific to either; it has shown up in both.
+
+- **Never hallucinate or extrapolate a physical/hardware metric.** This
+  covers lithography/fabrication process details, memristor device
+  parameters, energy-per-spike figures (pJ/fJ), entropy-production rates,
+  benchmark numbers, time constants, and any other quantitative claim
+  presented as an empirical or literature value. If a value is not explicit
+  in the text you're reading, write **"Value not present in text"** — do not
+  infer it from a similar-sounding paper, round a nearby number, or fill the
+  gap with a plausible-sounding estimate.
+- **Verify every citation and DOI externally before treating it as real.**
+  A citation that is well-formatted (author, year, venue) is not evidence
+  that it exists — this corpus has both real citations that were formatted
+  as if fabricated (missing authors, e.g. the original "Nano Letters (2024)"
+  entry) and citations that turned out to be genuinely unverifiable after a
+  real search (e.g. "CAT (2026)", "CDF (2025)" in the original P0 draft,
+  removed after a web search found nothing). Formatting quality tells you
+  nothing about whether the source exists; only an actual search does. See
+  `docs_v0.2/16_REVIEW_OF_EXTERNAL_ANALYSES.md` (if present) for a worked
+  example of this verification process, including a case where the
+  verifier's own search missed a real number because the search pattern was
+  too narrow — a reminder that a confident "not found" is only as good as
+  the search that produced it.
+- **Keep digital-twin/simulation claims and physical-substrate claims
+  strictly separate.** The software in this repository is a simplified
+  digital-twin prototype (see above) — never present a simulation output,
+  a code-computed value, or a model assumption as if it were a measurement
+  on real hardware, and never present a paper's physical-substrate claim as
+  already validated by the digital twin unless the text says so explicitly.
+- **Use a fixed extraction schema when cataloguing claims from a manuscript.**
+  For each numeric or empirical claim, record it as:
+
+  | Claim | Location in source | Status |
+  |---|---|---|
+  | *(the value/claim as stated)* | *(see below)* | Confirmed in text / Value not present in text / Externally verified / Unverifiable |
+
+  For **"Location in source"**: use `file:line` when working from the
+  `.tex`/`.md` source. When working directly from a compiled **PDF**, use
+  `file:page` or a section/paragraph reference instead — never invent a line
+  number for a binary file you haven't extracted text from with a tool that
+  actually reports one.
 
 ## What NOT to touch without explicitly asking
 
