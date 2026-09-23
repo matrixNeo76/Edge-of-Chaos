@@ -193,13 +193,13 @@ docker-compose up --build
 
 | 论文 | DOI |
 |---|---|
-| **P0_Distilled_v0.1**（主要入口） | [10.5281/zenodo.22895485](https://doi.org/10.5281/zenodo.22895485) |
-| P1_Main（扩展/权威版本） | [10.5281/zenodo.22896027](https://doi.org/10.5281/zenodo.22896027) |
-| P2_SelfAgency（自我能动性扩展） | [10.5281/zenodo.22896871](https://doi.org/10.5281/zenodo.22896871) |
-| P3_Critique（外部批判性评估） | [10.5281/zenodo.22896989](https://doi.org/10.5281/zenodo.22896989) |
-| C1_Philosophy（公设2的论证） | [10.5281/zenodo.22897360](https://doi.org/10.5281/zenodo.22897360) |
-| C2_PowerAnalysis（蒙特卡洛功效分析） | [10.5281/zenodo.22897563](https://doi.org/10.5281/zenodo.22897563) |
-| ES_Summary（执行摘要） | [10.5281/zenodo.22897733](https://doi.org/10.5281/zenodo.22897733) |
+| **P0_Distilled_v0.1**（主要入口） | [10.5281/zenodo.22895484](https://doi.org/10.5281/zenodo.22895484) |
+| P1_Main（扩展/权威版本） | [10.5281/zenodo.22896026](https://doi.org/10.5281/zenodo.22896026) |
+| P2_SelfAgency（自我能动性扩展） | [10.5281/zenodo.22896870](https://doi.org/10.5281/zenodo.22896870) |
+| P3_Critique（外部批判性评估） | [10.5281/zenodo.22896988](https://doi.org/10.5281/zenodo.22896988) |
+| C1_Philosophy（公设2的论证） | [10.5281/zenodo.22897359](https://doi.org/10.5281/zenodo.22897359) |
+| C2_PowerAnalysis（蒙特卡洛功效分析） | [10.5281/zenodo.22897562](https://doi.org/10.5281/zenodo.22897562) |
+| ES_Summary（执行摘要） | [10.5281/zenodo.22897732](https://doi.org/10.5281/zenodo.22897732) |
 | Medium 风格科普文章（英文） | [10.5281/zenodo.22898609](https://doi.org/10.5281/zenodo.22898609) |
 
 ---

@@ -187,13 +187,13 @@ il punto d'ingresso consigliato; gli altri sono companion/versioni estese.
 
 | Paper | DOI |
 |---|---|
-| **P0_Distilled_v0.1** (punto d'ingresso principale) | [10.5281/zenodo.22895485](https://doi.org/10.5281/zenodo.22895485) |
-| P1_Main (versione estesa/definitiva) | [10.5281/zenodo.22896027](https://doi.org/10.5281/zenodo.22896027) |
-| P2_SelfAgency (estensione self-agency) | [10.5281/zenodo.22896871](https://doi.org/10.5281/zenodo.22896871) |
-| P3_Critique (valutazione critica esterna) | [10.5281/zenodo.22896989](https://doi.org/10.5281/zenodo.22896989) |
-| C1_Philosophy (argomento per il Postulato 2) | [10.5281/zenodo.22897360](https://doi.org/10.5281/zenodo.22897360) |
-| C2_PowerAnalysis (power analysis Monte Carlo) | [10.5281/zenodo.22897563](https://doi.org/10.5281/zenodo.22897563) |
-| ES_Summary (sintesi esecutiva) | [10.5281/zenodo.22897733](https://doi.org/10.5281/zenodo.22897733) |
+| **P0_Distilled_v0.1** (punto d'ingresso principale) | [10.5281/zenodo.22895484](https://doi.org/10.5281/zenodo.22895484) |
+| P1_Main (versione estesa/definitiva) | [10.5281/zenodo.22896026](https://doi.org/10.5281/zenodo.22896026) |
+| P2_SelfAgency (estensione self-agency) | [10.5281/zenodo.22896870](https://doi.org/10.5281/zenodo.22896870) |
+| P3_Critique (valutazione critica esterna) | [10.5281/zenodo.22896988](https://doi.org/10.5281/zenodo.22896988) |
+| C1_Philosophy (argomento per il Postulato 2) | [10.5281/zenodo.22897359](https://doi.org/10.5281/zenodo.22897359) |
+| C2_PowerAnalysis (power analysis Monte Carlo) | [10.5281/zenodo.22897562](https://doi.org/10.5281/zenodo.22897562) |
+| ES_Summary (sintesi esecutiva) | [10.5281/zenodo.22897732](https://doi.org/10.5281/zenodo.22897732) |
 | Articolo divulgativo stile Medium (EN) | [10.5281/zenodo.22898609](https://doi.org/10.5281/zenodo.22898609) |
 
 ---

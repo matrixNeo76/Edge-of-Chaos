@@ -204,13 +204,13 @@ entry point; the others are companion/extended papers.
 
 | Paper | DOI |
 |---|---|
-| **P0_Distilled_v0.1** (main entry point) | [10.5281/zenodo.22895485](https://doi.org/10.5281/zenodo.22895485) |
-| P1_Main (extended, definitive version) | [10.5281/zenodo.22896027](https://doi.org/10.5281/zenodo.22896027) |
-| P2_SelfAgency (self-agency extension) | [10.5281/zenodo.22896871](https://doi.org/10.5281/zenodo.22896871) |
-| P3_Critique (external critical assessment) | [10.5281/zenodo.22896989](https://doi.org/10.5281/zenodo.22896989) |
-| C1_Philosophy (argument for Postulate 2) | [10.5281/zenodo.22897360](https://doi.org/10.5281/zenodo.22897360) |
-| C2_PowerAnalysis (Monte Carlo power analysis) | [10.5281/zenodo.22897563](https://doi.org/10.5281/zenodo.22897563) |
-| ES_Summary (executive summary) | [10.5281/zenodo.22897733](https://doi.org/10.5281/zenodo.22897733) |
+| **P0_Distilled_v0.1** (main entry point) | [10.5281/zenodo.22895484](https://doi.org/10.5281/zenodo.22895484) |
+| P1_Main (extended, definitive version) | [10.5281/zenodo.22896026](https://doi.org/10.5281/zenodo.22896026) |
+| P2_SelfAgency (self-agency extension) | [10.5281/zenodo.22896870](https://doi.org/10.5281/zenodo.22896870) |
+| P3_Critique (external critical assessment) | [10.5281/zenodo.22896988](https://doi.org/10.5281/zenodo.22896988) |
+| C1_Philosophy (argument for Postulate 2) | [10.5281/zenodo.22897359](https://doi.org/10.5281/zenodo.22897359) |
+| C2_PowerAnalysis (Monte Carlo power analysis) | [10.5281/zenodo.22897562](https://doi.org/10.5281/zenodo.22897562) |
+| ES_Summary (executive summary) | [10.5281/zenodo.22897732](https://doi.org/10.5281/zenodo.22897732) |
 | Medium-style explainer article (popular science, EN) | [10.5281/zenodo.22898609](https://doi.org/10.5281/zenodo.22898609) |
 
 ---
