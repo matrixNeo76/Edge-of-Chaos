@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest
+      - name: Run tests
+        env:
+          MPLBACKEND: Agg
+        run: >
+          python -m pytest -q
+          test_thermodynamic_valence.py test_hardware_session.py
+          test_demarcation.py test_necessary_conditions.py
+      - name: Command-line demonstrations
+        env:
+          MPLBACKEND: Agg
+          OUTPUT_DIR: ci_output
+        run: |
+          python paper0_cli.py metrology
+          python paper0_cli.py conditions
+          python paper0_cli.py dashboard
+
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build binary and PyO3 library
+        run: cargo build --release --locked
+      - name: Run binary
+        run: ./target/release/thermodynamic_valence

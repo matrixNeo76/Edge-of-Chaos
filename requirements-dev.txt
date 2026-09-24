@@ -1,5 +1,5 @@
-# Dipendenze aggiuntive per build/packaging (non necessarie per il solo uso
-# degli script). Vedi build_exe.ps1 e install.sh/install.ps1.
+# Additional dependencies for building and packaging (not needed to run the
+# scripts). See build_exe.ps1 and install.sh / install.ps1.
 
 -r requirements.txt
 maturin>=1.5,<2
