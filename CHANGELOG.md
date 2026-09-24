@@ -7,6 +7,42 @@ continuously evolving research software.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-24
+
+### Fixed
+- `G_pred` did not follow its definition in the self-agency paper
+  (P2_SelfAgency.tex, section 5.4), `D_KL(p_obs || p_ref) - D_KL(p_obs || p_pred)`.
+  The code computed `D_KL(p_obs || p_target) - D_KL(p_pred || p_target)`, which
+  scores the efference-copy prediction by its closeness to the target niche instead
+  of to the observations. Because the niche is centred on 0 and the simulated state
+  is not, noise centred on 0 looked "closer to the niche" than the correct
+  prediction: this is why the dashboard's ablated condition scored higher than
+  baseline (about -0.9 vs -2.1). With the P2 definition the ablation lowers `G_pred`
+  and `Psi` (dashboard: 1.95 baseline vs -0.18 ablated), in both
+  `thermodynamic_valence.py` and `thermodynamic_valence.rs`. The fix follows the
+  specification; it was not tuned to obtain the predicted direction.
+- The target niche was redrawn without a seed at every call in the Python engine,
+  adding run-to-run noise to `d_kl_allostatic` and `G_pred`. It is now drawn from a
+  fixed seed (`niche_seed=12345`, as the Rust engine already did), so equal inputs
+  give equal outputs.
+- The dashboard ablation drew unseeded random numbers; it is now seeded.
+- The dashboard labelled the efference-copy ablation "Ablation 4", but in the papers
+  Ablation (Control) 4 is the hard-wired Braitenberg vehicle. It is now labelled
+  "Efference ablation (A2 decoupled)".
+- `s_obs[0]` and `s_pred[0]` were left at 0 while the state started at 0.1; they
+  now hold the initial state.
+
+### Changed
+- `G_pred` is estimated on two-dimensional delay-embedded densities
+  `(s(t), s(t - tau))`, `tau_steps=10` by default, matching the "phase-space
+  densities" of P2 section 5.4. New helpers: `delay_embed` (Python and Rust) and
+  `estimate_kl_divergence_knn_2d` (Rust). Numerical values of `G_pred` and `Psi`
+  change accordingly and are not comparable with v0.2.0.
+
+### Added
+- Regression tests: an ablation centred on the niche must lower `G_pred` and `Psi`;
+  the valence computation must be deterministic.
+
 ## [0.2.0] - 2026-09-24
 
 ### Added
@@ -102,10 +138,19 @@ continuously evolving research software.
   (small-fluctuation) level (Falasco & Esposito, Rev. Mod. Phys. 97, 015002, 2025).
 - `lib.rs` (PyO3 module) uses placeholder estimators for `D_KL` and `G_pred`, so
   its results are not comparable with the Python and standalone Rust engines.
-- The digital twin does not reproduce the predicted drop of `Psi` under efference
-  ablation (Ablation 4): in `valence_dashboard.py` the ablated condition scores
-  higher than baseline. The ablation also draws unseeded random numbers, so the
-  exact values vary between runs. Not investigated yet.
+- ~~The digital twin does not reproduce the predicted drop of `Psi` under efference
+  ablation~~: resolved in 0.2.1 (wrong `G_pred` formula, see above).
+- `G_pred` compares densities estimated separately for observations and
+  predictions, so it cannot detect whether a prediction is aligned in time with the
+  observations: a prediction shifted by 200 steps scores the same as the correct
+  one, and a shuffled prediction only slightly lower, for any tested `tau_steps`
+  (1-200). The same holds for the definition in P2 section 5.4, where temporal
+  alignment is covered only by the joint requirement on transfer entropy, which the
+  digital twin does not implement.
+- In the simulation, level A2 does not feed back into A1: the efference-copy
+  prediction never enters the dynamics. Ablating it changes the measurement, not
+  the behaviour of the simulated substrate, so the digital twin cannot test the
+  closed-loop prediction of the protocol.
 - `test_hardware_session.py::test_noise_calibration_edge_of_chaos` fails
   deterministically due to a tolerance threshold that does not isolate the 1/f
   noise from the mock signal's deterministic sinusoidal carrier — see

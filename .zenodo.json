@@ -2,7 +2,7 @@
   "title": "Edge-of-Chaos",
   "upload_type": "software",
   "description": "Falsifiable research programme and digital-twin metrology platform (Python + Rust) testing the necessary physical conditions for primary interoceptive sentience in continuous neuromorphic substrates.",
-  "notes": "v0.2.0 corrects the SDE integration (spurious Milstein term for additive noise; wrong initial state) and stops presenting the digital twin's dissipation terms as Hatano-Sasa quantities: they are heuristic proxies that depend on the integration step. See CHANGELOG.md for details and known open issues.",
+  "notes": "v0.2.1 aligns the predictive gain G_pred with its definition in the self-agency paper (P2, section 5.4): the efference-copy prediction is now scored against the observations, not against the target niche. The previous form made an ablated efference copy raise Psi instead of lowering it. The target niche and the dashboard ablation are now seeded. See CHANGELOG.md for details and known open issues.",
   "creators": [
     {"name": "Iavarone, Francesco", "affiliation": "Independent Researcher", "orcid": "0009-0005-9773-8187"}
   ],
