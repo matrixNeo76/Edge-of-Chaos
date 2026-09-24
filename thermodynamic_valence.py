@@ -33,6 +33,10 @@ def simulate_neuromorphic_substrate_sde(n_steps=10000, dt=0.001, seed=42):
     Simulates the stochastic dynamics of a two-level neuromorphic substrate (A1/A2)
     by Euler-Maruyama integration of an SDE with additive noise.
     """
+    if n_steps < 2:
+        raise ValueError(f"n_steps must be at least 2, got {n_steps}")
+    if dt <= 0:
+        raise ValueError(f"dt must be positive, got {dt}")
     np.random.seed(seed)
 
     # Material parameters (Mott / diffusive memristor)
@@ -70,11 +74,19 @@ def estimate_kl_divergence_knn(p_samples, q_samples, k=5):
     Non-parametric k-NN estimate of the Kullback-Leibler divergence D_KL(P || Q),
     based on KDTree (Kraskov et al. / Perez-Cruz).
     """
+    p_samples = np.asarray(p_samples, dtype=float)
+    q_samples = np.asarray(q_samples, dtype=float)
     p_samples = np.atleast_2d(p_samples).T if p_samples.ndim == 1 else p_samples
     q_samples = np.atleast_2d(q_samples).T if q_samples.ndim == 1 else q_samples
 
     n, d = p_samples.shape
-    m, _ = q_samples.shape
+    m, d_q = q_samples.shape
+    if d != d_q:
+        raise ValueError(f"p_samples and q_samples differ in dimension: {d} vs {d_q}")
+    if n <= k + 1 or m < k:
+        raise ValueError(f"need more than k + 1 = {k + 1} samples of P and at least k = {k} of Q, got {n} and {m}")
+    if not (np.all(np.isfinite(p_samples)) and np.all(np.isfinite(q_samples))):
+        raise ValueError("samples contain NaN or infinite values")
 
     tree_p = KDTree(p_samples)
     tree_q = KDTree(q_samples)
@@ -116,6 +128,21 @@ def calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt, alpha=1.0, beta=0.5
     actuation, so the free-running reference p_ref is stood in for by the target niche.
     The niche samples are drawn from a fixed seed, so equal inputs give equal outputs.
     """
+    x_A1, s_obs, s_pred = (np.asarray(a, dtype=float) for a in (x_A1, s_obs, s_pred))
+    if not (x_A1.ndim == s_obs.ndim == s_pred.ndim == 1):
+        raise ValueError("x_A1, s_obs and s_pred must be one-dimensional")
+    if not (len(x_A1) == len(s_obs) == len(s_pred)):
+        raise ValueError(f"x_A1, s_obs and s_pred must have equal length, got {len(x_A1)}, {len(s_obs)}, {len(s_pred)}")
+    if dt <= 0:
+        raise ValueError(f"dt must be positive, got {dt}")
+    if tau_steps < 1:
+        raise ValueError(f"tau_steps must be at least 1, got {tau_steps}")
+    min_length = tau_steps + 7  # the k-NN estimators (k = 5) need at least 7 embedded points
+    if len(x_A1) < min_length:
+        raise ValueError(f"series too short: {len(x_A1)} samples, need at least {min_length} for tau_steps = {tau_steps}")
+    if not all(np.all(np.isfinite(a)) for a in (x_A1, s_obs, s_pred)):
+        raise ValueError("x_A1, s_obs and s_pred must not contain NaN or infinite values")
+
     # 1. Heuristic dissipation proxies -- NOT Hatano-Sasa quantities (see module docstring).
     # Their ratio, and hence Psi, changes with dt: compare results only at equal dt.
     dx = np.diff(x_A1) / dt

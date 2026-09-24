@@ -70,6 +70,8 @@ pub fn simulate_neuromorphic_substrate_sde(
     dt: f64,
     seed: u64,
 ) -> (Vec<f64>, Vec<f64>, Vec<f64>) {
+    assert!(n_steps >= 2, "n_steps must be at least 2, got {}", n_steps);
+    assert!(dt > 0.0, "dt must be positive, got {}", dt);
     let mut rng = FastRng::new(seed);
     let a = -1.2;
     let b = 0.8;
@@ -195,6 +197,17 @@ pub fn calculate_thermodynamic_valence(
 ) -> MetrologyResult {
     let tau_steps = 10;
     let n = x_a1.len();
+    assert!(
+        s_obs.len() == n && s_pred.len() == n,
+        "x_a1, s_obs and s_pred must have equal length, got {}, {}, {}",
+        n, s_obs.len(), s_pred.len()
+    );
+    assert!(dt > 0.0, "dt must be positive, got {}", dt);
+    assert!(n >= tau_steps + 7, "series too short: {} samples, need at least {}", n, tau_steps + 7);
+    assert!(
+        x_a1.iter().chain(s_obs).chain(s_pred).all(|v| v.is_finite()),
+        "x_a1, s_obs and s_pred must not contain NaN or infinite values"
+    );
     let mut dx = Vec::with_capacity(n - 1);
     for i in 0..n - 1 {
         dx.push((x_a1[i + 1] - x_a1[i]) / dt);

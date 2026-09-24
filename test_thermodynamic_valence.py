@@ -135,5 +135,24 @@ class TestThermodynamicValence(unittest.TestCase):
         second = calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt)
         self.assertEqual(first, second)
 
+    def test_invalid_input_raises(self):
+        """Invalid input raises ValueError instead of returning silently wrong numbers."""
+        x_A1, s_obs, s_pred, dt = simulate_neuromorphic_substrate_sde(n_steps=200, seed=1)
+        cases = {
+            "unequal lengths": (x_A1, s_obs[:-5], s_pred, dt),
+            "NaN": (np.r_[x_A1[:-1], np.nan], s_obs, s_pred, dt),
+            "too short for tau": (x_A1[:12], s_obs[:12], s_pred[:12], dt),
+            "zero dt": (x_A1, s_obs, s_pred, 0.0),
+        }
+        for name, args in cases.items():
+            with self.subTest(name), self.assertRaises(ValueError):
+                calculate_thermodynamic_valence(*args)
+        with self.assertRaises(ValueError):
+            estimate_kl_divergence_knn(np.array([]), np.ones(10))
+        with self.assertRaises(ValueError):
+            estimate_kl_divergence_knn(np.ones((20, 2)), np.ones((20, 1)))
+        with self.assertRaises(ValueError):
+            simulate_neuromorphic_substrate_sde(n_steps=1)
+
 if __name__ == "__main__":
     unittest.main()
