@@ -78,6 +78,7 @@ Edge-of-Chaos/
 │   ├── test_thermodynamic_valence.py            Unit tests for the metrology engine
 │   ├── test_demarcation.py                      Tests of the demarcation conditions
 │   ├── test_necessary_conditions.py             Tests of the necessary-condition criteria
+│   ├── notebooks/demo.ipynb                     Demonstration notebook (runs on Binder)
 │   ├── test_hardware_session.py                 Unit tests for the hardware session
 │   │
 │   ├── paper0_cli.py                            Single subcommand entry point (for packaging)

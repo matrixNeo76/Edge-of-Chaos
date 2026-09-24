@@ -59,6 +59,7 @@ Edge-of-Chaos/
 ├── test_demarcation.py           # Test delle condizioni di demarcazione su sistemi con risposta nota
 ├── test_necessary_conditions.py  # Test dei criteri per le condizioni necessarie
 ├── paper0_cli.py                 # Entry-point unico a sottocomandi
+├── notebooks/demo.ipynb          # Notebook dimostrativo (eseguibile su Binder)
 ├── references.bib                # Database BibTeX completo di 49 citazioni (IIT, FEP, Chua, Lakatos)
 │
 ├── install.sh                    # Script di installazione per Linux / macOS
@@ -161,6 +162,12 @@ Per generare la dashboard grafica `valence_dashboard.png`:
 ```bash
 python3 valence_dashboard.py
 ```
+
+### Notebook dimostrativo
+`notebooks/demo.ipynb` esegue su dati simulati il proxy della valenza con l'ablazione della
+copia d'efferenza, il limite noto di G_pred, le condizioni di demarcazione e il criterio
+dell'edge of chaos, con spiegazioni. Si apre nel browser senza installare nulla tramite
+[Binder](https://mybinder.org/v2/gh/matrixNeo76/Edge-of-Chaos/HEAD?labpath=notebooks%2Fdemo.ipynb).
 
 ### CLI tutto-in-uno
 Tutti i comandi sopra sono disponibili anche tramite un unico entry-point, lo

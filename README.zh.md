@@ -66,6 +66,7 @@ Edge-of-Chaos/
 ├── test_demarcation.py           # 在答案已知的系统上测试划界条件
 ├── test_necessary_conditions.py  # 必要条件判据的测试
 ├── paper0_cli.py                 # 统一的多子命令 CLI 入口
+├── notebooks/demo.ipynb          # 演示笔记本（可在 Binder 上运行）
 ├── references.bib                # 完整的 BibTeX 参考文献数据库（49 条引用，涵盖 IIT、FEP、Chua、Lakatos）
 │
 ├── install.sh                    # Linux / macOS 安装脚本
@@ -166,6 +167,8 @@ python3 valence_dashboard.py
 ```
 
 ### 一体化 CLI
+`notebooks/demo.ipynb` 在模拟数据上运行效价代理量与传出副本消融、G_pred 的已知局限、划界条件以及混沌边缘判据，并附有说明。无需安装，可通过 [Binder](https://mybinder.org/v2/gh/matrixNeo76/Edge-of-Chaos/HEAD?labpath=notebooks%2Fdemo.ipynb) 在浏览器中打开。
+
 以上所有命令也可通过统一入口调用，该入口同样是下方 `build_exe.ps1` 打包的对象：
 ```bash
 python3 paper0_cli.py metrology|dashboard|demarcation|conditions|hardware|test

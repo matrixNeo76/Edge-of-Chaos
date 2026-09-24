@@ -9,6 +9,8 @@
 > (*P0_Distilled v0.1*).
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22895263.svg)](https://doi.org/10.5281/zenodo.22895263)
+[![CI](https://github.com/matrixNeo76/Edge-of-Chaos/actions/workflows/ci.yml/badge.svg)](https://github.com/matrixNeo76/Edge-of-Chaos/actions/workflows/ci.yml)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/matrixNeo76/Edge-of-Chaos/HEAD?labpath=notebooks%2Fdemo.ipynb)
 
 ---
 
@@ -69,6 +71,7 @@ Edge-of-Chaos/
 ├── test_demarcation.py           # Tests of the demarcation conditions on systems with a known answer
 ├── test_necessary_conditions.py  # Tests of the necessary-condition criteria
 ├── paper0_cli.py                 # Single CLI entry point with subcommands
+├── notebooks/demo.ipynb          # Demonstration notebook (runs on Binder)
 ├── references.bib                # Complete BibTeX database of 49 citations (IIT, FEP, Chua, Lakatos)
 │
 ├── install.sh                    # Setup script for Linux / macOS
@@ -181,6 +184,12 @@ To generate the graphical dashboard `valence_dashboard.png`:
 ```bash
 python3 valence_dashboard.py
 ```
+
+### Demonstration notebook
+`notebooks/demo.ipynb` runs the valence proxy with the efference-copy ablation, the known
+limit of G_pred, the demarcation conditions and the edge-of-chaos criterion on simulated
+data, with explanations. It can be opened in the browser without installing anything
+through [Binder](https://mybinder.org/v2/gh/matrixNeo76/Edge-of-Chaos/HEAD?labpath=notebooks%2Fdemo.ipynb).
 
 ### All-in-one CLI
 All the commands above are also available through a single entry point, which is
