@@ -7,6 +7,70 @@ continuously evolving research software.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-25
+
+This release follows a conformance review of the code against the papers
+(formula by formula). The review found that the operational demarcation of the
+programme was not implemented, and that the three functions presented as the
+"demarcation tests" computed quantities different from those the papers define.
+
+### Added
+- `demarcation.py`: the three operational demarcation conditions of P0 section 3
+  and P1 section 2.1 — causal non-separability (numerical rank of the response
+  matrix against a linear superposition model), non-Markovian memory (conditional
+  mutual information beyond Markov order k, Frenzel-Pompe k-NN estimator with
+  k_NN = 4, against IAAFT surrogates) and state-dependent effective dynamics
+  (least-squares Jacobians in three phase-space regions, theta_state = 0.25).
+  Interpretation choices where the papers leave room are stated in the docstrings.
+- `necessary_conditions.py`: criteria for three of the necessary conditions, as
+  P1 defines them — edge of chaos (Re Y(j omega) < 0 in the band and a stable
+  operating point), causal degeneracy (D_C with rank_delta and effective rank, the
+  robust radius rho_deg and prediction B.15; Appendix B) and exponent stability at
+  the three largest sizes with the 30%/50% feasibility limits (Appendix D).
+- `synthetic_systems.py`: systems with a known answer (AR(1), nonlinear lag-5
+  process, linear system, double well, response matrices), shared by tests, CLI
+  and notebook.
+- Tests on known-answer cases: `test_demarcation.py`, `test_necessary_conditions.py`;
+  the k-NN KL estimator against closed-form Gaussian values; the 1/f noise
+  generator (standard deviation and spectral slope); input validation.
+- CLI: `paper0_cli.py demarcation` now runs the three demarcation conditions;
+  new `paper0_cli.py conditions` runs the necessary-condition criteria. The
+  surrogate settings are reduced by default and configurable to the protocol's
+  100 surrogates and 99th percentile.
+- Continuous integration (GitHub Actions): tests on Python 3.11 and 3.12, the CLI
+  demonstrations, and the Rust build.
+- `notebooks/demo.ipynb`, runnable on Binder.
+
+### Changed
+- `demarcation_tests.py` is now a compatibility module that re-exports the new
+  functions and emits a DeprecationWarning. **Breaking:** its former functions
+  `test_edge_of_chaos_admittance`, `calculate_spectral_causal_degeneracy` and
+  `verify_finite_size_scaling` are removed (see Fixed).
+- `lib.rs` (PyO3 module) calls the engine of `thermodynamic_valence.rs` instead of
+  its own simulation and placeholder estimators; it returns the same numbers as
+  the binary.
+- The 1/f noise generator and the mock carrier are extracted from the mock DMM
+  (`generate_1f_noise`, `mock_dmm_carrier`), and the mock is seedable.
+
+### Fixed
+- The former edge-of-chaos test could never pass with its default parameters
+  (Re Y > 0 for every frequency), and its stability Jacobian was a hard-coded
+  constant unrelated to the model: the CLI always printed "Edge of Chaos
+  Verified: False".
+- The former "spectral causal degeneracy" used eigenvalues of a square matrix,
+  counted the kernel with a spurious +1 and applied a threshold not in the papers.
+- The former finite-size scaling check generated its data from the scaling law it
+  was meant to verify.
+- `calculate_thermodynamic_valence` returned numbers without error for series of
+  unequal length, series too short for the delay embedding, and dt = 0 (NaN); the
+  KL estimator divided by zero on empty input. They now raise ValueError (Python)
+  or panic with a message (Rust).
+- `test_noise_calibration_edge_of_chaos` measured the deterministic carrier as
+  noise and failed deterministically; it now measures the fluctuations relative to
+  the known carrier. The whole test suite passes.
+- The READMEs, `CITATION.cff` and `PROJECT_STRUCTURE.md` called three necessary
+  conditions "the operational demarcation tests".
+
 ## [0.2.1] - 2026-09-24
 
 ### Fixed
@@ -136,8 +200,16 @@ continuously evolving research software.
   041003 (2024). More generally, additive-noise Langevin models of nonlinear
   electronic circuits are thermodynamically inconsistent beyond the Gaussian
   (small-fluctuation) level (Falasco & Esposito, Rev. Mod. Phys. 97, 015002, 2025).
-- `lib.rs` (PyO3 module) uses placeholder estimators for `D_KL` and `G_pred`, so
-  its results are not comparable with the Python and standalone Rust engines.
+- ~~`lib.rs` uses placeholder estimators~~: resolved in 0.3.0.
+- The papers set the highest Markov order of the non-Markovian memory condition to
+  k_max = 500. A k-nearest-neighbour estimator cannot work in that many
+  dimensions; `non_markovian_memory` takes k_max as a parameter (default 5) and
+  truncates the past beyond order k to `past_lags` lags. The same limit applies to
+  the protocol, not only to the software.
+- Condition 1 of the demarcation takes the linear superposition model R_lin as
+  input; fitting it to an impulse response is not implemented.
+- `degeneracy_radius` samples directions in K_delta, so it returns an upper bound
+  of the supremum that defines rho_deg.
 - ~~The digital twin does not reproduce the predicted drop of `Psi` under efference
   ablation~~: resolved in 0.2.1 (wrong `G_pred` formula, see above).
 - `G_pred` compares densities estimated separately for observations and
@@ -151,7 +223,5 @@ continuously evolving research software.
   prediction never enters the dynamics. Ablating it changes the measurement, not
   the behaviour of the simulated substrate, so the digital twin cannot test the
   closed-loop prediction of the protocol.
-- `test_hardware_session.py::test_noise_calibration_edge_of_chaos` fails
-  deterministically due to a tolerance threshold that does not isolate the 1/f
-  noise from the mock signal's deterministic sinusoidal carrier — see
-  `docs_v0.2/04_ENVIRONMENT_STATUS_AND_FIXES.md`, Bug 8.
+- ~~`test_noise_calibration_edge_of_chaos` fails deterministically~~: resolved
+  in 0.3.0.
