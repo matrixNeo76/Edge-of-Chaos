@@ -10,8 +10,8 @@ authors:
     given-names: Francesco
     affiliation: Independent Researcher
     orcid: "https://orcid.org/0009-0005-9773-8187"
-version: 0.1.0
-date-released: "2026-09-22"
+version: 0.2.0
+date-released: "2026-09-24"
 license:
   - MIT
   - Apache-2.0
@@ -20,7 +20,8 @@ abstract: >-
   Falsifiable research programme and digital-twin metrology platform
   (Python + Rust) testing the necessary physical conditions for primary
   interoceptive sentience in continuous neuromorphic substrates. Implements
-  the thermodynamic/allostatic valence functional Psi(t) and the three
+  a practical proxy of the thermodynamic/allostatic valence functional Psi(t)
+  (its dissipation terms are heuristic, not Hatano-Sasa estimates) and the three
   operational demarcation tests (edge-of-chaos activity, spectral causal
   degeneracy, finite-size scaling) of the P0_Distilled v0.1 research
   programme.

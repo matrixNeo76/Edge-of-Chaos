@@ -2,12 +2,17 @@
   "title": "Edge-of-Chaos",
   "upload_type": "software",
   "description": "Falsifiable research programme and digital-twin metrology platform (Python + Rust) testing the necessary physical conditions for primary interoceptive sentience in continuous neuromorphic substrates.",
+  "notes": "v0.2.0 corrects the SDE integration (spurious Milstein term for additive noise; wrong initial state) and stops presenting the digital twin's dissipation terms as Hatano-Sasa quantities: they are heuristic proxies that depend on the integration step. See CHANGELOG.md for details and known open issues.",
   "creators": [
     {"name": "Iavarone, Francesco", "affiliation": "Independent Researcher", "orcid": "0009-0005-9773-8187"}
   ],
   "license": "MIT",
   "keywords": ["neuromorphic computing", "memristors", "edge of chaos", "interoceptive sentience", "thermodynamic valence", "Rust", "Python"],
   "related_identifiers": [
-    {"identifier": "https://github.com/matrixNeo76/Edge-of-Chaos", "relation": "isSupplementTo", "scheme": "url"}
+    {"identifier": "https://github.com/matrixNeo76/Edge-of-Chaos", "relation": "isSupplementTo", "scheme": "url"},
+    {"identifier": "10.5281/zenodo.22895484", "relation": "isSupplementTo", "scheme": "doi", "resource_type": "publication-preprint"}
+  ],
+  "communities": [
+    {"identifier": "edge-of-chaos-programme"}
   ]
 }

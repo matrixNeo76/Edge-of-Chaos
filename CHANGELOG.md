@@ -7,6 +7,8 @@ continuously evolving research software.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-24
+
 ### Added
 - Multilingual READMEs: `README.md` (English, now the default), `README.it.md`
   (Italian), `README.zh.md` (Chinese), cross-linked at the top of each.
