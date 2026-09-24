@@ -14,7 +14,8 @@
 //!      sigma_noise^2 / dt, and the true housekeeping rate of this one-variable
 //!      model is identically zero. See thermodynamic_valence.py for details.
 //!   3. Non-parametric k-NN estimate of the Kullback-Leibler divergence (D_KL).
-//!   4. Predictive gain of the efference copy (G_pred).
+//!   4. Predictive gain of the efference copy (G_pred), as defined in
+//!      P2_SelfAgency.tex §5.4, on delay-embedded densities.
 //!   5. Integrated thermodynamic and allostatic valence functional Psi(t).
 
 use std::f64::consts::PI;
@@ -80,6 +81,9 @@ pub fn simulate_neuromorphic_substrate_sde(
 
     let mut x_val: f64 = 0.1;
     x_a1[0] = x_val;
+    // No noise draw at t = 0, so the random stream of the loop is unchanged.
+    s_obs[0] = x_val;
+    s_pred[0] = x_val;
     let sqrt_dt = dt.sqrt();
 
     for t in 1..n_steps {
@@ -137,7 +141,49 @@ pub fn estimate_kl_divergence_knn_1d(p_samples: &[f64], q_samples: &[f64], k: us
     kl_est.max(0.0)
 }
 
-/// Computes the integrated valence functional Psi(t)
+/// Two-dimensional delay embedding (s(t), s(t - tau)) of a one-dimensional signal
+pub fn delay_embed(signal: &[f64], tau_steps: usize) -> Vec<[f64; 2]> {
+    (tau_steps..signal.len())
+        .map(|t| [signal[t], signal[t - tau_steps]])
+        .collect()
+}
+
+/// Estimate of D_KL(P || Q) via k-nearest neighbours for two-dimensional samples
+/// (Euclidean distance), matching estimate_kl_divergence_knn in thermodynamic_valence.py
+pub fn estimate_kl_divergence_knn_2d(p_samples: &[[f64; 2]], q_samples: &[[f64; 2]], k: usize) -> f64 {
+    let n = p_samples.len();
+    let m = q_samples.len();
+
+    if n <= k || m <= k {
+        return 0.0;
+    }
+
+    let dist = |a: &[f64; 2], b: &[f64; 2]| ((a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2)).sqrt();
+    let mut kl_sum = 0.0;
+
+    for p_i in p_samples.iter() {
+        // Distance to the k-th nearest neighbour in P (index 0 is the point itself)
+        let mut p_dists: Vec<f64> = p_samples.iter().map(|x| dist(x, p_i)).collect();
+        p_dists.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        let r_k_p = p_dists[k].max(1e-12);
+
+        // Distance to the k-th nearest neighbour in Q
+        let mut q_dists: Vec<f64> = q_samples.iter().map(|x| dist(x, p_i)).collect();
+        q_dists.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        let r_k_q = q_dists[k - 1].max(1e-12);
+
+        kl_sum += (r_k_q / r_k_p).ln();
+    }
+
+    let kl_est = (2.0 / n as f64) * kl_sum + (m as f64 / (n - 1) as f64).ln();
+    kl_est.max(0.0)
+}
+
+/// Computes the integrated valence functional Psi(t).
+///
+/// G_pred follows P2_SelfAgency.tex (§5.4): D_KL(p_obs || p_ref) - D_KL(p_obs || p_pred),
+/// on delay-embedded densities. The target niche stands in for the free-running
+/// reference p_ref, because the digital twin has no actuation.
 pub fn calculate_thermodynamic_valence(
     x_a1: &[f64],
     s_obs: &[f64],
@@ -147,6 +193,7 @@ pub fn calculate_thermodynamic_valence(
     beta: f64,
     gamma: f64,
 ) -> MetrologyResult {
+    let tau_steps = 10;
     let n = x_a1.len();
     let mut dx = Vec::with_capacity(n - 1);
     for i in 0..n - 1 {
@@ -170,10 +217,15 @@ pub fn calculate_thermodynamic_valence(
     let target_samples: Vec<f64> = (0..n).map(|_| rng.next_gaussian() * 0.2).collect();
 
     let d_kl_allostatic = estimate_kl_divergence_knn_1d(x_a1, &target_samples, 5);
-    let d_kl_baseline = estimate_kl_divergence_knn_1d(s_obs, &target_samples, 5);
-    let d_kl_predicted = estimate_kl_divergence_knn_1d(s_pred, &target_samples, 5);
 
-    let g_pred = d_kl_baseline - d_kl_predicted;
+    // G_pred scores the prediction against the observations, not against the niche.
+    let p_ref = delay_embed(&target_samples, tau_steps);
+    let obs_embedded = delay_embed(s_obs, tau_steps);
+    let pred_embedded = delay_embed(s_pred, tau_steps);
+    let d_kl_reference = estimate_kl_divergence_knn_2d(&obs_embedded, &p_ref, 5);
+    let d_kl_prediction = estimate_kl_divergence_knn_2d(&obs_embedded, &pred_embedded, 5);
+
+    let g_pred = d_kl_reference - d_kl_prediction;
 
     // PRACTICAL PROXY, not the formal Psi(t) of P1_Main.tex Appendix F (which uses
     // normalized entropy-production rates against a hardware-calibrated S_crit_dot).

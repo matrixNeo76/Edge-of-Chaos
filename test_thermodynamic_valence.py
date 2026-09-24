@@ -96,5 +96,27 @@ class TestThermodynamicValence(unittest.TestCase):
             "Ablating the efference copy should reduce the predictive gain G_pred"
         )
 
+    def test_ablation_centred_on_niche_reduces_gain(self):
+        """
+        Regression test: before v0.2.1, G_pred compared the prediction with the target
+        niche instead of with the observations, so noise centred on the niche (as in
+        valence_dashboard.py) raised G_pred and Psi instead of lowering them.
+        """
+        x_A1, s_obs, s_pred, dt = simulate_neuromorphic_substrate_sde(n_steps=2000, seed=42)
+        s_pred_ablated = np.random.default_rng(2026).normal(0.0, 1.0, size=len(s_pred))
+
+        res_normal = calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt)
+        res_ablated = calculate_thermodynamic_valence(x_A1, s_obs, s_pred_ablated, dt)
+
+        self.assertLess(res_ablated["g_pred"], res_normal["g_pred"])
+        self.assertLess(res_ablated["psi_valence"], res_normal["psi_valence"])
+
+    def test_valence_is_deterministic(self):
+        """Equal inputs give equal outputs: the target niche is drawn from a fixed seed."""
+        x_A1, s_obs, s_pred, dt = simulate_neuromorphic_substrate_sde(n_steps=1000, seed=5)
+        first = calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt)
+        second = calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt)
+        self.assertEqual(first, second)
+
 if __name__ == "__main__":
     unittest.main()

@@ -6,7 +6,9 @@ Metrology visualization dashboard generator (Digital Twin P0_Distilled v0.1)
 Generates:
 1. Time series of the valence functional Psi(t) and of the Ex/Hk dissipation proxies.
 2. Phase-space trajectory (x(t) vs dx/dt) with the edge-of-chaos region.
-3. Comparison diagram between the baseline condition and Ablation 4 (efference decoupling).
+3. Comparison diagram between the baseline condition and an efference-copy ablation
+   (A2 decoupled). This is not Ablation/Control 4 of the papers, which is the
+   hard-wired Braitenberg vehicle.
 """
 
 import os
@@ -53,8 +55,9 @@ def generate_metrology_dashboard():
 
     t_sub = time_vec[window::20]
 
-    # 2. Ablation 4 simulation (distorted / noisy efference copy)
-    s_pred_ablation = np.random.normal(0, 1.0, size=n_steps)
+    # 2. Efference-copy ablation (A2 decoupled): the prediction is replaced by noise
+    # Seeded, so that the comparison is reproducible between runs.
+    s_pred_ablation = np.random.default_rng(2026).normal(0, 1.0, size=n_steps)
     res_base = calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt)
     res_abl = calculate_thermodynamic_valence(x_A1, s_obs, s_pred_ablation, dt)
 
@@ -94,9 +97,9 @@ def generate_metrology_dashboard():
     ax3.set_ylabel('Proxy value (arb. units)')
     ax3.legend()
 
-    # Plot 4: Negative control comparison (Ablation 4)
+    # Plot 4: Negative control comparison (efference-copy ablation)
     ax4 = fig.add_subplot(gs[1, 1])
-    categories = ['Baseline ($A_1+A_2$)', 'Ablation 4 (No Efference)']
+    categories = ['Baseline ($A_1+A_2$)', 'Efference ablation ($A_2$ decoupled)']
     values = [res_base['psi_valence'], res_abl['psi_valence']]
     colors = ['#0173B2', '#CC78BC']
     bars = ax4.bar(categories, values, color=colors, width=0.5)
