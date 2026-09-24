@@ -59,6 +59,23 @@ class TestThermodynamicValence(unittest.TestCase):
 
         self.assertGreater(d_kl_positive, 1.0, f"D_KL between shifted distributions should be significantly positive, got {d_kl_positive}")
 
+    def test_kl_estimator_matches_analytic_gaussian_values(self):
+        """k-NN estimate against the closed-form KL divergence of two Gaussians."""
+        rng = np.random.default_rng(0)
+
+        def gaussian_kl(m1, s1, m2, s2):
+            return np.log(s2 / s1) + (s1 ** 2 + (m1 - m2) ** 2) / (2 * s2 ** 2) - 0.5
+
+        for m1, s1, m2, s2 in [(0, 1, 1, 1), (0, 1, 0, 2), (0.5, 0.3, 0, 1)]:
+            p = rng.normal(m1, s1, size=(4000, 1))
+            q = rng.normal(m2, s2, size=(4000, 1))
+            self.assertAlmostEqual(estimate_kl_divergence_knn(p, q, k=5), gaussian_kl(m1, s1, m2, s2), delta=0.08)
+
+        # Two dimensions: unit shift in each coordinate gives KL = 1
+        p = rng.normal(0, 1, size=(4000, 2))
+        q = rng.normal(1, 1, size=(4000, 2))
+        self.assertAlmostEqual(estimate_kl_divergence_knn(p, q, k=5), 1.0, delta=0.1)
+
     def test_thermodynamic_valence_keys_and_bounds(self):
         """Verifies that the valence computation returns the expected keys and finite values."""
         x_A1, s_obs, s_pred, dt = simulate_neuromorphic_substrate_sde(n_steps=2000, seed=42)

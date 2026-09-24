@@ -15,7 +15,9 @@ from hardware_driver_v2 import (
     LaboratoryParametersConfig,
     KeithleyDMMDriverV2,
     PicoScopeOscilloscopeDriverV2,
-    NeuromorphicHardwareInterfaceV2
+    NeuromorphicHardwareInterfaceV2,
+    generate_1f_noise,
+    mock_dmm_carrier,
 )
 from thermodynamic_valence import calculate_thermodynamic_valence
 
@@ -44,19 +46,40 @@ class TestHardwareAcquisitionSession(unittest.TestCase):
                         f"Voltage compliance violation: max(|V|)={np.max(np.abs(v_t))} V > {self.config.V_COMPLIANCE_MAX} V")
 
     def test_noise_calibration_edge_of_chaos(self):
-        """Verifies that the injected 1/f percolative noise is calibrated around the critical point (sigma ~ 0.10)."""
-        dmm = KeithleyDMMDriverV2(config=self.config, mock=True)
+        """
+        The mock current is carrier * (1 + noise): relative to the known 5 Hz carrier, the
+        fluctuations must have the calibrated amplitude sigma_noise = 0.10. (The earlier
+        version of this test measured the carrier as noise too, and failed.)
+        """
+        dmm = KeithleyDMMDriverV2(config=self.config, mock=True, seed=3)
         dmm.connect()
-        i_t = dmm.read_current_stream(n_samples=5000)
+        n_samples = 5000
+        i_t = dmm.read_current_stream(n_samples=n_samples)
 
-        # Compute the relative fluctuations around the trend
-        i_mean = np.mean(i_t)
-        rel_fluctuations = (i_t - i_mean) / i_mean
-        std_fluct = np.std(rel_fluctuations)
+        dt = 1.0 / self.config.SAMPLE_RATE_DMM_HZ
+        t = np.linspace(0, n_samples * dt, n_samples)
+        rel_fluctuations = i_t / mock_dmm_carrier(t) - 1.0
 
-        # The relative noise should be around 0.10 (edge of chaos)
-        self.assertGreater(std_fluct, 0.02, "Percolative noise too suppressed")
-        self.assertLess(std_fluct, 0.35, "Percolative noise too high (outside the critical regime)")
+        self.assertAlmostEqual(np.std(rel_fluctuations), self.config.SIGMA_NOISE_OPTIMAL, delta=0.01)
+
+    def test_1f_noise_generator_spectrum(self):
+        """The generator gives the requested standard deviation and a 1/f**alpha spectrum."""
+        dt, n_samples = 1e-3, 2 ** 14
+        for alpha in (0.5, 1.0, 1.5):
+            noise = generate_1f_noise(n_samples, dt, alpha=alpha, sigma=0.1, rng=np.random.default_rng(0))
+            self.assertAlmostEqual(np.std(noise), 0.1, places=6)
+
+            freqs = np.fft.rfftfreq(n_samples, dt)[1:]
+            power = np.abs(np.fft.rfft(noise))[1:] ** 2
+            band = (freqs > 1.0) & (freqs < 200.0)
+            slope = np.polyfit(np.log(freqs[band]), np.log(power[band]), 1)[0]
+            self.assertAlmostEqual(slope, -alpha, delta=0.1)
+
+    def test_1f_noise_generator_rejects_invalid_input(self):
+        with self.assertRaises(ValueError):
+            generate_1f_noise(2, 1e-3)
+        with self.assertRaises(ValueError):
+            generate_1f_noise(100, 0.0)
 
     def test_extended_multi_frame_acquisition(self):
         """Simulates an extended session of 15 consecutive frames and verifies temporal stability."""
