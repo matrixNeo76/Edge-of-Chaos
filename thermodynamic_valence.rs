@@ -8,8 +8,11 @@
 //!   of physical time series extracted from analog neuromorphic substrates.
 //!
 //! Implements:
-//!   1. Stochastic Ito-Milstein SDE integration for a two-level A1/A2 architecture.
-//!   2. NESS thermodynamic decomposition (Housekeeping vs Excess entropy production).
+//!   1. Euler-Maruyama SDE integration (additive noise) for a two-level A1/A2 architecture.
+//!   2. Heuristic dissipation proxies sigma_hk / sigma_ex. These are NOT Hatano-Sasa
+//!      housekeeping/excess entropy production rates: sigma_hk scales as
+//!      sigma_noise^2 / dt, and the true housekeeping rate of this one-variable
+//!      model is identically zero. See thermodynamic_valence.py for details.
 //!   3. Non-parametric k-NN estimate of the Kullback-Leibler divergence (D_KL).
 //!   4. Predictive gain of the efference copy (G_pred).
 //!   5. Integrated thermodynamic and allostatic valence functional Psi(t).
@@ -60,7 +63,7 @@ impl FastRng {
     }
 }
 
-/// Simulates the A1/A2 neuromorphic substrate via Ito-Milstein SDE integration
+/// Simulates the A1/A2 neuromorphic substrate via Euler-Maruyama SDE integration (additive noise)
 pub fn simulate_neuromorphic_substrate_sde(
     n_steps: usize,
     dt: f64,
@@ -69,23 +72,24 @@ pub fn simulate_neuromorphic_substrate_sde(
     let mut rng = FastRng::new(seed);
     let a = -1.2;
     let b = 0.8;
-    let sigma_noise = 0.15;
+    let sigma_noise = 0.15; // additive white Gaussian noise, not 1/f
 
     let mut x_a1 = vec![0.0; n_steps];
     let mut s_obs = vec![0.0; n_steps];
     let mut s_pred = vec![0.0; n_steps];
 
     let mut x_val: f64 = 0.1;
+    x_a1[0] = x_val;
     let sqrt_dt = dt.sqrt();
 
     for t in 1..n_steps {
         let dw = rng.next_gaussian() * sqrt_dt;
         let time_val = t as f64 * dt;
 
-        // Ito-Milstein SDE step for substrate A1
-        let mut dx = (a * x_val + b * x_val.tanh() + (time_val * 2.0).sin()) * dt
+        // With additive noise the Milstein correction 0.5*g*g'*(dw^2 - dt) vanishes
+        // (g' = 0), so Milstein reduces to Euler-Maruyama (Higham 2001).
+        let dx = (a * x_val + b * x_val.tanh() + (time_val * 2.0).sin()) * dt
             + sigma_noise * dw;
-        dx += 0.5 * sigma_noise * sigma_noise * (dw * dw - dt);
 
         x_val += dx;
         x_a1[t] = x_val;
@@ -149,11 +153,12 @@ pub fn calculate_thermodynamic_valence(
         dx.push((x_a1[i + 1] - x_a1[i]) / dt);
     }
 
-    // Housekeeping dissipation (variance of dx)
+    // Heuristic proxies, NOT Hatano-Sasa quantities; their ratio (and Psi) changes with dt.
+    // sigma_hk proxy: variance of the finite-difference velocity (~ sigma_noise^2 / dt)
     let mean_dx = dx.iter().sum::<f64>() / dx.len() as f64;
     let sigma_hk = dx.iter().map(|v| (v - mean_dx).powi(2)).sum::<f64>() / dx.len() as f64;
 
-    // Excess dissipation for reorganisation
+    // sigma_ex proxy: mean |velocity * state|
     let mut excess_sum = 0.0;
     for i in 0..dx.len() {
         excess_sum += (dx[i] * x_a1[i]).abs();
@@ -195,8 +200,8 @@ fn main() {
 
     println!("Time points processed: {}", n_steps);
     println!("Mean state of substrate A1 x(t): {:.4}", x_a1.iter().sum::<f64>() / n_steps as f64);
-    println!("Excess dissipation sigma_ex: {:.4}", res.sigma_ex);
-    println!("Housekeeping dissipation sigma_hk: {:.4}", res.sigma_hk);
+    println!("Excess-dissipation proxy sigma_ex: {:.4}", res.sigma_ex);
+    println!("Housekeeping-dissipation proxy sigma_hk (dt-dependent): {:.4}", res.sigma_hk);
     println!("Allostatic divergence D_KL(P||P_target): {:.4}", res.d_kl_allostatic);
     println!("Predictive gain of the efference copy G_pred: {:.4}", res.g_pred);
     println!("-> INTEGRATED VALENCE FUNCTIONAL Psi(t): {:.4}", res.psi_valence);

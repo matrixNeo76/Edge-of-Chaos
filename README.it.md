@@ -40,7 +40,7 @@ A differenza delle intelligenze artificiali digitali su architetture von Neumann
 
 ```
 Edge-of-Chaos/
-├── thermodynamic_valence.py       # Engine metrologico Python (Hatano-Sasa, k-NN KL-divergence, Psi(t))
+├── thermodynamic_valence.py       # Engine metrologico Python (proxy di dissipazione, k-NN KL-divergence, Psi(t))
 ├── thermodynamic_valence.rs       # Engine metrologico in Rust nativo ad alte prestazioni (zero-copy)
 ├── lib.rs                        # Modulo PyO3 FFI per compilare Rust in estensione nativa Python
 ├── Cargo.toml                    # Configurazione Cargo / PyO3 per l'infrastruttura Rust
@@ -74,7 +74,7 @@ i manoscritti scientifici in fase di revisione editoriale).
 ### 1. Funzionale di Valenza Termodinamica $\Psi(t)$
 $$\Psi_{allo}(t) = \alpha \cdot \ln\left(1 + \frac{\sigma_{ex}(t)}{\sigma_{hk}(t) + \epsilon}\right) - \beta \cdot \mathcal{D}_{KL}\big(P(x) \,||\, P_{target}\big) + \gamma \cdot G_{pred}(t)$$
 
-* **$\sigma_{ex}$ / $\sigma_{hk}$**: Dissipazione in eccesso rispetto alla produzione di entropia stazionaria di housekeeping (decomposizione NESS di Hatano-Sasa).
+* **$\sigma_{ex}$ / $\sigma_{hk}$**: Nei paper, le produzioni di entropia in eccesso e di housekeeping della decomposizione NESS di Hatano-Sasa. **Nel codice attuale sono proxy euristici, non grandezze di Hatano-Sasa**: $\sigma_{hk}$ scala come $\sigma_{noise}^2/dt$, quindi dipende dal passo di integrazione, e la vera produzione di housekeeping del modello a una variabile del digital twin è identicamente nulla. Confrontare valori di $\Psi(t)$ solo a parità di $dt$. Uno stimatore corretto (ad es. Sekizawa, Ito & Oizumi, *Phys. Rev. X* 14, 041003, 2024) non è ancora implementato.
 * **$\mathcal{D}_{KL}$**: Divergenza probabilistica non-parametrica ($k$-NN) dalla nicchia target di stabilità allostasica.
 * **$G_{pred}$**: Guadagno predittivo della copia efferente generata dal livello $A_2$ sul livello $A_1$.
 

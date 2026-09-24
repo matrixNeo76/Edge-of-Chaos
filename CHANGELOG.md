@@ -33,6 +33,29 @@ continuously evolving research software.
   repository — fully superseded by `hardware_driver_v2.py`.
 
 ### Fixed
+- Spurious Milstein correction in the SDE integrators (`thermodynamic_valence.py`,
+  `thermodynamic_valence.rs`, `lib.rs`): with additive noise the correction
+  `0.5*g*g'*(dW**2 - dt)` vanishes because `g' = 0`, but the code added
+  `0.5*sigma**2*(dW**2 - dt)`. The integrators are now Euler-Maruyama, as they
+  should be for additive noise (Higham 2001).
+- `lib.rs` computed the variance of the finite-difference velocity around the mean
+  of the *state* instead of the mean of the velocity.
+- The stored initial state `x_A1[0]` was 0 while the integration started from 0.1,
+  producing a spurious first derivative of 0.1/dt (the spike at the start of the
+  dashboard's phase-space and `sigma_hk` panels). All three engines now store the
+  actual initial state.
+- The dashboard title claimed that `Psi` "collapses under efference ablation", but
+  the dashboard's own bar chart shows the ablated condition with a *higher* `Psi`
+  than baseline (about -0.9 vs -2.1), both before and after the fixes above. The
+  title now just names the comparison; the discrepancy is listed below.
+- The SDE noise was labelled "1/f percolative noise" but is white Gaussian noise.
+  The genuine 1/f generator is the one in `hardware_driver_v2.py`.
+- Documentation overclaim: README (all three languages), docstrings, CLI output and
+  dashboard labels presented `sigma_hk` / `sigma_ex` as Hatano-Sasa housekeeping /
+  excess entropy production. They are heuristic proxies: `sigma_hk` scales as
+  `sigma_noise**2/dt`, so `Psi` depends on the integration step, and the true
+  housekeeping rate of the one-variable model is identically zero. The labels now
+  say so; the numerical definitions of the proxies are unchanged.
 - Terminology typo "sentienza" → "senzienza" (correct Italian) in `README.it.md`
   and (previously) `AGENTS.md`.
 - Broken README references to files excluded from the public repository
@@ -69,6 +92,18 @@ continuously evolving research software.
   component, producing degenerate signals (zero mean/NaN).
 
 ### Known, unresolved
+- No thermodynamically meaningful estimator of the housekeeping / excess entropy
+  production is implemented yet. A candidate for linear Langevin systems with at
+  least two coupled state variables is Sekizawa, Ito & Oizumi, Phys. Rev. X 14,
+  041003 (2024). More generally, additive-noise Langevin models of nonlinear
+  electronic circuits are thermodynamically inconsistent beyond the Gaussian
+  (small-fluctuation) level (Falasco & Esposito, Rev. Mod. Phys. 97, 015002, 2025).
+- `lib.rs` (PyO3 module) uses placeholder estimators for `D_KL` and `G_pred`, so
+  its results are not comparable with the Python and standalone Rust engines.
+- The digital twin does not reproduce the predicted drop of `Psi` under efference
+  ablation (Ablation 4): in `valence_dashboard.py` the ablated condition scores
+  higher than baseline. The ablation also draws unseeded random numbers, so the
+  exact values vary between runs. Not investigated yet.
 - `test_hardware_session.py::test_noise_calibration_edge_of_chaos` fails
   deterministically due to a tolerance threshold that does not isolate the 1/f
   noise from the mock signal's deterministic sinusoidal carrier — see

@@ -47,7 +47,7 @@ on a Chip）约束）不同，本平台直接在**物质层面**评估基底，�
 
 ```
 Edge-of-Chaos/
-├── thermodynamic_valence.py       # Python 计量引擎（Hatano-Sasa 分解、k-NN KL 散度、Psi(t)）
+├── thermodynamic_valence.py       # Python 计量引擎（耗散代理量、k-NN KL 散度、Psi(t)）
 ├── thermodynamic_valence.rs       # 高性能原生 Rust 计量引擎（零拷贝）
 ├── lib.rs                        # PyO3 FFI 模块，将 Rust 编译为原生 Python 扩展
 ├── Cargo.toml                    # Rust 基础设施的 Cargo / PyO3 配置
@@ -80,8 +80,11 @@ Edge-of-Chaos/
 ### 1. 热力学效价泛函 $\Psi(t)$
 $$\Psi_{allo}(t) = \alpha \cdot \ln\left(1 + \frac{\sigma_{ex}(t)}{\sigma_{hk}(t) + \epsilon}\right) - \beta \cdot \mathcal{D}_{KL}\big(P(x) \,||\, P_{target}\big) + \gamma \cdot G_{pred}(t)$$
 
-* **$\sigma_{ex}$ / $\sigma_{hk}$**：相对于稳态管家熵产生（housekeeping entropy
-  production）的过量耗散（Hatano-Sasa 非平衡稳态分解）。
+* **$\sigma_{ex}$ / $\sigma_{hk}$**：在论文中，指 Hatano-Sasa 非平衡稳态分解中的过量熵产生与管家
+  熵产生（housekeeping entropy production）。**在当前代码中，它们只是启发式代理量，并非
+  Hatano-Sasa 量**：$\sigma_{hk}$ 按 $\sigma_{noise}^2/dt$ 缩放，因而依赖于积分步长；而数字孪生
+  单变量模型的真实管家熵产生恒为零。只应在相同 $dt$ 下比较 $\Psi(t)$ 的数值。正确的估计方法
+  （例如 Sekizawa, Ito & Oizumi, *Phys. Rev. X* 14, 041003, 2024）尚未实现。
 * **$\mathcal{D}_{KL}$**：相对于目标允稳态稳定性生态位的非参数化（$k$-NN）概率散度。
 * **$G_{pred}$**：由 $A_2$ 层生成、作用于 $A_1$ 层的传出副本（efference copy）
   预测增益。

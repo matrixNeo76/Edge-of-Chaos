@@ -81,11 +81,12 @@ pub fn compute_thermodynamic_valence_rust(
     let mut s_pred = vec![0.0; n_steps];
 
     let mut x_val: f64 = 0.1;
+    x_a1[0] = x_val;
     for t in 1..n_steps {
         let dw = rng.next_gaussian() * dt.sqrt();
+        // Euler-Maruyama: with additive noise the Milstein correction vanishes (g' = 0).
         let dx = (a * x_val + b * x_val.tanh() + (t as f64 * dt * 2.0).sin()) * dt
-            + sigma_noise * dw
-            + 0.5 * sigma_noise * sigma_noise * (dw * dw - dt);
+            + sigma_noise * dw;
         x_val += dx;
         x_a1[t] = x_val;
 
@@ -93,8 +94,8 @@ pub fn compute_thermodynamic_valence_rust(
         s_pred[t] = x_a1[t - 1] + (a * x_a1[t - 1] + b * x_a1[t - 1].tanh()) * dt;
     }
 
-    // Hatano-Sasa decomposition
-    let mut var_sum = 0.0;
+    // Heuristic dissipation proxies, NOT Hatano-Sasa quantities (see
+    // thermodynamic_valence.py): sigma_hk ~ sigma_noise^2 / dt, so Psi changes with dt.
     let mut mean_x = 0.0;
     for &x in &x_a1 {
         mean_x += x;
@@ -104,9 +105,9 @@ pub fn compute_thermodynamic_valence_rust(
     let mut dx_vec = vec![0.0; n_steps - 1];
     for i in 0..n_steps - 1 {
         dx_vec[i] = (x_a1[i + 1] - x_a1[i]) / dt;
-        var_sum += (dx_vec[i] - mean_x).powi(2);
     }
-    let sigma_hk = var_sum / (n_steps - 1) as f64;
+    let mean_dx = dx_vec.iter().sum::<f64>() / (n_steps - 1) as f64;
+    let sigma_hk = dx_vec.iter().map(|v| (v - mean_dx).powi(2)).sum::<f64>() / (n_steps - 1) as f64;
 
     let mut excess_sum = 0.0;
     for i in 0..n_steps - 1 {
@@ -114,7 +115,9 @@ pub fn compute_thermodynamic_valence_rust(
     }
     let sigma_ex = excess_sum / (n_steps - 1) as f64;
 
-    // Kullback-Leibler distance and predictive gain
+    // PLACEHOLDERS, not the k-NN estimators of thermodynamic_valence.py/.rs: D_KL is a
+    // squared z-score of the mean, G_pred uses a single sample. Results from this
+    // module are therefore not comparable with the Python or standalone Rust engines.
     let d_kl_allostatic = (mean_x.abs() / 0.2).powi(2);
     let g_pred = 0.05 * (1.0 - (s_obs[1] - s_pred[1]).abs());
 

@@ -4,7 +4,7 @@ valence_dashboard.py
 Metrology visualization dashboard generator (Digital Twin P0_Distilled v0.1)
 
 Generates:
-1. Time series of the valence functional Psi(t) and of the Ex/Hk dissipation.
+1. Time series of the valence functional Psi(t) and of the Ex/Hk dissipation proxies.
 2. Phase-space trajectory (x(t) vs dx/dt) with the edge-of-chaos region.
 3. Comparison diagram between the baseline condition and Ablation 4 (efference decoupling).
 """
@@ -62,7 +62,7 @@ def generate_metrology_dashboard():
     fig = plt.figure(figsize=(16, 10))
     gs = fig.add_gridspec(2, 2, hspace=0.35, wspace=0.25)
 
-    fig.suptitle(r"Thermodynamic Valence $\Psi(t)$ Collapses under Efference Ablation",
+    fig.suptitle(r"Thermodynamic Valence $\Psi(t)$: Baseline vs Efference Ablation",
                  fontsize=16, fontweight='bold', y=0.98)
 
     # Plot 1: Time series of the valence Psi(t)
@@ -85,13 +85,13 @@ def generate_metrology_dashboard():
     ax2.set_ylabel('Derivative $dx/dt$')
     ax2.legend()
 
-    # Plot 3: Hatano-Sasa dissipation (housekeeping vs excess)
+    # Plot 3: heuristic dissipation proxies (NOT Hatano-Sasa quantities; see thermodynamic_valence.py)
     ax3 = fig.add_subplot(gs[1, 0])
-    sns.lineplot(x=t_sub, y=ex_series, ax=ax3, color='#029E73', label=r'$\sigma_{ex}$ (Excess Dissipation)')
-    sns.lineplot(x=t_sub, y=hk_series, ax=ax3, color='#D55E00', label=r'$\sigma_{hk}$ (Housekeeping Entropy)')
-    ax3.set_title('NESS Thermodynamic Decomposition', fontsize=12, fontweight='bold')
+    sns.lineplot(x=t_sub, y=ex_series, ax=ax3, color='#029E73', label=r'$\sigma_{ex}$ proxy')
+    sns.lineplot(x=t_sub, y=hk_series, ax=ax3, color='#D55E00', label=r'$\sigma_{hk}$ proxy ($dt$-dependent)')
+    ax3.set_title('Heuristic Dissipation Proxies', fontsize=12, fontweight='bold')
     ax3.set_xlabel('Time (s)')
-    ax3.set_ylabel('Entropy Production')
+    ax3.set_ylabel('Proxy value (arb. units)')
     ax3.legend()
 
     # Plot 4: Negative control comparison (Ablation 4)
