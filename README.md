@@ -20,7 +20,7 @@
 5. [Script Usage Guide](#-script-usage-guide)
    - [Metrology and Digital Twin (`thermodynamic_valence.py` / `.rs`)](#1-metrology-and-digital-twin)
    - [Real Hardware Interfacing (`hardware_driver_v2.py`)](#2-real-hardware-interfacing)
-   - [Operational Demarcation Tests (`demarcation_tests.py`)](#3-operational-demarcation-tests)
+   - [Demarcation and Necessary Conditions (`demarcation.py`, `necessary_conditions.py`)](#3-demarcation-and-necessary-conditions)
    - [Visualization and Dashboard (`valence_dashboard.py`)](#4-visualization-and-dashboard)
 6. [Standalone Executable (no Docker)](#-standalone-executable-no-docker-for-lab-pcs)
 7. [Containerization and Reproducibility (Docker)](#-containerization-and-reproducibility-docker)
@@ -58,11 +58,16 @@ Edge-of-Chaos/
 │
 ├── hardware_driver_v2.py         # PyVISA/SCPI driver for Keithley DMM and PicoScope with auto-compliance
 ├── test_hardware_session.py      # Extended test suite for hardware safety-limit verification
-├── demarcation_tests.py          # Operational demarcation tests (Edge of Chaos, Degeneracy, FSS)
+├── demarcation.py                # The 3 operational demarcation conditions (non-separability, non-Markovian memory, state dependence)
+├── necessary_conditions.py       # Criteria for 3 necessary conditions (edge of chaos, causal degeneracy, exponent stability)
+├── synthetic_systems.py          # Synthetic systems with a known answer (tests and demonstrations)
+├── demarcation_tests.py          # Compatibility module (re-exports the two modules above)
 ├── valence_dashboard.py          # 4-quadrant graphical dashboard generator (Seaborn/Matplotlib)
 ├── valence_dashboard.png         # High-resolution visual artifact from an example simulation run
 │
 ├── test_thermodynamic_valence.py  # Unit tests validating the SDE math and Psi(t)
+├── test_demarcation.py           # Tests of the demarcation conditions on systems with a known answer
+├── test_necessary_conditions.py  # Tests of the necessary-condition criteria
 ├── paper0_cli.py                 # Single CLI entry point with subcommands
 ├── references.bib                # Complete BibTeX database of 49 citations (IIT, FEP, Chua, Lakatos)
 │
@@ -154,12 +159,22 @@ To verify safety and compliance limits via the hardware test suite:
 python3 test_hardware_session.py
 ```
 
-### 3. Operational Demarcation Tests
-To verify the three operational conditions of P0 (Edge of Chaos, Spectral Degeneracy,
-and Finite-Size Scaling):
+### 3. Demarcation and Necessary Conditions
+`demarcation.py` implements the three **operational demarcation conditions** of P0
+(section 3): causal non-separability (numerical rank of the response matrix against a
+linear superposition model), non-Markovian memory (conditional mutual information beyond
+Markov order k, against IAAFT surrogates) and state-dependent effective dynamics
+(Jacobians in three phase-space regions). `necessary_conditions.py` implements the
+criteria for three of the five **necessary conditions** (P1 section 3, Appendices B and
+D): edge of chaos, causal degeneracy with the robust radius rho_deg, and exponent
+stability. Both work on measured or estimated data; the demonstrations below run them on
+synthetic systems whose answer is known:
 ```bash
-python3 demarcation_tests.py
+python3 paper0_cli.py demarcation   # reduced surrogate settings; protocol: --surrogates 100 --percentile 99
+python3 paper0_cli.py conditions
 ```
+The papers set the highest Markov order to k_max = 500, which a k-nearest-neighbour
+estimator cannot handle; k_max is a parameter (see the `demarcation.py` docstring).
 
 ### 4. Visualization and Dashboard
 To generate the graphical dashboard `valence_dashboard.png`:
@@ -168,10 +183,10 @@ python3 valence_dashboard.py
 ```
 
 ### All-in-one CLI
-All four commands above are also available through a single entry point, which is
+All the commands above are also available through a single entry point, which is
 also the one packaged by `build_exe.ps1` below:
 ```bash
-python3 paper0_cli.py metrology|dashboard|demarcation|hardware|test
+python3 paper0_cli.py metrology|dashboard|demarcation|conditions|hardware|test
 ```
 
 ---
@@ -184,7 +199,7 @@ is impractical (USB/GPIB access, admin permissions):
 
 ```powershell
 .\build_exe.ps1
-.\dist\paper0\paper0.exe metrology   # or: dashboard | demarcation | hardware | test
+.\dist\paper0\paper0.exe metrology   # or: dashboard | demarcation | conditions | hardware | test
 ```
 
 ---

@@ -29,8 +29,7 @@ programme, math glossary, code↔paper map, environment status, knowledge graph 
 
 ```bash
 # Tests
-python -m unittest test_thermodynamic_valence -v
-python -m unittest test_hardware_session -v
+python -m pytest -q test_thermodynamic_valence.py test_hardware_session.py test_demarcation.py test_necessary_conditions.py
 
 # Rust
 cargo check --all-targets
@@ -41,7 +40,7 @@ maturin build --release --out dist_wheel
 pip install dist_wheel/*.whl
 
 # Single CLI (for packaging / quick use)
-python paper0_cli.py metrology|dashboard|demarcation|hardware|test
+python paper0_cli.py metrology|dashboard|demarcation|conditions|hardware|test
 
 # Standalone executable build (no Docker)
 ./build_exe.ps1
@@ -86,9 +85,6 @@ sources.
   preregistered implementation of the paper's experimental protocol (see
   `docs_v0.2/03_CODE_ARCHITECTURE_MAP.md` if present in your checkout). Do not
   assume a function faithfully implements the paper's equation without checking.
-- `test_hardware_session.py::test_noise_calibration_edge_of_chaos` is a **known,
-  unresolved failure** due to a tolerance threshold that is too tight — it is not a
-  regression you introduced, see `docs_v0.2/04_ENVIRONMENT_STATUS_AND_FIXES.md`.
 - `thermodynamic_valence.py`, `thermodynamic_valence.rs`, and `lib.rs` all
   implement the **same practical proxy** of Psi(t) — a log-ratio of the raw
   dissipative components plus a KL-divergence penalty — which is **not

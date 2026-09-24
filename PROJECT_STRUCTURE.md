@@ -66,13 +66,18 @@ Edge-of-Chaos/
 │   ├── Cargo.toml / Cargo.lock                  Cargo config (bin + lib PyO3)
 │   ├── demo_pyo3_integration.py                 Demo of the Rust→Python binding
 │   │
-│   ├── demarcation_tests.py                     Tests for the 3 operational demarcation conditions
+│   ├── demarcation.py                           The 3 operational demarcation conditions (P0 section 3)
+│   ├── necessary_conditions.py                  Criteria for 3 necessary conditions (P1 section 3, App. B, D)
+│   ├── synthetic_systems.py                     Synthetic systems with a known answer (tests, demos)
+│   ├── demarcation_tests.py                     Compatibility module (re-exports the two modules above)
 │   ├── valence_dashboard.py                     4-quadrant graphical dashboard (matplotlib/seaborn)
 │   ├── valence_dashboard.png                    Example visual artifact (checked in, not generated)
 │   │
 │   ├── hardware_driver_v2.py                    Hardware driver (mock, Keithley/PicoScope, preregistered lab parameters)
 │   │
 │   ├── test_thermodynamic_valence.py            Unit tests for the metrology engine
+│   ├── test_demarcation.py                      Tests of the demarcation conditions
+│   ├── test_necessary_conditions.py             Tests of the necessary-condition criteria
 │   ├── test_hardware_session.py                 Unit tests for the hardware session
 │   │
 │   ├── paper0_cli.py                            Single subcommand entry point (for packaging)

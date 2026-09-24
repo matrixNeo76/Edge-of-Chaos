@@ -21,10 +21,11 @@ abstract: >-
   (Python + Rust) testing the necessary physical conditions for primary
   interoceptive sentience in continuous neuromorphic substrates. Implements
   a practical proxy of the thermodynamic/allostatic valence functional Psi(t)
-  (its dissipation terms are heuristic, not Hatano-Sasa estimates) and the three
-  operational demarcation tests (edge-of-chaos activity, spectral causal
-  degeneracy, finite-size scaling) of the P0_Distilled v0.1 research
-  programme.
+  (its dissipation terms are heuristic, not Hatano-Sasa estimates), the three
+  operational demarcation conditions (causal non-separability, non-Markovian
+  memory, state-dependent effective dynamics) and criteria for three of the
+  necessary conditions (edge of chaos, causal degeneracy, exponent stability)
+  of the P0_Distilled v0.1 research programme.
 keywords:
   - neuromorphic computing
   - memristors

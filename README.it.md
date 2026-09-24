@@ -16,7 +16,7 @@
 5. [Guida all'Uso degli Script](#-guida-alluso-degli-script)
    - [Metrologia e Digital Twin (`thermodynamic_valence.py` / `.rs`)](#1-metrologia-e-digital-twin)
    - [Interfacciamento Hardware Reale (`hardware_driver_v2.py`)](#2-interfacciamento-hardware-reale)
-   - [Test di Demarcazione Operativa (`demarcation_tests.py`)](#3-test-di-demarcazione-operativa)
+   - [Demarcazione e Condizioni Necessarie (`demarcation.py`, `necessary_conditions.py`)](#3-demarcazione-e-condizioni-necessarie)
    - [Visualizzazione e Dashboard (`valence_dashboard.py`)](#4-visualizzazione-e-dashboard)
 6. [Eseguibile Standalone (senza Docker)](#-eseguibile-standalone-senza-docker-per-pc-di-laboratorio)
 7. [Containerizzazione e Replicabilità (Docker)](#-containerizzazione-e-replicabilità-docker)
@@ -48,11 +48,16 @@ Edge-of-Chaos/
 │
 ├── hardware_driver_v2.py         # Driver PyVISA/SCPI per Keithley DMM e PicoScope con auto-compliance
 ├── test_hardware_session.py      # Test suite estesa per la verifica dei limiti di sicurezza hardware
-├── demarcation_tests.py          # Test operativi di demarcazione (Edge of Chaos, Degenerazione, FSS)
+├── demarcation.py                # Le 3 condizioni operative di demarcazione (non separabilità, memoria non markoviana, dipendenza dallo stato)
+├── necessary_conditions.py       # Criteri per 3 condizioni necessarie (edge of chaos, degenerazione causale, stabilità degli esponenti)
+├── synthetic_systems.py          # Sistemi sintetici con risposta nota (test e dimostrazioni)
+├── demarcation_tests.py          # Modulo di compatibilità (riesporta i due moduli sopra)
 ├── valence_dashboard.py          # Generatore della dashboard grafica a 4 quadranti (Seaborn/Matplotlib)
 ├── valence_dashboard.png         # Artifact visivo ad alta risoluzione di una simulazione di esempio
 │
 ├── test_thermodynamic_valence.py  # Test unitari per la validazione matematica delle SDE e di Psi(t)
+├── test_demarcation.py           # Test delle condizioni di demarcazione su sistemi con risposta nota
+├── test_necessary_conditions.py  # Test dei criteri per le condizioni necessarie
 ├── paper0_cli.py                 # Entry-point unico a sottocomandi
 ├── references.bib                # Database BibTeX completo di 49 citazioni (IIT, FEP, Chua, Lakatos)
 │
@@ -134,11 +139,22 @@ Per verificare la sicurezza e i limiti di compliance tramite la test suite hardw
 python3 test_hardware_session.py
 ```
 
-### 3. Test di Demarcazione Operativa
-Per verificare le tre condizioni operative di P0 (Edge of Chaos, Degenerazione Spettrale e Finite-Size Scaling):
+### 3. Demarcazione e Condizioni Necessarie
+`demarcation.py` implementa le tre **condizioni operative di demarcazione** di P0
+(sezione 3): non separabilità causale (rango numerico della matrice di risposta rispetto a
+un modello di sovrapposizione lineare), memoria non markoviana (informazione mutua
+condizionata oltre l'ordine di Markov k, confrontata con surrogati IAAFT) e dinamica
+effettiva dipendente dallo stato (Jacobiani in tre regioni dello spazio delle fasi).
+`necessary_conditions.py` implementa i criteri per tre delle cinque **condizioni
+necessarie** (P1 sezione 3, Appendici B e D): edge of chaos, degenerazione causale con il
+raggio robusto rho_deg e stabilità degli esponenti. Entrambi lavorano su dati misurati o
+stimati; le dimostrazioni seguenti li eseguono su sistemi sintetici con risposta nota:
 ```bash
-python3 demarcation_tests.py
+python3 paper0_cli.py demarcation   # surrogati ridotti; protocollo: --surrogates 100 --percentile 99
+python3 paper0_cli.py conditions
 ```
+I paper fissano l'ordine di Markov massimo a k_max = 500, che uno stimatore k-nearest-neighbour
+non può gestire; k_max è un parametro (vedi la docstring di `demarcation.py`).
 
 ### 4. Visualizzazione e Dashboard
 Per generare la dashboard grafica `valence_dashboard.png`:
@@ -147,10 +163,10 @@ python3 valence_dashboard.py
 ```
 
 ### CLI tutto-in-uno
-I quattro comandi sopra sono disponibili anche tramite un unico entry-point, lo
+Tutti i comandi sopra sono disponibili anche tramite un unico entry-point, lo
 stesso impacchettato da `build_exe.ps1` più sotto:
 ```bash
-python3 paper0_cli.py metrology|dashboard|demarcation|hardware|test
+python3 paper0_cli.py metrology|dashboard|demarcation|conditions|hardware|test
 ```
 
 ---
@@ -163,7 +179,7 @@ Docker non è praticabile (accesso USB/GPIB, permessi admin):
 
 ```powershell
 .\build_exe.ps1
-.\dist\paper0\paper0.exe metrology   # o: dashboard | demarcation | hardware | test
+.\dist\paper0\paper0.exe metrology   # o: dashboard | demarcation | conditions | hardware | test
 ```
 
 ---

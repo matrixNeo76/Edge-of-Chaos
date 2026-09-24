@@ -5,14 +5,15 @@ Single subcommand entry point for the P0_Distilled v0.1 metrology platform.
 
 Does not duplicate the logic of the existing scripts: it imports their functions
 and calls them. Each script (`thermodynamic_valence.py`, `valence_dashboard.py`,
-`demarcation_tests.py`, `hardware_driver_v2.py`) remains runnable standalone
+`demarcation.py`, `necessary_conditions.py`, `hardware_driver_v2.py`) remains usable standalone
 exactly as before — this file is purely additive, designed mainly as a single
 entry point for PyInstaller packaging.
 
 Usage:
     python paper0_cli.py metrology
     python paper0_cli.py dashboard
-    python paper0_cli.py demarcation
+    python paper0_cli.py demarcation [--k-max 3 --surrogates 19 --percentile 95]
+    python paper0_cli.py conditions
     python paper0_cli.py hardware
     python paper0_cli.py test [--suite metrology|hardware|all]
 """
@@ -45,29 +46,76 @@ def cmd_dashboard(_args):
     return 0
 
 
-def cmd_demarcation(_args):
+def _verdict(passes):
+    return "PASS" if passes else "fail"
+
+
+def cmd_demarcation(args):
+    """
+    The three operational demarcation conditions (P0 section 3, P1 section 2.1), each run
+    on a synthetic system that should pass and one that should fail. The surrogate test
+    uses reduced settings for speed; the protocol uses 100 surrogates and the 99th
+    percentile (--surrogates 100 --percentile 99).
+    """
+    from demarcation import (causal_non_separability, noise_floor_from_recordings,
+                             non_markovian_memory, state_dependent_dynamics)
+    from synthetic_systems import ar1, nonlinear_lag5, linear_2d, double_well, response_matrices
+
+    print("=== OPERATIONAL DEMARCATION (synthetic illustration, not a substrate) ===")
+
+    r, r_lin, noise = response_matrices()
+    delta = noise_floor_from_recordings(noise)
+    print("\n[1] Causal non-separability: rank_delta(R) > rank_delta(R_lin)")
+    for name, matrix in (("response with extra modes", r), ("linear superposition only", r_lin)):
+        res = causal_non_separability(matrix, r_lin, delta)
+        print(f"    {name:28s} rank {res['rank_R']} vs {res['rank_R_lin']} -> {_verdict(res['passes'])}")
+
+    print(f"\n[2] Non-Markovian memory: orders 1..{args.k_max}, {args.surrogates} IAAFT surrogates, "
+          f"{args.percentile:g}th percentile")
+    for name, series in (("nonlinear, lag-5 memory", nonlinear_lag5(1500)), ("AR(1), Markov", ar1(1500))):
+        res = non_markovian_memory(series, k_max=args.k_max, n_surrogates=args.surrogates,
+                                   percentile=args.percentile)
+        detail = ", ".join(f"k={row['order']}: {row['residual_memory']:.3f}/{row['surrogate_threshold']:.3f}"
+                           for row in res["per_order"])
+        print(f"    {name:28s} {detail} -> {_verdict(res['passes'])}")
+
+    print("\n[3] State-dependent dynamics: relative Jacobian difference > 0.25")
+    for name, states in (("double well", double_well(20000)), ("linear system", linear_2d(20000))):
+        res = state_dependent_dynamics(states)
+        largest = max(d["relative_difference"] for d in res["differences"])
+        print(f"    {name:28s} largest difference {largest:.3f} -> {_verdict(res['passes'])}")
+    return 0
+
+
+def cmd_conditions(_args):
+    """Criteria for three of the necessary conditions (P1 section 3, Appendices B and D)."""
     import numpy as np
-    from demarcation_tests import (
-        test_edge_of_chaos_admittance,
-        calculate_spectral_causal_degeneracy,
-        verify_finite_size_scaling,
-    )
+    from necessary_conditions import (edge_of_chaos, first_order_admittance, causal_degeneracy,
+                                      degeneracy_radius, degeneracy_prediction, exponent_stability)
+
+    print("=== NECESSARY CONDITIONS (synthetic illustration, not a substrate) ===")
 
     freqs = np.linspace(0.1, 100.0, 500)
-    eoc = test_edge_of_chaos_admittance(freqs)
-    print("=== DEMARCATION TEST 1: EDGE OF CHAOS ===")
-    print(f"Edge of Chaos Verified: {eoc['is_edge_of_chaos']}")
-    print(f"Jacobian Trace: {eoc['trace_J']:.2f}, Determinant: {eoc['det_J']:.2f}")
+    print("\n[1] Edge of chaos: Re Y(jw) < 0 in the band and a stable operating point")
+    for name, gain in (("locally active device", -2.0), ("passive device", 0.8)):
+        res = edge_of_chaos(freqs, first_order_admittance(freqs, g0=0.1, gain=gain, rate=1.0), [[-1.0]])
+        band = f"{res['active_band_hz'].min():.2f}-{res['active_band_hz'].max():.2f} Hz" if res["locally_active"] else "none"
+        print(f"    {name:24s} active band {band:>16s} -> {_verdict(res['passes'])}")
 
-    print("\n=== DEMARCATION TEST 2: SPECTRAL CAUSAL DEGENERACY ===")
-    J_mock = np.array([[-1.0, 0.5, 0.0], [0.5, -1.0, 0.0], [0.0, 0.0, -1.0]])
-    deg = calculate_spectral_causal_degeneracy(J_mock)
-    print(f"Kernel Dimension: {deg['nullspace_dim']}, Degeneracy Rho: {deg['rho_deg']:.2f}")
-    print(f"Degeneracy Threshold Exceeded: {deg['passes_degeneracy_threshold']}")
+    print("\n[2] Causal degeneracy (Appendix B) for F(w) = (w0, w1, w2^2 + w3^2) at w = 0")
+    jacobian_f = np.array([[1.0, 0, 0, 0], [0, 1.0, 0, 0], [0, 0, 0, 0]])
+    deg = causal_degeneracy(jacobian_f, delta=1e-9)
+    radius = degeneracy_radius(lambda w: np.array([w[0], w[1], w[2] ** 2 + w[3] ** 2]),
+                               np.zeros(4), np.zeros(3), epsilon=0.04, jacobian_f=jacobian_f, delta=1e-9)
+    print(f"    D_C = {deg['D_C']:.3f}, D_C_eff = {deg['D_C_eff']:.3f}, rho_deg <= {radius['rho_deg']:.3f}")
+    for norm in (0.1, 0.5):
+        pred = degeneracy_prediction(radius["rho_deg"], norm)
+        print(f"    (B.15) with ||dW_therm|| = {norm}: ratio {pred['ratio']:.2f} -> {_verdict(pred['passes'])}")
 
-    print("\n=== DEMARCATION TEST 3: FINITE-SIZE SCALING (FSS) ===")
-    for row in verify_finite_size_scaling():
-        print(f"L={row['L']}: delta_p={row['delta_p']:.4f}, xi={row['xi']:.2f}")
+    print("\n[3] Exponent stability at the three largest sizes (Appendix D, 2D, Delta_exp = 10%)")
+    for name, exponents in (("stable exponents", [1.90, 1.52, 1.50, 1.48]), ("drifting exponents", [1.0, 1.2, 1.5, 1.9])):
+        res = exponent_stability([16, 32, 64, 128], exponents, delta_exp=0.10)
+        print(f"    {name:24s} spread {res['relative_spread']:.3f} -> {_verdict(res['passes'])}")
     return 0
 
 
@@ -88,7 +136,10 @@ def cmd_test(args):
     suite_map = {
         "metrology": ["test_thermodynamic_valence"],
         "hardware": ["test_hardware_session"],
-        "all": ["test_thermodynamic_valence", "test_hardware_session"],
+        "demarcation": ["test_demarcation"],
+        "conditions": ["test_necessary_conditions"],
+        "all": ["test_thermodynamic_valence", "test_hardware_session",
+                "test_demarcation", "test_necessary_conditions"],
     }
     modules = suite_map[args.suite]
     loader = unittest.TestLoader()
@@ -108,12 +159,16 @@ def main(argv=None):
 
     sub.add_parser("metrology", help="Runs the digital twin and computes Psi(t)")
     sub.add_parser("dashboard", help="Generates the 4-quadrant graphical dashboard")
-    sub.add_parser("demarcation", help="Runs the 3 operational demarcation tests")
+    p_dem = sub.add_parser("demarcation", help="Runs the 3 operational demarcation conditions on synthetic systems")
+    p_dem.add_argument("--k-max", type=int, default=3, help="Highest Markov order tested (default: 3)")
+    p_dem.add_argument("--surrogates", type=int, default=19, help="Number of IAAFT surrogates (protocol: 100)")
+    p_dem.add_argument("--percentile", type=float, default=95.0, help="Surrogate percentile (protocol: 99)")
+    sub.add_parser("conditions", help="Runs the necessary-condition criteria on synthetic systems")
     sub.add_parser("hardware", help="Initializes a mock hardware session and acquires a frame")
 
     p_test = sub.add_parser("test", help="Runs the test suites")
     p_test.add_argument(
-        "--suite", choices=["metrology", "hardware", "all"], default="all",
+        "--suite", choices=["metrology", "hardware", "demarcation", "conditions", "all"], default="all",
         help="Which suite to run (default: all)",
     )
 
@@ -122,6 +177,7 @@ def main(argv=None):
         "metrology": cmd_metrology,
         "dashboard": cmd_dashboard,
         "demarcation": cmd_demarcation,
+        "conditions": cmd_conditions,
         "hardware": cmd_hardware,
         "test": cmd_test,
     }

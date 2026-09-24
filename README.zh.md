@@ -19,7 +19,7 @@
 5. [脚本使用指南](#-脚本使用指南)
    - [计量与数字孪生（`thermodynamic_valence.py` / `.rs`）](#1-计量与数字孪生)
    - [真实硬件接口（`hardware_driver_v2.py`）](#2-真实硬件接口)
-   - [运行性划界测试（`demarcation_tests.py`）](#3-运行性划界测试)
+   - [划界与必要条件（`demarcation.py`、`necessary_conditions.py`）](#3-划界与必要条件)
    - [可视化与仪表盘（`valence_dashboard.py`）](#4-可视化与仪表盘)
 6. [独立可执行文件（无需 Docker）](#-独立可执行文件无需-docker用于实验室电脑)
 7. [容器化与可复现性（Docker）](#-容器化与可复现性docker)
@@ -55,11 +55,16 @@ Edge-of-Chaos/
 │
 ├── hardware_driver_v2.py         # 用于 Keithley DMM 与 PicoScope 的 PyVISA/SCPI 驱动，带自动合规保护
 ├── test_hardware_session.py      # 硬件安全限制验证的扩展测试套件
-├── demarcation_tests.py          # 运行性划界测试（Edge of Chaos、简并度、有限尺寸标度）
+├── demarcation.py                # 三个运行性划界条件（因果不可分性、非马尔可夫记忆、状态依赖动力学）
+├── necessary_conditions.py       # 三个必要条件的判据（混沌边缘、因果简并度、指数稳定性）
+├── synthetic_systems.py          # 答案已知的合成系统（用于测试与演示）
+├── demarcation_tests.py          # 兼容模块（重新导出上述两个模块）
 ├── valence_dashboard.py          # 四象限图形仪表盘生成器（Seaborn/Matplotlib）
 ├── valence_dashboard.png         # 示例仿真运行的高分辨率可视化结果
 │
 ├── test_thermodynamic_valence.py  # 验证 SDE 数学与 Psi(t) 的单元测试
+├── test_demarcation.py           # 在答案已知的系统上测试划界条件
+├── test_necessary_conditions.py  # 必要条件判据的测试
 ├── paper0_cli.py                 # 统一的多子命令 CLI 入口
 ├── references.bib                # 完整的 BibTeX 参考文献数据库（49 条引用，涵盖 IIT、FEP、Chua、Lakatos）
 │
@@ -146,11 +151,13 @@ python3 hardware_driver_v2.py
 python3 test_hardware_session.py
 ```
 
-### 3. 运行性划界测试
-验证 P0 的三个运行性条件（混沌边缘、谱简并度、有限尺寸标度）：
+### 3. 划界与必要条件
+`demarcation.py` 实现 P0（第 3 节）的三个**运行性划界条件**：因果不可分性（响应矩阵相对于线性叠加模型的数值秩）、非马尔可夫记忆（超出马尔可夫阶 k 的条件互信息，与 IAAFT 替代数据比较）以及状态依赖的有效动力学（相空间三个区域中的雅可比矩阵）。`necessary_conditions.py` 实现五个**必要条件**中三个的判据（P1 第 3 节、附录 B 与 D）：混沌边缘、带鲁棒半径 rho_deg 的因果简并度，以及指数稳定性。两者都作用于测量或估计的数据；下面的演示在答案已知的合成系统上运行它们：
 ```bash
-python3 demarcation_tests.py
+python3 paper0_cli.py demarcation   # 替代数据设置已缩减；协议：--surrogates 100 --percentile 99
+python3 paper0_cli.py conditions
 ```
+论文将最高马尔可夫阶设为 k_max = 500，k 近邻估计器无法处理；因此 k_max 是一个参数（见 `demarcation.py` 的文档字符串）。
 
 ### 4. 可视化与仪表盘
 生成图形仪表盘 `valence_dashboard.png`：
@@ -159,9 +166,9 @@ python3 valence_dashboard.py
 ```
 
 ### 一体化 CLI
-以上四个命令也可通过统一入口调用，该入口同样是下方 `build_exe.ps1` 打包的对象：
+以上所有命令也可通过统一入口调用，该入口同样是下方 `build_exe.ps1` 打包的对象：
 ```bash
-python3 paper0_cli.py metrology|dashboard|demarcation|hardware|test
+python3 paper0_cli.py metrology|dashboard|demarcation|conditions|hardware|test
 ```
 
 ---
@@ -173,7 +180,7 @@ python3 paper0_cli.py metrology|dashboard|demarcation|hardware|test
 
 ```powershell
 .\build_exe.ps1
-.\dist\paper0\paper0.exe metrology   # 或：dashboard | demarcation | hardware | test
+.\dist\paper0\paper0.exe metrology   # 或：dashboard | demarcation | conditions | hardware | test
 ```
 
 ---

@@ -20,24 +20,7 @@ from demarcation import (
     state_dependent_dynamics,
     is_candidate,
 )
-
-
-def ar1(n, phi=0.8, seed=0):
-    """Linear Markov process of order 1."""
-    rng = np.random.default_rng(seed)
-    x = np.zeros(n)
-    for t in range(1, n):
-        x[t] = phi * x[t - 1] + rng.normal()
-    return x
-
-
-def nonlinear_lag5(n, seed=0):
-    """Nonlinear process whose future depends on x[t] and x[t-4]: Markov order 5."""
-    rng = np.random.default_rng(seed)
-    x = np.zeros(n)
-    for t in range(5, n):
-        x[t] = 0.4 * x[t - 1] + 0.8 * np.cos(2 * x[t - 5]) + 0.3 * rng.normal()
-    return x
+from synthetic_systems import ar1, nonlinear_lag5, linear_2d, double_well, response_matrices
 
 
 class TestCausalNonSeparability(unittest.TestCase):
@@ -48,19 +31,12 @@ class TestCausalNonSeparability(unittest.TestCase):
         self.assertEqual(numerical_rank(matrix, 0.5), 2)
 
     def test_extra_modes_beyond_linear_model_pass(self):
-        rng = np.random.default_rng(1)
-        basis = np.linalg.qr(rng.normal(size=(8, 8)))[0]
-        r_lin = basis[:, :3] @ np.diag([3, 2, 1]) @ basis[:, :3].T
-        r = r_lin + basis[:, 3:5] @ np.diag([0.8, 0.5]) @ basis[:, 3:5].T
-        delta = noise_floor_from_recordings(0.05 * rng.normal(size=(8, 8)))
-        noisy = lambda m: m + 0.05 * rng.normal(size=m.shape)
-
-        result = causal_non_separability(noisy(r), noisy(r_lin), delta)
+        r, r_lin, noise = response_matrices(seed=1)
+        delta = noise_floor_from_recordings(noise)
+        result = causal_non_separability(r, r_lin, delta)
         self.assertEqual((result["rank_R"], result["rank_R_lin"]), (5, 3))
         self.assertTrue(result["passes"])
-
-        same = causal_non_separability(noisy(r_lin), noisy(r_lin), delta)
-        self.assertFalse(same["passes"])
+        self.assertFalse(causal_non_separability(r_lin, r_lin, delta)["passes"])
 
     def test_invalid_input(self):
         with self.assertRaises(ValueError):
@@ -131,19 +107,8 @@ class TestStateDependentDynamics(unittest.TestCase):
         self.assertEqual(len(np.unique(indices)), len(indices))
 
     def test_linear_system_fails_nonlinear_system_passes(self):
-        rng = np.random.default_rng(5)
-        n = 20000
-        linear = np.zeros((n, 2))
-        a = np.array([[0.8, 0.1], [-0.1, 0.8]])
-        for t in range(1, n):
-            linear[t] = a @ linear[t - 1] + 0.1 * rng.normal(size=2)
-        self.assertFalse(state_dependent_dynamics(linear)["passes"])
-
-        double_well = np.zeros(n)
-        for t in range(1, n):
-            x = double_well[t - 1]
-            double_well[t] = x + 0.05 * (x - x ** 3) + 0.3 * rng.normal()
-        self.assertTrue(state_dependent_dynamics(double_well)["passes"])
+        self.assertFalse(state_dependent_dynamics(linear_2d(20000, seed=5))["passes"])
+        self.assertTrue(state_dependent_dynamics(double_well(20000, seed=5))["passes"])
 
     def test_candidate_requires_all_three(self):
         yes, no = {"passes": True}, {"passes": False}

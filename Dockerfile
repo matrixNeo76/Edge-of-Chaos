@@ -20,7 +20,8 @@ WORKDIR /app
 
 # Copy and install Python requirements
 COPY references.bib thermodynamic_valence.py thermodynamic_valence.rs test_thermodynamic_valence.py valence_dashboard.py ./
-COPY hardware_driver_v2.py test_hardware_session.py demarcation_tests.py lib.rs Cargo.toml install.sh ./
+COPY hardware_driver_v2.py test_hardware_session.py demarcation.py necessary_conditions.py synthetic_systems.py demarcation_tests.py paper0_cli.py lib.rs Cargo.toml install.sh ./
+COPY test_demarcation.py test_necessary_conditions.py ./
 
 RUN pip install --no-cache-dir numpy scipy matplotlib seaborn pyvisa maturin
 
@@ -28,7 +29,7 @@ RUN pip install --no-cache-dir numpy scipy matplotlib seaborn pyvisa maturin
 RUN maturin build --release --out dist && pip install dist/*.whl
 
 # Automated tests at build time
-RUN python3 -m unittest test_thermodynamic_valence.py test_hardware_session.py
+RUN python3 -m unittest test_thermodynamic_valence test_hardware_session test_demarcation test_necessary_conditions
 
 EXPOSE 8080
 
