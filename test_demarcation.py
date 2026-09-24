@@ -1,0 +1,155 @@
+"""
+test_demarcation.py
+===================
+Tests of the three operational demarcation conditions (demarcation.py) on systems whose
+answer is known in advance.
+"""
+
+import unittest
+import numpy as np
+
+from demarcation import (
+    numerical_rank,
+    noise_floor_from_recordings,
+    causal_non_separability,
+    conditional_mutual_information,
+    residual_memory,
+    iaaft_surrogate,
+    non_markovian_memory,
+    phase_space_regions,
+    state_dependent_dynamics,
+    is_candidate,
+)
+
+
+def ar1(n, phi=0.8, seed=0):
+    """Linear Markov process of order 1."""
+    rng = np.random.default_rng(seed)
+    x = np.zeros(n)
+    for t in range(1, n):
+        x[t] = phi * x[t - 1] + rng.normal()
+    return x
+
+
+def nonlinear_lag5(n, seed=0):
+    """Nonlinear process whose future depends on x[t] and x[t-4]: Markov order 5."""
+    rng = np.random.default_rng(seed)
+    x = np.zeros(n)
+    for t in range(5, n):
+        x[t] = 0.4 * x[t - 1] + 0.8 * np.cos(2 * x[t - 5]) + 0.3 * rng.normal()
+    return x
+
+
+class TestCausalNonSeparability(unittest.TestCase):
+
+    def test_numerical_rank_counts_singular_values_above_delta(self):
+        matrix = np.diag([3.0, 1.0, 0.1, 0.0])
+        self.assertEqual(numerical_rank(matrix, 0.05), 3)
+        self.assertEqual(numerical_rank(matrix, 0.5), 2)
+
+    def test_extra_modes_beyond_linear_model_pass(self):
+        rng = np.random.default_rng(1)
+        basis = np.linalg.qr(rng.normal(size=(8, 8)))[0]
+        r_lin = basis[:, :3] @ np.diag([3, 2, 1]) @ basis[:, :3].T
+        r = r_lin + basis[:, 3:5] @ np.diag([0.8, 0.5]) @ basis[:, 3:5].T
+        delta = noise_floor_from_recordings(0.05 * rng.normal(size=(8, 8)))
+        noisy = lambda m: m + 0.05 * rng.normal(size=m.shape)
+
+        result = causal_non_separability(noisy(r), noisy(r_lin), delta)
+        self.assertEqual((result["rank_R"], result["rank_R_lin"]), (5, 3))
+        self.assertTrue(result["passes"])
+
+        same = causal_non_separability(noisy(r_lin), noisy(r_lin), delta)
+        self.assertFalse(same["passes"])
+
+    def test_invalid_input(self):
+        with self.assertRaises(ValueError):
+            causal_non_separability(np.eye(3), np.eye(4), 0.1)
+        with self.assertRaises(ValueError):
+            numerical_rank(np.array([[np.nan, 1.0], [0.0, 1.0]]), 0.1)
+        with self.assertRaises(ValueError):
+            numerical_rank(np.eye(2), -1.0)
+
+
+class TestNonMarkovianMemory(unittest.TestCase):
+
+    def test_mutual_information_matches_gaussian_value(self):
+        rng = np.random.default_rng(2)
+        x = rng.normal(size=3000)
+        y = 0.8 * x + 0.6 * rng.normal(size=3000)
+        expected = -0.5 * np.log(1 - 0.8 ** 2)
+        self.assertAlmostEqual(conditional_mutual_information(x, y), expected, delta=0.06)
+        self.assertAlmostEqual(conditional_mutual_information(x, rng.normal(size=3000)), 0.0, delta=0.03)
+
+    def test_conditional_mutual_information_vanishes_given_the_common_cause(self):
+        rng = np.random.default_rng(3)
+        z = rng.normal(size=3000)
+        x = z + 0.5 * rng.normal(size=3000)
+        y = z + 0.5 * rng.normal(size=3000)
+        self.assertGreater(conditional_mutual_information(x, y), 0.3)
+        self.assertAlmostEqual(conditional_mutual_information(x, y, z), 0.0, delta=0.03)
+
+    def test_residual_memory_identifies_markov_order(self):
+        series = nonlinear_lag5(3000)
+        for order in (1, 2, 3, 4):
+            self.assertGreater(residual_memory(series, order, past_lags=5), 0.2)
+        for order in (5, 6):
+            self.assertAlmostEqual(residual_memory(series, order, past_lags=5), 0.0, delta=0.03)
+        for order in (1, 2):
+            self.assertAlmostEqual(residual_memory(ar1(3000), order, past_lags=5), 0.0, delta=0.03)
+
+    def test_iaaft_preserves_amplitudes_and_spectrum(self):
+        series = nonlinear_lag5(2048)
+        surrogate = iaaft_surrogate(series, rng=np.random.default_rng(0))
+        np.testing.assert_allclose(np.sort(surrogate), np.sort(series))
+        spectrum = np.abs(np.fft.rfft(series))
+        spectrum_s = np.abs(np.fft.rfft(surrogate))
+        self.assertLess(np.linalg.norm(spectrum - spectrum_s) / np.linalg.norm(spectrum), 0.1)
+
+    def test_condition_passes_for_nonlinear_memory_and_fails_for_markov(self):
+        # Reduced surrogate count and percentile to keep the test fast.
+        settings = dict(k_max=2, past_lags=5, n_surrogates=9, percentile=90.0)
+        self.assertTrue(non_markovian_memory(nonlinear_lag5(1500), **settings)["passes"])
+        self.assertFalse(non_markovian_memory(ar1(1500), **settings)["passes"])
+
+    def test_invalid_input(self):
+        with self.assertRaises(ValueError):
+            residual_memory(np.arange(20.0), order=3)
+        with self.assertRaises(ValueError):
+            non_markovian_memory(ar1(500), k_max=0)
+        with self.assertRaises(ValueError):
+            conditional_mutual_information(np.zeros(10), np.zeros(9))
+
+
+class TestStateDependentDynamics(unittest.TestCase):
+
+    def test_regions_are_disjoint_and_cover_the_states(self):
+        states = np.random.default_rng(4).normal(size=(900, 2))
+        regions = phase_space_regions(states, 3)
+        indices = np.concatenate(regions)
+        self.assertEqual(len(indices), len(states) - 1)
+        self.assertEqual(len(np.unique(indices)), len(indices))
+
+    def test_linear_system_fails_nonlinear_system_passes(self):
+        rng = np.random.default_rng(5)
+        n = 20000
+        linear = np.zeros((n, 2))
+        a = np.array([[0.8, 0.1], [-0.1, 0.8]])
+        for t in range(1, n):
+            linear[t] = a @ linear[t - 1] + 0.1 * rng.normal(size=2)
+        self.assertFalse(state_dependent_dynamics(linear)["passes"])
+
+        double_well = np.zeros(n)
+        for t in range(1, n):
+            x = double_well[t - 1]
+            double_well[t] = x + 0.05 * (x - x ** 3) + 0.3 * rng.normal()
+        self.assertTrue(state_dependent_dynamics(double_well)["passes"])
+
+    def test_candidate_requires_all_three(self):
+        yes, no = {"passes": True}, {"passes": False}
+        self.assertTrue(is_candidate(yes, yes, yes))
+        self.assertFalse(is_candidate(yes, no, yes))
+
+
+if __name__ == "__main__":
+    unittest.main()
