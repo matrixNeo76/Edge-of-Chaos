@@ -54,7 +54,7 @@ Edge-of-Chaos/
 │
 ├── test_thermodynamic_valence.py  # Test unitari per la validazione matematica delle SDE e di Psi(t)
 ├── paper0_cli.py                 # Entry-point unico a sottocomandi
-├── references.bib                # Database BibTeX completo di 45 citazioni (IIT, FEP, Chua, Lakatos)
+├── references.bib                # Database BibTeX completo di 49 citazioni (IIT, FEP, Chua, Lakatos)
 │
 ├── install.sh                    # Script di installazione per Linux / macOS
 ├── install.ps1                   # Script di installazione per Windows PowerShell
@@ -201,7 +201,7 @@ il punto d'ingresso consigliato; gli altri sono companion/versioni estese.
 ## 📜 Bibliografie e Riferimenti
 
 Tutti i riferimenti bibliografici teorici, epistemologici ed hardware citati nel paper e negli script sono disponibili nel file BibTeX allegato:
-* **`references.bib`**: Contiene 45 citazioni formattate (Chua, Hatano-Sasa, Tononi, Friston, Lakatos, Kleiner & Ludwig, Iavarone 2026).
+* **`references.bib`**: Contiene 49 citazioni formattate (Chua, Hatano-Sasa, Tononi, Friston, Lakatos, Kleiner & Ludwig, Iavarone 2026).
 
 ---
 *Lakatosian Research Programme on Neuromorphic Consciousness (2026)*

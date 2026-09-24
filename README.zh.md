@@ -61,7 +61,7 @@ Edge-of-Chaos/
 │
 ├── test_thermodynamic_valence.py  # 验证 SDE 数学与 Psi(t) 的单元测试
 ├── paper0_cli.py                 # 统一的多子命令 CLI 入口
-├── references.bib                # 完整的 BibTeX 参考文献数据库（45 条引用，涵盖 IIT、FEP、Chua、Lakatos）
+├── references.bib                # 完整的 BibTeX 参考文献数据库（49 条引用，涵盖 IIT、FEP、Chua、Lakatos）
 │
 ├── install.sh                    # Linux / macOS 安装脚本
 ├── install.ps1                   # Windows PowerShell 安装脚本
@@ -207,7 +207,7 @@ docker-compose up --build
 ## 📜 参考文献
 
 论文与脚本中引用的所有理论、认识论及硬件相关参考文献，均收录于随附的 BibTeX 文件中：
-* **`references.bib`**：包含 45 条格式化引用（Chua、Hatano-Sasa、Tononi、Friston、
+* **`references.bib`**：包含 49 条格式化引用（Chua、Hatano-Sasa、Tononi、Friston、
   Lakatos、Kleiner & Ludwig、Iavarone 2026）。
 
 ---

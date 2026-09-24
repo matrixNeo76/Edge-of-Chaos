@@ -64,7 +64,7 @@ Edge-of-Chaos/
 │
 ├── test_thermodynamic_valence.py  # Unit tests validating the SDE math and Psi(t)
 ├── paper0_cli.py                 # Single CLI entry point with subcommands
-├── references.bib                # Complete BibTeX database of 45 citations (IIT, FEP, Chua, Lakatos)
+├── references.bib                # Complete BibTeX database of 49 citations (IIT, FEP, Chua, Lakatos)
 │
 ├── install.sh                    # Setup script for Linux / macOS
 ├── install.ps1                   # Setup script for Windows PowerShell
@@ -219,7 +219,7 @@ entry point; the others are companion/extended papers.
 
 All theoretical, epistemological, and hardware references cited in the paper and in
 the scripts are available in the attached BibTeX file:
-* **`references.bib`**: Contains 45 formatted citations (Chua, Hatano-Sasa, Tononi,
+* **`references.bib`**: Contains 49 formatted citations (Chua, Hatano-Sasa, Tononi,
   Friston, Lakatos, Kleiner & Ludwig, Iavarone 2026).
 
 ---
