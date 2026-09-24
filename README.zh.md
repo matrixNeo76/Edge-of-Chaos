@@ -166,9 +166,10 @@ python3 paper0_cli.py conditions
 python3 valence_dashboard.py
 ```
 
-### 一体化 CLI
+### 演示笔记本
 `notebooks/demo.ipynb` 在模拟数据上运行效价代理量与传出副本消融、G_pred 的已知局限、划界条件以及混沌边缘判据，并附有说明。无需安装，可通过 [Binder](https://mybinder.org/v2/gh/matrixNeo76/Edge-of-Chaos/HEAD?labpath=notebooks%2Fdemo.ipynb) 在浏览器中打开。
 
+### 一体化 CLI
 以上所有命令也可通过统一入口调用，该入口同样是下方 `build_exe.ps1` 打包的对象：
 ```bash
 python3 paper0_cli.py metrology|dashboard|demarcation|conditions|hardware|test
