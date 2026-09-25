@@ -18,7 +18,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov ruff
+        run: pip install -r requirements.txt pytest pytest-cov ruff==0.15.12
       - name: Lint
         run: ruff check .
       - name: Run tests with coverage
