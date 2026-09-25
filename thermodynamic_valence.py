@@ -117,7 +117,7 @@ def delay_embed(signal, tau_steps):
 
 
 def calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt, alpha=1.0, beta=0.5, gamma=0.8,
-                                    tau_steps=10, niche_seed=12345):
+                                    tau_steps=10, niche_seed=12345, niche_samples=None):
     """
     Computes the valence functional Psi(t) from two heuristic dissipation proxies,
     the allostatic divergence, and the predictive gain of the efference copy.
@@ -126,7 +126,9 @@ def calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt, alpha=1.0, beta=0.5
         G_pred = D_KL(p_obs || p_ref) - D_KL(p_obs || p_pred),
     estimated on delay-embedded densities (tau_steps). The digital twin has no
     actuation, so the free-running reference p_ref is stood in for by the target niche.
-    The niche samples are drawn from a fixed seed, so equal inputs give equal outputs.
+    The niche samples are drawn from a fixed seed, so equal inputs give equal outputs;
+    niche_samples (one per time point) replaces them, e.g. to compare with the Rust engine,
+    which draws its niche from a different generator.
     """
     x_A1, s_obs, s_pred = (np.asarray(a, dtype=float) for a in (x_A1, s_obs, s_pred))
     if not (x_A1.ndim == s_obs.ndim == s_pred.ndim == 1):
@@ -151,8 +153,12 @@ def calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt, alpha=1.0, beta=0.5
 
     # 2. Target allostatic niche p_target ~ N(0, 0.2), from a fixed seed so that it
     # does not add run-to-run noise to the comparison between conditions.
-    niche_rng = np.random.default_rng(niche_seed)
-    p_target = niche_rng.normal(0.0, 0.2, size=(len(x_A1), 1))
+    if niche_samples is None:
+        p_target = np.random.default_rng(niche_seed).normal(0.0, 0.2, size=(len(x_A1), 1))
+    else:
+        p_target = np.asarray(niche_samples, dtype=float).reshape(-1, 1)
+        if len(p_target) != len(x_A1) or not np.all(np.isfinite(p_target)):
+            raise ValueError("niche_samples must be finite, with one sample per time point")
     x_samples = np.atleast_2d(x_A1).T
 
     d_kl_allostatic = estimate_kl_divergence_knn(x_samples, p_target, k=5)
