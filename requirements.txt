@@ -3,7 +3,7 @@
 # Python 3.11 and 3.12 (Linux). For development/build (maturin, pyinstaller) see
 # requirements-dev.txt.
 
-numpy>=1.24,<3
+numpy>=2.5.3,<3
 scipy>=1.10,<2
 matplotlib>=3.7,<4
 seaborn>=0.12,<1
