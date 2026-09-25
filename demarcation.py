@@ -93,11 +93,36 @@ def causal_non_separability(R, R_lin, delta):
 # Condition 2: non-Markovian memory
 # ---------------------------------------------------------------------------
 
-def conditional_mutual_information(x, y, z=None, k=4):
+def dither(values, rng):
+    """
+    Break ties before a k-nearest-neighbour estimate (Kraskov et al. 2004 recommend adding
+    low-amplitude noise). Each column with repeated values - quantized data, as from an
+    ADC - gets uniform noise one quantization step wide (the step is the smallest gap
+    between distinct values), which spreads each quantization level over its bin. Columns
+    without repeats get Gaussian noise of 1e-10 times their standard deviation, which only
+    breaks accidental ties.
+    """
+    values = np.array(values, dtype=float, copy=True)
+    for col in range(values.shape[1]):
+        column = values[:, col]
+        levels = np.unique(column)
+        if len(levels) < len(column) and len(levels) > 1:
+            step = np.min(np.diff(levels))
+            column += rng.uniform(-step / 2, step / 2, size=len(column))
+        else:
+            column += rng.normal(0.0, 1e-10 * (np.std(column) or 1.0), size=len(column))
+    return values
+
+
+def conditional_mutual_information(x, y, z=None, k=4, jitter=True, seed=0):
     """
     k-nearest-neighbour estimate of I(X; Y | Z) (Frenzel & Pompe 2007; with z=None, the
     mutual information estimator of Kraskov, Stoegbauer & Grassberger 2004), in nats.
     Uses the maximum norm. x, y, z are arrays of shape (n,) or (n, d).
+
+    With jitter=True (default) the inputs are dithered first (see dither): on quantized
+    data the estimator is otherwise strongly biased (two independent variables rounded to
+    0.1 gave 0.19 nats instead of 0). The dither is seeded, so results are reproducible.
     """
     x = _finite_array(x, "x").reshape(len(x), -1)
     y = _finite_array(y, "y").reshape(len(y), -1)
@@ -110,6 +135,10 @@ def conditional_mutual_information(x, y, z=None, k=4):
             raise ValueError("z must have the same number of samples as x and y")
     if n <= k + 1:
         raise ValueError(f"need more than k + 1 = {k + 1} samples, got {n}")
+    if jitter:
+        rng = np.random.default_rng(seed)
+        x, y = dither(x, rng), dither(y, rng)
+        z = dither(z, rng) if z is not None else None
 
     joint = np.hstack([x, y] if z is None else [x, y, z])
     # Distance to the k-th neighbour in the joint space (index 0 is the point itself)

@@ -65,6 +65,33 @@ class TestNonMarkovianMemory(unittest.TestCase):
         self.assertGreater(conditional_mutual_information(x, y), 0.3)
         self.assertAlmostEqual(conditional_mutual_information(x, y, z), 0.0, delta=0.03)
 
+    def test_quantized_data_do_not_bias_the_estimator(self):
+        """
+        ADC data are quantized. Without dithering, two independent variables rounded to
+        0.1 gave 0.19 nats and rounded to 1.0 gave -3.8; with it they give about 0.
+        """
+        rng = np.random.default_rng(6)
+        x, y = rng.normal(size=3000), rng.normal(size=3000)
+        for step in (0.1, 0.5, 1.0):
+            quantize = lambda v: np.round(v / step) * step
+            self.assertAlmostEqual(conditional_mutual_information(quantize(x), quantize(y)), 0.0, delta=0.03)
+        self.assertGreater(abs(conditional_mutual_information(np.round(x, 1), np.round(y, 1), jitter=False)), 0.1)
+        # Dependence survives quantization
+        y_dep = 0.8 * x + 0.6 * rng.normal(size=3000)
+        self.assertAlmostEqual(conditional_mutual_information(np.round(x, 1), np.round(y_dep, 1)),
+                               -0.5 * np.log(1 - 0.8 ** 2), delta=0.06)
+
+    def test_quantized_markov_process_has_no_spurious_memory(self):
+        quantized = np.round(ar1(3000), 0)
+        for order in (1, 2):
+            self.assertAlmostEqual(residual_memory(quantized, order, past_lags=3), 0.0, delta=0.03)
+
+    def test_dither_is_reproducible_and_leaves_continuous_data_unchanged(self):
+        rng = np.random.default_rng(7)
+        x, y = rng.normal(size=500), rng.normal(size=500)
+        self.assertEqual(conditional_mutual_information(x, y), conditional_mutual_information(x, y))
+        self.assertAlmostEqual(conditional_mutual_information(x, y), conditional_mutual_information(x, y, jitter=False), places=6)
+
     def test_residual_memory_identifies_markov_order(self):
         series = nonlinear_lag5(3000)
         for order in (1, 2, 3, 4):
