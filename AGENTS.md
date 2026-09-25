@@ -36,6 +36,11 @@ python -m pytest -q test_thermodynamic_valence.py test_hardware_session.py test_
 ruff check .
 cargo test --release
 
+# Corpus and repository tools (see tools/README.md)
+python -m pytest -q tools/tests
+python -m tools.corpus_lint --docs-dir docs --facts tools/corpus_facts.toml --persona PERSONA.md
+python -m tools.check_versions
+
 # Rust
 cargo check --all-targets
 cargo run --release --bin thermodynamic_valence

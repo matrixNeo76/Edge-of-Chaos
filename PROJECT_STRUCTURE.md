@@ -82,6 +82,7 @@ Edge-of-Chaos/
 │   ├── test_necessary_conditions.py             Tests of the necessary-condition criteria
 │   ├── test_engine_parity.py                    Python/Rust parity on identical inputs (needs the native module)
 │   ├── notebooks/demo.ipynb                     Demonstration notebook (runs on Binder)
+│   ├── tools/                                   Build and consistency checks (see tools/README.md)
 │   ├── test_hardware_session.py                 Unit tests for the hardware session
 │   │
 │   ├── paper0_cli.py                            Single subcommand entry point (for packaging)

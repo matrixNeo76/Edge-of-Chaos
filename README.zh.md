@@ -68,6 +68,7 @@ Edge-of-Chaos/
 ├── test_engine_parity.py         # 相同输入下 Python/Rust 结果一致性测试（需要原生模块）
 ├── paper0_cli.py                 # 统一的多子命令 CLI 入口
 ├── notebooks/demo.ipynb          # 演示笔记本（可在 Binder 上运行）
+├── tools/                        # 论文构建与一致性检查、引用核验、Zenodo 记录与版本检查
 ├── references.bib                # 完整的 BibTeX 参考文献数据库（49 条引用，涵盖 IIT、FEP、Chua、Lakatos）
 │
 ├── install.sh                    # Linux / macOS 安装脚本
@@ -166,6 +167,9 @@ python3 paper0_cli.py conditions
 ```bash
 python3 valence_dashboard.py
 ```
+
+### 语料工具
+`tools/` 包含每轮修订使用的检查：论文的可复现构建、跨论文一致性检查、基于 Crossref 与 DataCite 的引用核验、已发布 Zenodo 记录检查，以及发布版本检查（在 CI 中运行）。详见 [tools/README.md](tools/README.md)（英文）。
 
 ### 演示笔记本
 `notebooks/demo.ipynb` 在模拟数据上运行效价代理量与传出副本消融、G_pred 的已知局限、划界条件以及混沌边缘判据，并附有说明。无需安装，可通过 [Binder](https://mybinder.org/v2/gh/matrixNeo76/Edge-of-Chaos/HEAD?labpath=notebooks%2Fdemo.ipynb) 在浏览器中打开。
