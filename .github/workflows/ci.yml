@@ -58,6 +58,8 @@ jobs:
           pip install -r requirements.txt pytest maturin
           maturin build --release --out dist_wheel
           pip install dist_wheel/*.whl
+          # The parity test skips itself without the native module; here it must run.
+          python -c "import thermodynamic_valence_rust as m; assert hasattr(m, 'calculate_valence_with_niche_rust')"
           python -m pytest -q -rs test_engine_parity.py
 
   docker:

@@ -8,6 +8,8 @@ Integrates the optimal laboratory parameters derived from the simulation campaig
   - 1/f percolative noise calibrated at the edge of chaos (sigma_noise = 0.10, alpha = 1.0)
   - Automatic pre-configuration for Keithley DMM, PicoScope, and SCPI function generator
   - A1/A2 allostatic feedback and efference-copy injection in hardware/firmware
+Only the mock instruments are implemented; the real-instrument paths raise
+NotImplementedError (see KeithleyDMMDriverV2 for what a real driver needs).
 """
 
 import numpy as np
@@ -61,52 +63,48 @@ def mock_dmm_carrier(t):
     return 100e-6 * (1.0 + 0.5 * np.sin(2 * np.pi * 5.0 * t))
 
 
+KEITHLEY_NOT_IMPLEMENTED = (
+    "real Keithley acquisition is not implemented: only the mock (mock=True) is available. "
+    "See the KeithleyDMMDriverV2 docstring for what a real driver must do."
+)
+
+
 class KeithleyDMMDriverV2:
     """
-    Driver for a Keithley SourceMeter (e.g. 2400) with compliance limits set on connection.
+    Driver for a Keithley SourceMeter (e.g. 2400). Only the mock is implemented.
 
-    The real-instrument path (mock=False) has only been tested against a fake VISA resource
-    that records the commands (test_hardware_session.py), not against an instrument. On
-    connection it sets the current compliance and the overvoltage protection before any other
-    command, reads both back, and closes the connection and raises if they do not match.
-    Use it as a context manager, or call close(), to release the instrument.
+    Up to v0.3.0 a real-instrument path existed but had never run against an instrument, and
+    a review found it wrong in ways that cannot be fixed without one: it set the voltage
+    limit with :SOUR:VOLT:PROT, which on the 2400 is the overvoltage protection (selectable
+    only in steps from 20 V, so a 1.5 V limit is not possible) rather than a compliance; it
+    parsed :TRACE:DATA? as currents, while the default format interleaves voltage, current,
+    resistance, timestamp and status; it never configured the buffer or started an
+    acquisition, so n_samples was ignored; and it left the instrument open when a command
+    failed during connect(). The real path now raises NotImplementedError. A real driver
+    must, at least:
+      - choose the source function, then set the compliance of the measured quantity
+        (:SENS:CURR:PROT when sourcing voltage, :SENS:VOLT:PROT when sourcing current) and
+        the source range and level within the safe limits, read them back, and reject
+        non-finite or out-of-range readings, all before enabling the output;
+      - set :FORM:ELEM CURR, clear and size the buffer (:TRAC:CLE, :TRAC:POIN n,
+        :TRAC:FEED:CONT NEXT, :TRIG:COUN n), start the acquisition and read n values;
+      - release the instrument on every error path (close / context manager);
+      - be tested on the instrument, not only against a fake VISA resource.
     """
-    def __init__(self, resource_name="GPIB0::24::INSTR", config=LaboratoryParametersConfig, mock=True, seed=None,
-                 resource_manager=None):
+    def __init__(self, resource_name="GPIB0::24::INSTR", config=LaboratoryParametersConfig, mock=True, seed=None):
         self.resource_name = resource_name
         self.config = config
         self.mock = mock
         self.connected = False
-        self.inst = None
         self.rng = np.random.default_rng(seed)
-        self._resource_manager = resource_manager
 
     def connect(self):
-        if self.mock:
-            self.connected = True
-            return f"MOCK_KEITHLEY_2400 (Configured: V_comp={self.config.V_COMPLIANCE_MAX}V, I_comp={self.config.I_COMPLIANCE_MAX*1e3}mA)"
-        if self._resource_manager is None:
-            import pyvisa
-            self._resource_manager = pyvisa.ResourceManager()
-        self.inst = self._resource_manager.open_resource(self.resource_name)
-        # Safety limits first, before any other command
-        self.inst.write(f":SENS:CURR:PROT {self.config.I_COMPLIANCE_MAX}")
-        self.inst.write(f":SOUR:VOLT:PROT {self.config.V_COMPLIANCE_MAX}")
-        current_limit = float(self.inst.query(":SENS:CURR:PROT?"))
-        voltage_limit = float(self.inst.query(":SOUR:VOLT:PROT?"))
-        if current_limit > self.config.I_COMPLIANCE_MAX or voltage_limit > self.config.V_COMPLIANCE_MAX:
-            self.close()
-            raise RuntimeError(
-                f"compliance not applied: instrument reports {current_limit} A / {voltage_limit} V, "
-                f"requested {self.config.I_COMPLIANCE_MAX} A / {self.config.V_COMPLIANCE_MAX} V")
+        if not self.mock:
+            raise NotImplementedError(KEITHLEY_NOT_IMPLEMENTED)
         self.connected = True
-        return self.inst.query("*IDN?")
+        return f"MOCK_KEITHLEY_2400 (Configured: V_comp={self.config.V_COMPLIANCE_MAX}V, I_comp={self.config.I_COMPLIANCE_MAX*1e3}mA)"
 
     def close(self):
-        """Release the instrument (no-op for the mock)."""
-        if self.inst is not None:
-            self.inst.close()
-            self.inst = None
         self.connected = False
 
     def __enter__(self):
@@ -118,26 +116,25 @@ class KeithleyDMMDriverV2:
         return False
 
     def read_current_stream(self, n_samples=1000):
-        """Reads a current stream I(t), injecting 1/f percolative noise calibrated at the edge of chaos."""
+        """Mock current stream I(t): a 5 Hz carrier modulated by calibrated 1/f noise."""
+        if not self.mock:
+            raise NotImplementedError(KEITHLEY_NOT_IMPLEMENTED)
         if not self.connected:
             raise RuntimeError("Device not connected. Call connect() before reading.")
-        if self.mock:
-            if n_samples < 4:
-                raise ValueError(f"n_samples must be at least 4, got {n_samples}")
-            dt = 1.0 / self.config.SAMPLE_RATE_DMM_HZ
-            t = np.linspace(0, n_samples * dt, n_samples)
+        if n_samples < 4:
+            raise ValueError(f"n_samples must be at least 4, got {n_samples}")
+        dt = 1.0 / self.config.SAMPLE_RATE_DMM_HZ
+        t = np.linspace(0, n_samples * dt, n_samples)
 
-            noise_1f = generate_1f_noise(n_samples, dt, alpha=self.config.ALPHA_NOISE_1F,
-                                         sigma=self.config.SIGMA_NOISE_OPTIMAL, rng=self.rng)
+        noise_1f = generate_1f_noise(n_samples, dt, alpha=self.config.ALPHA_NOISE_1F,
+                                     sigma=self.config.SIGMA_NOISE_OPTIMAL, rng=self.rng)
 
-            # Deterministic carrier modulated by the 1/f noise
-            i_t = mock_dmm_carrier(t) * (1.0 + noise_1f)
+        # Deterministic carrier modulated by the 1/f noise
+        i_t = mock_dmm_carrier(t) * (1.0 + noise_1f)
 
-            # Hard compliance protection limit
-            i_t = np.clip(i_t, 0, self.config.I_COMPLIANCE_MAX)
-            return i_t
-        data_str = self.inst.query(":TRACE:DATA?")
-        return np.array([float(val) for val in data_str.split(',') if val.strip()])
+        # Hard compliance protection limit
+        i_t = np.clip(i_t, 0, self.config.I_COMPLIANCE_MAX)
+        return i_t
 
 
 PICOSCOPE_NOT_IMPLEMENTED = (
@@ -212,7 +209,11 @@ class NeuromorphicHardwareInterfaceV2:
         self.pico.close()
 
     def __enter__(self):
-        self.initialize_session()
+        try:
+            self.initialize_session()
+        except BaseException:
+            self.close()
+            raise
         return self
 
     def __exit__(self, exc_type, exc, tb):

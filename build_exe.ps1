@@ -92,8 +92,14 @@ $TestModules = @("test_thermodynamic_valence", "test_hardware_session", "test_de
                  "test_necessary_conditions", "test_engine_parity")
 $HiddenImports = $TestModules | ForEach-Object { "--hidden-import=$_" }
 & $VenvPython -m PyInstaller --onedir --noconfirm --name paper0 @HiddenImports paper0_cli.py
+$PyInstallerExit = $LASTEXITCODE
 Pop-Location
 $ErrorActionPreference = "Stop"
+if ($PyInstallerExit -ne 0) {
+    # An executable left by an earlier build must not pass for a successful one
+    Write-Host "[ERROR] PyInstaller failed (exit $PyInstallerExit)." -ForegroundColor Red
+    exit 1
+}
 
 # 6. Outcome
 $ExePath = Join-Path $RepoRoot "dist\paper0\paper0.exe"

@@ -20,67 +20,18 @@ from hardware_driver_v2 import (
 from thermodynamic_valence import calculate_thermodynamic_valence
 
 
-class FakeVisaResource:
-    """Records the commands sent to an instrument and answers queries from a table."""
+class TestRealInstrumentPaths(unittest.TestCase):
+    """Only the mock instruments exist; the real paths must fail explicitly."""
 
-    def __init__(self, answers):
-        self.answers = answers
-        self.log = []
-        self.closed = False
-
-    def write(self, command):
-        self.log.append(("write", command))
-
-    def query(self, command):
-        self.log.append(("query", command))
-        return self.answers[command]
-
-    def close(self):
-        self.closed = True
-
-
-class FakeResourceManager:
-    def __init__(self, resource):
-        self.resource = resource
-        self.opened = []
-
-    def open_resource(self, name):
-        self.opened.append(name)
-        return self.resource
-
-
-def keithley_answers(current_limit="0.001", voltage_limit="1.5"):
-    return {":SENS:CURR:PROT?": current_limit, ":SOUR:VOLT:PROT?": voltage_limit,
-            "*IDN?": "KEITHLEY,2400,FAKE", ":TRACE:DATA?": "1e-4,2e-4,3e-4"}
-
-
-class TestRealInstrumentPath(unittest.TestCase):
-    """The mock=False code paths, against a fake VISA resource (no instrument needed)."""
-
-    def test_compliance_is_set_and_verified_before_anything_else(self):
-        resource = FakeVisaResource(keithley_answers())
-        dmm = KeithleyDMMDriverV2(mock=False, resource_manager=FakeResourceManager(resource))
-        self.assertEqual(dmm.connect(), "KEITHLEY,2400,FAKE")
-        self.assertEqual(resource.log[:4], [
-            ("write", ":SENS:CURR:PROT 0.001"),
-            ("write", ":SOUR:VOLT:PROT 1.5"),
-            ("query", ":SENS:CURR:PROT?"),
-            ("query", ":SOUR:VOLT:PROT?"),
-        ])
-
-    def test_refuses_and_closes_if_compliance_is_not_applied(self):
-        resource = FakeVisaResource(keithley_answers(current_limit="0.1"))
-        dmm = KeithleyDMMDriverV2(mock=False, resource_manager=FakeResourceManager(resource))
-        with self.assertRaises(RuntimeError):
+    def test_keithley_real_path_is_explicitly_unavailable(self):
+        dmm = KeithleyDMMDriverV2(mock=False)
+        with self.assertRaises(NotImplementedError):
             dmm.connect()
-        self.assertTrue(resource.closed)
-        self.assertFalse(dmm.connected)
-
-    def test_reads_trace_and_closes_as_context_manager(self):
-        resource = FakeVisaResource(keithley_answers())
-        with KeithleyDMMDriverV2(mock=False, resource_manager=FakeResourceManager(resource)) as dmm:
-            np.testing.assert_allclose(dmm.read_current_stream(), [1e-4, 2e-4, 3e-4])
-        self.assertTrue(resource.closed)
+        with self.assertRaises(NotImplementedError):
+            dmm.read_current_stream()
+        with self.assertRaises(NotImplementedError):
+            with KeithleyDMMDriverV2(mock=False):
+                pass
 
     def test_picoscope_real_path_is_explicitly_unavailable(self):
         pico = PicoScopeOscilloscopeDriverV2(mock=False)
@@ -88,12 +39,20 @@ class TestRealInstrumentPath(unittest.TestCase):
             pico.connect()
         with self.assertRaises(NotImplementedError):
             pico.acquire_waveform()
+
+    def test_interface_releases_instruments_when_initialisation_fails(self):
+        hw = NeuromorphicHardwareInterfaceV2(mock=False)
         with self.assertRaises(NotImplementedError):
-            NeuromorphicHardwareInterfaceV2(mock=False).initialize_session()
+            with hw:
+                pass
+        self.assertFalse(hw.dmm.connected)
+        self.assertFalse(hw.pico.connected)
 
     def test_mock_acquisition_requires_connection(self):
         with self.assertRaises(RuntimeError):
             PicoScopeOscilloscopeDriverV2(mock=True).acquire_waveform()
+        with self.assertRaises(RuntimeError):
+            KeithleyDMMDriverV2(mock=True).read_current_stream()
 
 
 class TestHardwareAcquisitionSession(unittest.TestCase):

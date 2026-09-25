@@ -71,7 +71,7 @@ pub fn simulate_neuromorphic_substrate_sde(
     seed: u64,
 ) -> (Vec<f64>, Vec<f64>, Vec<f64>) {
     assert!(n_steps >= 2, "n_steps must be at least 2, got {}", n_steps);
-    assert!(dt > 0.0, "dt must be positive, got {}", dt);
+    assert!(dt.is_finite() && dt > 0.0, "dt must be positive and finite, got {}", dt);
     let mut rng = FastRng::new(seed);
     let a = -1.2;
     let b = 0.8;
@@ -240,11 +240,11 @@ pub fn calculate_thermodynamic_valence_with_niche(
         "x_a1, s_obs and s_pred must have equal length, got {}, {}, {}",
         n, s_obs.len(), s_pred.len()
     );
-    assert!(dt > 0.0, "dt must be positive, got {}", dt);
+    assert!(dt.is_finite() && dt > 0.0, "dt must be positive and finite, got {}", dt);
     assert!(n >= tau_steps + 7, "series too short: {} samples, need at least {}", n, tau_steps + 7);
     assert!(
-        x_a1.iter().chain(s_obs).chain(s_pred).all(|v| v.is_finite()),
-        "x_a1, s_obs and s_pred must not contain NaN or infinite values"
+        x_a1.iter().chain(s_obs).chain(s_pred).chain(target_samples).all(|v| v.is_finite()),
+        "x_a1, s_obs, s_pred and the niche must not contain NaN or infinite values"
     );
     let mut dx = Vec::with_capacity(n - 1);
     for i in 0..n - 1 {
@@ -379,6 +379,15 @@ mod tests {
     fn short_series_panic() {
         let (x, s_obs, s_pred) = simulate_neuromorphic_substrate_sde(12, 0.001, 1);
         calculate_thermodynamic_valence(&x, &s_obs, &s_pred, 0.001, 1.0, 0.5, 0.8);
+    }
+
+    #[test]
+    #[should_panic(expected = "must not contain NaN")]
+    fn non_finite_niche_panics() {
+        let (x, s_obs, s_pred) = simulate_neuromorphic_substrate_sde(100, 0.001, 1);
+        let mut niche = vec![0.0; x.len()];
+        niche[3] = f64::INFINITY;
+        calculate_thermodynamic_valence_with_niche(&x, &s_obs, &s_pred, 0.001, 1.0, 0.5, 0.8, &niche);
     }
 
     #[test]

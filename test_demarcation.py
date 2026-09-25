@@ -92,6 +92,14 @@ class TestNonMarkovianMemory(unittest.TestCase):
         self.assertEqual(conditional_mutual_information(x, y), conditional_mutual_information(x, y))
         self.assertAlmostEqual(conditional_mutual_information(x, y), conditional_mutual_information(x, y, jitter=False), places=6)
 
+    def test_dither_works_with_large_offsets(self):
+        """At 1e15 a noise of 1e-10 would be rounded away without centring (CodeRabbit, PR #1)."""
+        tied = np.full(100, 1e15)
+        self.assertAlmostEqual(conditional_mutual_information(tied, tied.copy()), 0.0, delta=0.2)
+        rng = np.random.default_rng(9)
+        x, y = rng.normal(size=2000), rng.normal(size=2000)
+        self.assertAlmostEqual(conditional_mutual_information(x + 1e12, y - 1e12), 0.0, delta=0.03)
+
     def test_residual_memory_identifies_markov_order(self):
         series = nonlinear_lag5(3000)
         for order in (1, 2, 3, 4):
@@ -155,6 +163,19 @@ class TestStateDependentDynamics(unittest.TestCase):
         self.assertGreater(result["statistic"], result["null_threshold"])
         with self.assertRaises(ValueError):
             state_dependent_dynamics(linear_2d(500), n_null=-1)
+
+    def test_invalid_n_null_and_fixed_regions_are_rejected(self):
+        states = linear_2d(2000, seed=2)
+        for bad in (float("nan"), 2.5, -1, True):
+            with self.subTest(n_null=bad), self.assertRaises(ValueError):
+                state_dependent_dynamics(states, n_null=bad)
+        fixed = phase_space_regions(states, 3)
+        with self.assertRaises(ValueError):
+            state_dependent_dynamics(states, regions=fixed, n_null=19)
+        # Fixed regions are allowed without a null, and a callable rule with one
+        self.assertIn("passes", state_dependent_dynamics(states, regions=fixed, n_null=0))
+        result = state_dependent_dynamics(states, regions=lambda s: phase_space_regions(s, 3), n_null=9)
+        self.assertIsNotNone(result["null_threshold"])
 
     def test_candidate_requires_all_three(self):
         yes, no = {"passes": True}, {"passes": False}

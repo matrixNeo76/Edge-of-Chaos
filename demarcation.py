@@ -103,6 +103,9 @@ def dither(values, rng):
     breaks accidental ties.
     """
     values = np.array(values, dtype=float, copy=True)
+    # Centre first: added noise must stay representable next to large offsets (at 1e15 the
+    # spacing between doubles is 0.125, so noise of 1e-10 would be rounded away).
+    values -= values.mean(axis=0)
     for col in range(values.shape[1]):
         column = values[:, col]
         levels = np.unique(column)
@@ -322,13 +325,29 @@ def state_dependent_dynamics(states, theta_state=0.25, dt=1.0, regions=None,
     The papers specify theta_state alone. Without the null, estimation noise passes the
     threshold for short records: a linear system passed in 20 of 20 runs at 1000 samples.
     The null is a declared deviation from the papers; n_null = 0 reproduces their criterion.
-    `regions` defaults to phase_space_regions(states, 3), recomputed on each surrogate.
+    `regions` is a rule that partitions a series into regions: a callable taking the states
+    and returning a list of index arrays, applied to the data and to each surrogate
+    (default: phase_space_regions with three regions). A fixed list of index arrays is
+    accepted only with n_null = 0, because indices of the observed series do not identify
+    the same regions of phase space in a surrogate.
     """
     states = _finite_array(states, "states").reshape(len(states), -1)
-    if n_null < 0:
-        raise ValueError(f"n_null must be non-negative, got {n_null}")
-    fixed_regions = regions
-    regions = phase_space_regions(states, 3) if regions is None else regions
+    if isinstance(n_null, bool) or not isinstance(n_null, (int, np.integer)) or n_null < 0:
+        raise ValueError(f"n_null must be a non-negative integer, got {n_null!r}")
+    if regions is None:
+        def partition(s):
+            return phase_space_regions(s, 3)
+    elif callable(regions):
+        partition = regions
+    elif n_null > 0:
+        raise ValueError("with n_null > 0, regions must be a callable partition rule, "
+                         "not fixed indices (they do not carry over to the surrogates)")
+    else:
+        fixed = list(regions)
+
+        def partition(s):
+            return fixed
+    regions = partition(states)
     if len(regions) < 2:
         raise ValueError("need at least two regions")
     jacobians, differences = _jacobian_differences(states, regions, dt)
@@ -339,8 +358,7 @@ def state_dependent_dynamics(states, theta_state=0.25, dt=1.0, regions=None,
         rng = np.random.default_rng(seed)
         null = []
         for s in linear_surrogates(states, n_null, rng):
-            r = phase_space_regions(s, 3) if fixed_regions is None else fixed_regions
-            null.append(max(d["relative_difference"] for d in _jacobian_differences(s, r, dt)[1]))
+            null.append(max(d["relative_difference"] for d in _jacobian_differences(s, partition(s), dt)[1]))
         null_threshold = float(np.percentile(null, percentile))
 
     passes = statistic > theta_state and (null_threshold is None or statistic > null_threshold)

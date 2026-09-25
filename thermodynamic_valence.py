@@ -35,8 +35,8 @@ def simulate_neuromorphic_substrate_sde(n_steps=10000, dt=0.001, seed=42):
     """
     if n_steps < 2:
         raise ValueError(f"n_steps must be at least 2, got {n_steps}")
-    if dt <= 0:
-        raise ValueError(f"dt must be positive, got {dt}")
+    if not (np.isfinite(dt) and dt > 0):
+        raise ValueError(f"dt must be positive and finite, got {dt}")
     # Local generator: same stream as the former np.random.seed(seed), without touching
     # the global NumPy state of the caller.
     rng = np.random.RandomState(seed)
@@ -141,8 +141,8 @@ def calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt, alpha=1.0, beta=0.5
         raise ValueError("x_A1, s_obs and s_pred must be one-dimensional")
     if not (len(x_A1) == len(s_obs) == len(s_pred)):
         raise ValueError(f"x_A1, s_obs and s_pred must have equal length, got {len(x_A1)}, {len(s_obs)}, {len(s_pred)}")
-    if dt <= 0:
-        raise ValueError(f"dt must be positive, got {dt}")
+    if not (np.isfinite(dt) and dt > 0):
+        raise ValueError(f"dt must be positive and finite, got {dt}")
     if tau_steps < 1:
         raise ValueError(f"tau_steps must be at least 1, got {tau_steps}")
     min_length = tau_steps + 7  # the k-NN estimators (k = 5) need at least 7 embedded points
@@ -162,9 +162,13 @@ def calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt, alpha=1.0, beta=0.5
     if niche_samples is None:
         p_target = np.random.default_rng(niche_seed).normal(0.0, 0.2, size=(len(x_A1), 1))
     else:
-        p_target = np.asarray(niche_samples, dtype=float).reshape(-1, 1)
-        if len(p_target) != len(x_A1) or not np.all(np.isfinite(p_target)):
-            raise ValueError("niche_samples must be finite, with one sample per time point")
+        p_target = np.asarray(niche_samples, dtype=float)
+        if p_target.ndim == 2 and p_target.shape[1] == 1:
+            p_target = p_target[:, 0]
+        if p_target.ndim != 1 or len(p_target) != len(x_A1) or not np.all(np.isfinite(p_target)):
+            raise ValueError("niche_samples must be a finite one-dimensional array with one sample "
+                             f"per time point ({len(x_A1)}), got shape {np.shape(niche_samples)}")
+        p_target = p_target.reshape(-1, 1)
     x_samples = np.atleast_2d(x_A1).T
 
     d_kl_allostatic = estimate_kl_divergence_knn(x_samples, p_target, k=5)

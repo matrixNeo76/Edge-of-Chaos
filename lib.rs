@@ -53,9 +53,9 @@ pub fn compute_thermodynamic_valence_rust(
             n_steps
         )));
     }
-    if !(dt > 0.0) {
+    if !(dt.is_finite() && dt > 0.0) {
         return Err(pyo3::exceptions::PyValueError::new_err(format!(
-            "dt must be positive, got {}",
+            "dt must be positive and finite, got {}",
             dt
         )));
     }
@@ -97,8 +97,8 @@ pub fn calculate_valence_with_niche_rust(
             n
         )));
     }
-    if !(dt > 0.0) {
-        return Err(pyo3::exceptions::PyValueError::new_err("dt must be positive"));
+    if !(dt.is_finite() && dt > 0.0) {
+        return Err(pyo3::exceptions::PyValueError::new_err("dt must be positive and finite"));
     }
     if !x_a1.iter().chain(&s_obs).chain(&s_pred).chain(&niche).all(|v| v.is_finite()) {
         return Err(pyo3::exceptions::PyValueError::new_err("inputs must be finite"));

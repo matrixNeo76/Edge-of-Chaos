@@ -43,17 +43,29 @@ first change made through a pull request reviewed by CI and CodeRabbit.
   (9 decimal places) for the same inputs. The two engines draw random numbers from
   different generators, so they simulate different series for the same seed;
   "same engine" in the documentation meant same formulas.
-- Tests of the real-instrument code paths against a fake VISA resource.
+- Tests that the real-instrument paths fail explicitly and release the instruments.
 - CI: ruff, a coverage report, `cargo test`, the parity test against a freshly
   built wheel, and a Docker build. `.coderabbit.yaml` for automated review.
 
 ### Fixed
 - `docker-compose.yml` ran `dashboard_valenza.py`, renamed in v0.2.0.
 - PicoScope with `mock=False` answered "MOCK_PICOSCOPE" and returned None; it now
-  raises NotImplementedError, and the interface checks it before opening a real
-  source-meter. The Keithley path verifies the compliance limits it sets (closing
-  the connection if they do not match), reads the trace with `query`, and can be
-  closed or used as a context manager.
+  raises NotImplementedError.
+- **The real Keithley path now raises NotImplementedError too.** It had never run
+  against an instrument, and review (CodeRabbit, PR #1) found it wrong: the voltage
+  limit was set with the overvoltage-protection command, which on the 2400 cannot
+  be 1.5 V; `:TRACE:DATA?` was parsed as currents while the default format
+  interleaves five quantities; no acquisition was configured or started; and the
+  instrument stayed open when connect() failed. The class docstring lists what a
+  real driver must do. The interface releases the instruments when initialisation
+  fails.
+- Input checks: infinite `dt`, niche samples of the wrong shape (Python) or not
+  finite (Rust), and non-integer or NaN `n_null` are rejected; fixed region indices
+  are rejected with a surrogate null (they do not carry over to the surrogates;
+  pass a partition rule instead). The dither centres the data first, so it also
+  breaks ties next to large offsets.
+- CI fails if the parity test would be skipped; `build_exe.ps1` stops if
+  PyInstaller fails instead of reporting an older executable as a new build.
 - `paper0 test` in the standalone executable could not find the test modules,
   which PyInstaller does not detect; `build_exe.ps1` could package a stale wheel
   left in `dist_wheel`.
@@ -276,5 +288,4 @@ programme was not implemented, and that the three functions presented as the
   closed-loop prediction of the protocol.
 - ~~`test_noise_calibration_edge_of_chaos` fails deterministically~~: resolved
   in 0.3.0.
-- The real PicoScope driver is not implemented, and the real Keithley path has
-  only been tested against a fake VISA resource, not an instrument.
+- No real-instrument driver is implemented (Keithley, PicoScope): only the mocks.
