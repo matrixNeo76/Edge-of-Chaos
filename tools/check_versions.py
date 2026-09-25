@@ -6,7 +6,7 @@ CITATION.cff and .zenodo.json (the "vX.Y.Z" at the start of the notes), and it m
 released section in CHANGELOG.md. Run in CI; exits 1 on a mismatch.
 
 Usage
-    python tools/check_versions.py [--repo-root .]
+    python -m tools.check_versions [--repo-root .]
 """
 
 import argparse
@@ -28,7 +28,7 @@ def read_versions(root):
     citation = re.search(r"^version:\s*['\"]?([\w.\-]+)", (root / "CITATION.cff").read_text(encoding="utf-8"), re.M)
     versions["CITATION.cff"] = citation.group(1) if citation else None
     notes = json.loads((root / ".zenodo.json").read_text(encoding="utf-8")).get("notes", "")
-    zenodo = re.match(r"v(\d+\.\d+\.\d+)", notes)
+    zenodo = re.match(r"v(\d+\.\d+\.\d+)(?=\s|$)", notes)  # "v0.4.01" is not 0.4.0
     versions[".zenodo.json (notes)"] = zenodo.group(1) if zenodo else None
     return versions
 

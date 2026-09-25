@@ -1,8 +1,10 @@
 # Discrepancies reviewed by a person and accepted, with the reason. tools/verify_citations.py
-# reports them as "accepted" instead of "discrepancy". Add an entry only after checking the
-# source; never to silence an unexplained mismatch.
+# reports them as "accepted" instead of "discrepancy", but only for the kinds listed in `fields`
+# ("title", "year", "first author"): a new, different mismatch in the same entry is reported.
+# Add an entry only after checking the source; never to silence an unexplained mismatch.
 
 [[accepted]]
 key = "kleiner2025newman"
 identifier = "doi:10.33735/phimisci.2025.11827"
+fields = ["year"]
 reason = "Volume 6 (2025) of Philosophy and the Mind Sciences, published online 30 Jan 2026; cited as 2025, vol. 6 (checked on Crossref, round 3)."

@@ -19,9 +19,23 @@ pattern = 'Controls~?\s?(\d+\s*--\s*\d+)'
 allowed = ["8--9"]
 
 [[fact]]
-name = "auxiliary hypotheses (seven in Paper I, three in Paper II)"
+name = "auxiliary hypotheses of Paper I"
+pattern = '\b(one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:falsifiable\s+)?auxiliary hypotheses'
+allowed = ["seven"]
+files = ["P0_Distilled_v0.1", "P1_Main", "P3_Critique"]
+
+[[fact]]
+name = "auxiliary hypotheses of Paper II"
+pattern = '\b(one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:falsifiable\s+)?auxiliary hypotheses'
+allowed = ["three"]
+files = ["P2_SelfAgency"]
+
+# The Executive Summary reports both programmes: seven for Paper I, three for Paper II.
+[[fact]]
+name = "auxiliary hypotheses in the Executive Summary"
 pattern = '\b(one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:falsifiable\s+)?auxiliary hypotheses'
 allowed = ["seven", "three"]
+files = ["ES_Summary"]
 
 [[fact]]
 name = "necessary conditions"

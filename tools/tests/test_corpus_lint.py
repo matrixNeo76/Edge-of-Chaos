@@ -44,6 +44,9 @@ class TestParsing(unittest.TestCase):
 
     def test_comments_are_removed_but_escaped_percent_kept(self):
         self.assertEqual(strip_comments("50\\% of cases % a comment\nnext"), "50\\% of cases \nnext")
+        # After a line break (two backslashes) the % starts a comment again
+        self.assertEqual(strip_comments("a\\\\% \\cite{missing}"), "a\\\\")
+        self.assertEqual(strip_comments("b\\\\\\% kept"), "b\\\\\\% kept")
 
     def test_citations_undefined_and_unused(self):
         body, bibliography = split_bibliography(strip_comments(PAPER))
@@ -54,7 +57,10 @@ class TestParsing(unittest.TestCase):
     def test_revisions_agree_or_disagree(self):
         self.assertEqual(check_revisions(PAPER), {})
         clash = PAPER.replace("rev.~5", "rev.~4")
-        self.assertEqual(check_revisions(clash), {"header": 4, "date": 5, "body (highest)": 5})
+        self.assertEqual(check_revisions(clash), {"header": 4, "date": 5})
+        # A body that lags behind header and date: the date must not count as the body
+        lagging = PAPER.replace("\\begin{document}", "\\begin{document}\nChanges in revision 4.")
+        self.assertEqual(check_revisions(lagging), {"header": 5, "date": 5, "body (highest)": 4})
 
     def test_style_ignores_the_bibliography(self):
         body, _ = split_bibliography(PAPER)
@@ -87,6 +93,14 @@ class TestFacts(unittest.TestCase):
         self.assertIn("numbers of the Paper II controls", joined)
         self.assertIn("questions examined by the critical assessment: 'eleven objections examined in", joined)
 
+    def test_range_with_spaces_is_the_same_range(self):
+        errors, _ = self.run_lint(PAPER.replace("Controls~8--9", "Controls~8 -- 9"))
+        self.assertFalse(any("Paper II controls" in e for e in errors))
+
+    def test_auxiliary_hypotheses_are_checked_per_paper(self):
+        errors, _ = self.run_lint("\\begin{document}\nPaper I has three auxiliary hypotheses.\n", name="P0_Distilled_v0.1")
+        self.assertTrue(any("auxiliary hypotheses of Paper I" in e for e in errors))
+
     def test_history_sentence_is_not_a_count(self):
         errors, _ = self.run_lint(PAPER)
         self.assertFalse(any("ten objections" in e for e in errors))
@@ -101,9 +115,11 @@ class TestPersonaMap(unittest.TestCase):
 
     def test_missing_entries_are_reported(self):
         entries = ["demarcation.no_such_function", "no_such_file.py", "calculate_thermodynamic_valence",
-                   "thermodynamic_valence.py/.rs", "missing_module.py/.rs"]
+                   "thermodynamic_valence.py/.rs", "missing_module.py/.rs", "tools/corpus_lint.py",
+                   "tools/no_such_tool.py"]
         self.assertEqual(check_persona_map(entries, REPO),
-                         ["demarcation.no_such_function", "no_such_file.py", "missing_module.py/.rs"])
+                         ["demarcation.no_such_function", "no_such_file.py", "missing_module.py/.rs",
+                          "tools/no_such_tool.py"])
 
 
 if __name__ == "__main__":

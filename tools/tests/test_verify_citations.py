@@ -1,5 +1,6 @@
 """Tests for tools/verify_citations.py with simulated Crossref and DataCite responses (no network)."""
 
+import http.client
 import json
 import unittest
 import urllib.error
@@ -123,20 +124,36 @@ class TestVerify(unittest.TestCase):
         self.assertEqual(compare("Sanz Perl, Y. (2021). Nonequilibrium brain dynamics as a signature of "
                                  "consciousness.", record), [])
 
-    def test_accepted_discrepancies_are_reported_as_accepted(self):
-        entry = [("P0", "kleiner2024", "Kleiner, J. (2023). The case for neurons. doi:10.1093/nc/niae037")]
+    def test_year_inside_an_identifier_does_not_count(self):
+        # The record says 2019; the entry says 2018 and its DOI contains 2019
+        record = {"title": "The unfolding argument", "years": [2019], "first_author": "Doerig", "volume": None}
+        entry = "Doerig, A. (2018). The unfolding argument. doi:10.1016/j.concog.2019.04.002"
+        self.assertEqual(len(compare(entry, record)), 1)
+        self.assertTrue(compare(entry, record)[0].startswith("year differs"))
+        self.assertEqual(compare(entry.replace("(2018)", "(2019)"), record), [])
+
+    def test_accepted_discrepancies_only_for_their_fields(self):
+        title = "The case for neurons: a no-go theorem for consciousness on a chip"
+        entry = [("P0", "kleiner2024", f"Kleiner, J. (2023). {title}. doi:10.1093/nc/niae037")]
         (plain,) = verify(entry, {}, get=fake_get, pause=0)
-        self.assertEqual(plain["status"], "discrepancy")
-        accepted = {("kleiner2024", "doi:10.1093/nc/niae037"): "online-first year, checked"}
+        self.assertEqual(plain["status"], "discrepancy")  # year only
+        accepted = {("kleiner2024", "doi:10.1093/nc/niae037"): ({"year"}, "online-first year, checked")}
         (result,) = verify(entry, {}, get=fake_get, pause=0, accepted=accepted)
         self.assertEqual(result["status"], "accepted")
         self.assertIn("checked", result["details"])
+        # A different mismatch in the same entry is still reported
+        wrong_author = [("P0", "kleiner2024", f"Smith, J. (2023). {title}. doi:10.1093/nc/niae037")]
+        (result,) = verify(wrong_author, {}, get=fake_get, pause=0, accepted=accepted)
+        self.assertEqual(result["status"], "discrepancy")
 
     def test_network_errors_are_not_reported_as_missing(self):
-        def offline(url, timeout=30):
-            raise urllib.error.URLError("no network")
-        (result,) = verify([("P0", "k", "doi:10.1000/abc")], {}, get=offline, pause=0)
-        self.assertEqual(result["status"], "unverifiable now")
+        for error in (urllib.error.URLError("no network"), ConnectionResetError("reset"),
+                      http.client.IncompleteRead(b"partial")):
+            def offline(url, timeout=30, error=error):
+                raise error
+            with self.subTest(type(error).__name__):
+                (result,) = verify([("P0", "k", "doi:10.1000/abc")], {}, get=offline, pause=0)
+                self.assertEqual(result["status"], "unverifiable now")
 
     def test_report_puts_problems_first(self):
         text = report([{"source": "P0", "key": "a", "status": "verified", "details": ""},

@@ -12,7 +12,7 @@ For each record in the configuration (tools/zenodo_records.toml):
 - for software, the version field matches.
 
 Usage
-    python tools/zenodo_check.py --config tools/zenodo_records.toml --docs-dir docs
+    python -m tools.zenodo_check --config tools/zenodo_records.toml --docs-dir docs
 """
 
 import argparse
@@ -41,7 +41,9 @@ def check_record(spec, record, docs_dir=None, community=None):
     if expected_file:
         if expected_file not in files:
             problems.append(f"file '{expected_file}' not in the latest version (files: {sorted(files)})")
-        elif docs_dir is not None:
+        elif docs_dir is None:
+            problems.append("MD5 not compared: --docs-dir not given")
+        else:
             local = docs_dir / expected_file
             if not local.exists():
                 problems.append(f"local file {local} not found")
@@ -79,8 +81,11 @@ def run(config, docs_dir=None, get=http_get):
         except (urllib.error.URLError, TimeoutError, ValueError, KeyError) as error:
             results.append({"name": spec["name"], "record": None, "problems": [f"cannot read the record: {error}"]})
             continue
-        results.append({"name": spec["name"], "record": record.get("id"),
-                        "problems": check_record(spec, record, docs_dir, community)})
+        try:
+            problems = check_record(spec, record, docs_dir, community)
+        except OSError as error:  # e.g. a local file that cannot be read
+            problems = [f"cannot check the record: {error}"]
+        results.append({"name": spec["name"], "record": record.get("id"), "problems": problems})
     return results
 
 

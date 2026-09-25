@@ -21,7 +21,7 @@ The bibliography (after \\begin{thebibliography}) is excluded from the text chec
 titles of cited works keep their own spelling.
 
 Usage
-    python tools/corpus_lint.py --docs-dir docs --facts tools/corpus_facts.toml --persona PERSONA.md
+    python -m tools.corpus_lint --docs-dir docs --facts tools/corpus_facts.toml --persona PERSONA.md
 """
 
 import argparse
@@ -49,8 +49,11 @@ AVOID = ["moreover, it is important to note", "in summary", "it is worth noting"
 
 
 def strip_comments(text):
-    """Remove LaTeX comments (unescaped %) while keeping line numbers."""
-    return "\n".join(re.sub(r"(?<!\\)%.*", "", line) for line in text.split("\n"))
+    """
+    Remove LaTeX comments while keeping line numbers. A % starts a comment unless an odd number
+    of backslashes precedes it (\\% is a literal percent; \\\\% is a line break then a comment).
+    """
+    return "\n".join(re.sub(r"(?<!\\)((?:\\\\)*)%.*", r"\1", line) for line in text.split("\n"))
 
 
 def line_of(text, index):
@@ -77,13 +80,15 @@ def check_citations(body, bibliography):
 def check_revisions(text):
     """Revision in the header, in the date and the highest one mentioned in the body must agree."""
     found = {}
+    begin = text.find(BS + "begin{document}")
+    document_body = text[begin:] if begin >= 0 else text
     header = re.search(re.escape(BS + "lhead{") + r"[^}]*?rev\.~?\s*(\d+)", text)
     date = re.search(re.escape(BS + "date{") + r"[^}]*?revision\s+(\d+)", text)
     if header:
         found["header"] = int(header.group(1))
     if date:
         found["date"] = int(date.group(1))
-    body = [int(n) for n in re.findall(r"[Rr]evision~?\s*(\d+)", text)]
+    body = [int(n) for n in re.findall(r"[Rr]evision~?\s*(\d+)", document_body)]
     if body:
         found["body (highest)"] = max(body)
     return found if len(set(found.values())) > 1 else {}
@@ -94,9 +99,9 @@ def check_facts(name, body, facts):
     for fact in facts:
         if fact.get("files") and name not in fact["files"]:
             continue
-        allowed = {str(v).lower() for v in fact["allowed"]}
+        allowed = {re.sub(r"\s+", "", str(v).lower()) for v in fact["allowed"]}
         for match in re.finditer(fact["pattern"], body, re.I):
-            value = match.group(1).lower()
+            value = re.sub(r"\s+", "", match.group(1).lower())  # "8 -- 9" is the same range as "8--9"
             if value not in allowed:
                 problems.append((line_of(body, match.start()), fact["name"], match.group(0), sorted(allowed)))
     return problems
@@ -131,12 +136,12 @@ def check_persona_map(entries, repo_root):
     python_sources = {p: p.read_text(encoding="utf-8", errors="replace") for p in repo_root.glob("*.py")}
     missing = []
     for entry in entries:
-        if "/" in entry:  # thermodynamic_valence.py/.rs
-            stem, first_ext = entry.split("/")[0].rsplit(".", 1)
-            extensions = [first_ext] + [e.lstrip(".") for e in entry.split("/")[1:]]
-            if not all((repo_root / f"{stem}.{ext}").exists() for ext in extensions):
+        if re.fullmatch(r"[\w./-]+\.\w+(?:/\.\w+)+", entry):  # combined notation: name.py/.rs
+            first, *others = entry.split("/.")
+            stem, first_ext = first.rsplit(".", 1)
+            if not all((repo_root / f"{stem}.{ext}").exists() for ext in [first_ext] + others):
                 missing.append(entry)
-        elif entry.endswith((".py", ".rs")):
+        elif "/" in entry or entry.endswith((".py", ".rs", ".md", ".toml")):  # a path, possibly in a folder
             if not (repo_root / entry).exists():
                 missing.append(entry)
         elif "." in entry:  # module.function

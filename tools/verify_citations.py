@@ -21,10 +21,12 @@ no personal data. Discrepancies already reviewed by a person can be listed, with
 "accepted" TOML file (tools/citation_accepted.toml); they are then reported as "accepted".
 
 Usage
-    python tools/verify_citations.py --docs-dir docs --bib references.bib --cache docs_v0.2/.citation_cache.json
+    python -m tools.verify_citations --docs-dir docs --bib references.bib --cache docs_v0.2/.citation_cache.json \
+        --accepted tools/citation_accepted.toml
 """
 
 import argparse
+import http.client
 import json
 import tomllib
 import re
@@ -136,16 +138,28 @@ def fetch_record(kind, identifier, get=http_get):
         return fetch_datacite(identifier, get=get)
 
 
+def strip_identifiers(entry_text):
+    """The entry without DOIs, URLs and identifier fields, which often contain a year."""
+    text = re.sub(r"https?://\S+", " ", entry_text)
+    text = re.sub(r"\b(?:doi|eprint|url)\s*=\s*[{\"][^}\"]*[}\"]", " ", text, flags=re.I)
+    text = DOI.sub(" ", text)
+    text = re.sub(r"\b10\.\d{4,9}/\S+", " ", text)
+    return ARXIV.sub(" ", text)
+
+
 def compare(entry_text, record):
     """Problems found comparing an entry with its record (empty list: verified)."""
     problems = []
+    bare = strip_identifiers(entry_text)
     entry_words = set(normalise(entry_text))
     title_words = [w for w in normalise(record["title"]) if w not in STOPWORDS]
     if title_words:
         share = sum(w in entry_words for w in title_words) / len(title_words)
         if share < TITLE_THRESHOLD:
             problems.append(f"title differs (record: \"{record['title']}\", {share:.0%} of its words in the entry)")
-    if record["years"] and not any(str(y) in entry_text for y in record["years"]):
+    # A year counts only as a whole number outside identifiers: 10.1016/j.concog.2019.04.002
+    # contains 2019, but an entry dated (2018) with that DOI is still a year mismatch.
+    if record["years"] and not any(re.search(rf"(?<!\d){y}(?!\d)", bare) for y in record["years"]):
         problems.append(f"year differs (record: {record['years']})")
     author = normalise(record["first_author"])
     if author and not set(author) <= entry_words:
@@ -153,12 +167,29 @@ def compare(entry_text, record):
     return problems
 
 
+PROBLEM_KINDS = ("title", "year", "first author")
+
+
+def problem_kind(problem):
+    return next(kind for kind in PROBLEM_KINDS if problem.startswith(kind))
+
+
 def load_accepted(path):
-    """{(key, identifier): reason} from the accepted-discrepancies TOML file."""
+    """
+    {(key, identifier): (fields, reason)} from the accepted-discrepancies TOML file. An entry
+    accepts only the kinds of discrepancy listed in `fields` ("title", "year", "first author").
+    """
     if path is None or not path.exists():
         return {}
     items = tomllib.loads(path.read_text(encoding="utf-8")).get("accepted", [])
-    return {(item["key"], item["identifier"]): item["reason"] for item in items}
+    accepted = {}
+    for item in items:
+        fields = set(item.get("fields", []))
+        unknown = fields - set(PROBLEM_KINDS)
+        if not fields or unknown:
+            raise ValueError(f"accepted entry {item.get('key')}: 'fields' must list some of {PROBLEM_KINDS}")
+        accepted[(item["key"], item["identifier"])] = (fields, item["reason"])
+    return accepted
 
 
 def verify(entries, cache, get=http_get, pause=1.0, accepted=None):
@@ -180,13 +211,15 @@ def verify(entries, cache, get=http_get, pause=1.0, accepted=None):
                 status = "not found" if error.code == 404 else "unverifiable now"
                 results.append({"source": source, "key": key, "status": status, "details": f"{cache_key}: HTTP {error.code}"})
                 continue
-            except (urllib.error.URLError, TimeoutError, ValueError) as error:
+            # URLError, ConnectionResetError and timeouts are OSErrors; IncompleteRead is an
+            # HTTPException raised while reading the body. None of them may stop the run.
+            except (OSError, http.client.HTTPException, ValueError, KeyError) as error:
                 results.append({"source": source, "key": key, "status": "unverifiable now", "details": f"{cache_key}: {error}"})
                 continue
             time.sleep(pause)
         problems = compare(text, record)
-        reason = accepted.get((key, cache_key))
-        if problems and reason:
+        fields, reason = accepted.get((key, cache_key), (set(), ""))
+        if problems and all(problem_kind(p) in fields for p in problems):
             results.append({"source": source, "key": key, "status": "accepted", "details": f"{cache_key}; {reason}"})
             continue
         results.append({"source": source, "key": key, "status": "discrepancy" if problems else "verified",
@@ -226,9 +259,11 @@ def main(argv=None):
         entries += [(bib.name, key, text) for key, text in extract_bib_entries(bib.read_text(encoding="utf-8"))]
 
     cache = json.loads(args.cache.read_text(encoding="utf-8")) if args.cache and args.cache.exists() else {}
-    results = verify(entries, cache, accepted=load_accepted(args.accepted))
-    if args.cache:
-        args.cache.write_text(json.dumps(cache, indent=1, sort_keys=True), encoding="utf-8")
+    try:
+        results = verify(entries, cache, accepted=load_accepted(args.accepted))
+    finally:  # keep what was fetched even if the run stops
+        if args.cache:
+            args.cache.write_text(json.dumps(cache, indent=1, sort_keys=True), encoding="utf-8")
     text = report(results)
     if args.report:
         args.report.write_text(text, encoding="utf-8")

@@ -1,5 +1,6 @@
 """Tests for tools/build_papers.py on fixtures (no LaTeX installation needed)."""
 
+import hashlib
 import json
 import unittest
 from pathlib import Path
@@ -70,7 +71,8 @@ class TestEndToEndWithoutBuild(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             docs = Path(tmp)
             (docs / "Paper.tex").write_text("\\documentclass{article}\n", encoding="utf-8")
-            (docs / "Paper.pdf").write_bytes(b"%PDF-1.5 fake")
+            pdf_bytes = b"%PDF" + b"x" * (367956 - 4)  # the size the log reports
+            (docs / "Paper.pdf").write_bytes(pdf_bytes)
             (docs / "Paper.log").write_text(LOG, encoding="latin-1")
             report_path = docs / "report.md"
             status = main(["--docs-dir", str(docs), "--papers", "Paper", "--no-build",
@@ -78,10 +80,23 @@ class TestEndToEndWithoutBuild(unittest.TestCase):
             self.assertEqual(status, 1)  # undefined citation and reference, new overfull
             report = report_path.read_text(encoding="utf-8")
             self.assertIn("undefined citations: ['kleiner2024']", report)
-            self.assertIn("`", report)
+            self.assertIn(f"`{hashlib.md5(pdf_bytes).hexdigest()}`", report)
+            self.assertNotIn("SOURCE_DATE_EPOCH", report)  # nothing was compiled in this run
 
             # Recording the overfull boxes in the baseline leaves only the undefined entries
             status = main(["--docs-dir", str(docs), "--papers", "Paper", "--no-build", "--update-baseline"])
+            baseline = json.loads((docs / ".build_baseline.json").read_text(encoding="utf-8"))
+            self.assertEqual(baseline["Paper"], ["215--216", "508--509", "96--96"])
+
+            # A PDF from another build is not accepted as the one in the log
+            (docs / "Paper.pdf").write_bytes(b"%PDF other build")
+            main(["--docs-dir", str(docs), "--papers", "Paper", "--no-build", "--report", str(report_path)])
+            self.assertIn("is not the one in the log", report_path.read_text(encoding="utf-8"))
+
+            # Without a log the baseline keeps its previous entry
+            (docs / "Paper.log").unlink()
+            status = main(["--docs-dir", str(docs), "--papers", "Paper", "--no-build", "--update-baseline"])
+            self.assertEqual(status, 1)
             baseline = json.loads((docs / ".build_baseline.json").read_text(encoding="utf-8"))
             self.assertEqual(baseline["Paper"], ["215--216", "508--509", "96--96"])
 

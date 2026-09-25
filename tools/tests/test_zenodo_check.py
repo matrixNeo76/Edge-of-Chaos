@@ -50,6 +50,10 @@ class TestCheckRecord(unittest.TestCase):
                 self.assertEqual(len(problems), 1)
                 self.assertIn(expected, problems[0])
 
+    def test_md5_not_compared_without_docs_dir(self):
+        problems = check_record(SPEC, record(), None, "edge-of-chaos-programme")
+        self.assertEqual(problems, ["MD5 not compared: --docs-dir not given"])
+
     def test_missing_file_and_software_version(self):
         problems = check_record({"name": "x", "file": "other.pdf"}, record(), self.docs)
         self.assertIn("file 'other.pdf' not in the latest version", problems[0])
@@ -68,10 +72,18 @@ class TestRun(unittest.TestCase):
         config = {"community": "edge-of-chaos-programme",
                   "record": [dict(SPEC, concept=1), {"name": "P1", "concept": 2}]}
         results = run(config, get=get)
-        self.assertEqual(results[0]["problems"], [])
+        self.assertEqual(results[0]["problems"], ["MD5 not compared: --docs-dir not given"])
         self.assertIn("cannot read the record", results[1]["problems"][0])
         text = report(results)
-        self.assertIn("| P0 | 1001 | ok |", text)
+        self.assertIn("| P0 | 1001 | MD5 not compared", text)
+
+    def test_unreadable_local_file_is_reported_per_record(self):
+        with TemporaryDirectory() as tmp:
+            (Path(tmp) / "P0.pdf").mkdir()  # a directory where the PDF should be: reading fails
+            config = {"record": [dict(SPEC, concept=1), {"name": "Software", "concept": 1, "version": None}]}
+            results = run(config, Path(tmp), get=lambda url, timeout=30: json.dumps(record()))
+            self.assertIn("cannot check the record", results[0]["problems"][0])
+            self.assertEqual(results[1]["problems"], [])
 
 
 if __name__ == "__main__":

@@ -37,6 +37,12 @@ class TestCheckVersions(unittest.TestCase):
             self.assertIn("Cargo.lock=0.3.0", problems[0])
             self.assertIn("no released section for 0.4.0", problems[1])
 
+    def test_version_in_zenodo_notes_must_end(self):
+        with TemporaryDirectory() as tmp:
+            make_repo(Path(tmp), zenodo="v0.4.01")
+            _, problems = check(Path(tmp))
+            self.assertIn(".zenodo.json (notes)=0.4.01", problems[0])  # read in full, so it disagrees
+
 
 if __name__ == "__main__":
     unittest.main()

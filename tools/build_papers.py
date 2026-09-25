@@ -16,8 +16,8 @@ directory. The epoch defaults to the modification time of the .tex file; pass --
 copy (e.g. the arXiv package) identical to the original.
 
 Usage
-    python tools/build_papers.py --docs-dir docs --backup-suffix _pre_round4
-    python tools/build_papers.py --docs-dir docs --no-build        # checks on existing logs only
+    python -m tools.build_papers --docs-dir docs --backup-suffix _pre_round4
+    python -m tools.build_papers --docs-dir docs --no-build        # checks on existing logs only
 """
 
 import argparse
@@ -28,6 +28,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 DEFAULT_PAPERS = ["P0_Distilled_v0.1", "P1_Main", "P2_SelfAgency", "P3_Critique",
@@ -95,17 +96,32 @@ def find_pdflatex(explicit=None):
 
 
 def compile_paper(tex_path, pdflatex, epoch=None, passes=3):
-    """Run pdflatex `passes` times in the file's directory; returns the log text."""
+    """
+    Run pdflatex `passes` times in the file's directory. Returns (log text, problems): a pass
+    with a non-zero exit code, or a log or PDF not rewritten by this build (left over from an
+    earlier one), is a problem.
+    """
     env = dict(os.environ)
     if epoch is not None:
         env["SOURCE_DATE_EPOCH"] = str(int(epoch))
         env["FORCE_SOURCE_DATE"] = "1"
-    for _ in range(passes):
-        subprocess.run([pdflatex, "-interaction=nonstopmode", "-halt-on-error", tex_path.name],
-                       cwd=tex_path.parent, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                       check=False)
-    log = tex_path.with_suffix(".log")
-    return log.read_text(encoding="latin-1") if log.exists() else ""
+    else:  # a non-reproducible build must not inherit a fixed date from the environment
+        env.pop("SOURCE_DATE_EPOCH", None)
+        env.pop("FORCE_SOURCE_DATE", None)
+    started = time.time()
+    problems = []
+    for n in range(1, passes + 1):
+        completed = subprocess.run([pdflatex, "-interaction=nonstopmode", "-halt-on-error", tex_path.name],
+                                   cwd=tex_path.parent, env=env, stdout=subprocess.DEVNULL,
+                                   stderr=subprocess.DEVNULL, check=False)
+        if completed.returncode != 0:
+            problems.append(f"pdflatex pass {n} exited with code {completed.returncode}")
+            break
+    log, pdf = tex_path.with_suffix(".log"), tex_path.with_suffix(".pdf")
+    for artefact in (log, pdf):
+        if not artefact.exists() or artefact.stat().st_mtime < started - 1:
+            problems.append(f"{artefact.name} was not written by this build")
+    return (log.read_text(encoding="latin-1") if log.exists() else ""), problems
 
 
 def backup(tex_path, backup_dir, suffix):
@@ -124,7 +140,7 @@ def build_report(results):
         status = "ok" if r["ok"] else "**CHECK**"
         lines.append(f"| {r['paper']} | {r['pages']} | {r['bytes']} | {r['zenodo_size']} | `{r['md5']}` | {status} |")
     for r in results:
-        problems = []
+        problems = list(r.get("build_problems", []))
         if r["control_characters"]:
             problems.append(f"control characters at {r['control_characters']}")
         if r["errors"]:
@@ -137,9 +153,10 @@ def build_report(results):
             problems.append("new overfull boxes: " + ", ".join(f"{o['width_pt']}pt at lines {o['lines']}" for o in r["new_overfull"]))
         if problems:
             lines += ["", f"## {r['paper']}"] + [f"- {p}" for p in problems]
-    if results and results[0].get("epoch") is not None:
+    built = [r for r in results if r.get("epoch") is not None]
+    if built:
         lines += ["", "Reproducible build: SOURCE_DATE_EPOCH per paper = "
-                  + ", ".join(f"{r['paper']}={r['epoch']}" for r in results)]
+                  + ", ".join(f"{r['paper']}={r['epoch']}" for r in built)]
     return "\n".join(lines) + "\n"
 
 
@@ -171,17 +188,26 @@ def main(argv=None):
             return 2
         if args.backup_suffix and not args.no_build:
             backup(tex, args.backup_dir or docs / "_pdf_backup_pre_v2", args.backup_suffix)
-        epoch = None if args.not_reproducible else (args.epoch if args.epoch is not None else int(tex.stat().st_mtime))
+        # An epoch is attributed only to PDFs compiled by this run
+        epoch = None
+        if not args.no_build and not args.not_reproducible:
+            epoch = args.epoch if args.epoch is not None else int(tex.stat().st_mtime)
+        build_problems = []
         if args.no_build:
             log_path = tex.with_suffix(".log")
             log_text = log_path.read_text(encoding="latin-1") if log_path.exists() else ""
+            if not log_text:
+                build_problems.append("no log to check")
         else:
-            log_text = compile_paper(tex, pdflatex, epoch=epoch)
+            log_text, build_problems = compile_paper(tex, pdflatex, epoch=epoch)
         info = parse_log(log_text)
         known, new = split_overfull(info["overfull"], baseline.get(name, []))
         pdf = tex.with_suffix(".pdf")
+        if pdf.exists() and info["bytes"] is not None and pdf.stat().st_size != info["bytes"]:
+            build_problems.append(f"the PDF ({pdf.stat().st_size} bytes) is not the one in the log ({info['bytes']} bytes)")
         control = find_control_characters(tex.read_text(encoding="utf-8"))
-        ok = pdf.exists() and info["pages"] is not None and not (control or info["errors"] or info["undefined_citations"]
+        ok = pdf.exists() and info["pages"] is not None and not (build_problems or control or info["errors"]
+                                                                   or info["undefined_citations"]
                                                                    or info["undefined_references"] or new)
         results.append({
             "paper": name, "pages": info["pages"], "bytes": pdf.stat().st_size if pdf.exists() else None,
@@ -189,9 +215,10 @@ def main(argv=None):
             "md5": md5_of(pdf) if pdf.exists() else "-", "control_characters": control,
             "errors": info["errors"], "undefined_citations": info["undefined_citations"],
             "undefined_references": info["undefined_references"], "known_overfull": known,
-            "new_overfull": new, "epoch": epoch, "ok": ok,
+            "new_overfull": new, "epoch": epoch, "build_problems": build_problems, "ok": ok,
         })
-        if args.update_baseline:
+        # Record the baseline only from a usable log; keep the previous entry otherwise
+        if args.update_baseline and info["pages"] is not None and not build_problems:
             baseline[name] = [o["lines"] for o in info["overfull"]]
 
     if args.update_baseline:
