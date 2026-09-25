@@ -26,8 +26,11 @@ Interpretation choices, where the papers leave room (all declared in the docstri
   condition requires memory beyond that of a linear Gaussian process.
 - Condition 3 splits the states into three regions by the terciles of their first
   principal component, fits a linear map in each region by least squares (the papers'
-  randomised sketching is only a speed-up for large systems), and passes if at least one
-  pair of Jacobians differs by more than theta_state in relative Frobenius norm.
+  randomised sketching is only a speed-up for large systems), and passes if the largest
+  relative Frobenius difference between the Jacobians exceeds theta_state and the
+  distribution of the same statistic on linear surrogates. The papers specify theta_state
+  alone, which lets estimation noise pass with short records; the surrogate null is a
+  declared deviation (see state_dependent_dynamics).
 """
 
 import numpy as np
@@ -90,11 +93,39 @@ def causal_non_separability(R, R_lin, delta):
 # Condition 2: non-Markovian memory
 # ---------------------------------------------------------------------------
 
-def conditional_mutual_information(x, y, z=None, k=4):
+def dither(values, rng):
+    """
+    Break ties before a k-nearest-neighbour estimate (Kraskov et al. 2004 recommend adding
+    low-amplitude noise). Each column with repeated values - quantized data, as from an
+    ADC - gets uniform noise one quantization step wide (the step is the smallest gap
+    between distinct values), which spreads each quantization level over its bin. Columns
+    without repeats get Gaussian noise of 1e-10 times their standard deviation, which only
+    breaks accidental ties.
+    """
+    values = np.array(values, dtype=float, copy=True)
+    # Centre first: added noise must stay representable next to large offsets (at 1e15 the
+    # spacing between doubles is 0.125, so noise of 1e-10 would be rounded away).
+    values -= values.mean(axis=0)
+    for col in range(values.shape[1]):
+        column = values[:, col]
+        levels = np.unique(column)
+        if len(levels) < len(column) and len(levels) > 1:
+            step = np.min(np.diff(levels))
+            column += rng.uniform(-step / 2, step / 2, size=len(column))
+        else:
+            column += rng.normal(0.0, 1e-10 * (np.std(column) or 1.0), size=len(column))
+    return values
+
+
+def conditional_mutual_information(x, y, z=None, k=4, jitter=True, seed=0):
     """
     k-nearest-neighbour estimate of I(X; Y | Z) (Frenzel & Pompe 2007; with z=None, the
     mutual information estimator of Kraskov, Stoegbauer & Grassberger 2004), in nats.
     Uses the maximum norm. x, y, z are arrays of shape (n,) or (n, d).
+
+    With jitter=True (default) the inputs are dithered first (see dither): on quantized
+    data the estimator is otherwise strongly biased (two independent variables rounded to
+    0.1 gave 0.19 nats instead of 0). The dither is seeded, so results are reproducible.
     """
     x = _finite_array(x, "x").reshape(len(x), -1)
     y = _finite_array(y, "y").reshape(len(y), -1)
@@ -107,6 +138,10 @@ def conditional_mutual_information(x, y, z=None, k=4):
             raise ValueError("z must have the same number of samples as x and y")
     if n <= k + 1:
         raise ValueError(f"need more than k + 1 = {k + 1} samples, got {n}")
+    if jitter:
+        rng = np.random.default_rng(seed)
+        x, y = dither(x, rng), dither(y, rng)
+        z = dither(z, rng) if z is not None else None
 
     joint = np.hstack([x, y] if z is None else [x, y, z])
     # Distance to the k-th neighbour in the joint space (index 0 is the point itself)
@@ -238,18 +273,7 @@ def local_jacobian(states, indices, dt=1.0):
     return coeffs[:d].T
 
 
-def state_dependent_dynamics(states, theta_state=0.25, dt=1.0, regions=None):
-    """
-    Condition 3: the effective Jacobians of three phase-space regions differ.
-
-    Passes if at least one pair (i, j) has
-        ||J_i - J_j||_F / max(||J_i||_F, ||J_j||_F) > theta_state
-    (papers: theta_state = 0.25). `regions` defaults to phase_space_regions(states, 3).
-    """
-    states = _finite_array(states, "states").reshape(len(states), -1)
-    regions = phase_space_regions(states, 3) if regions is None else regions
-    if len(regions) < 2:
-        raise ValueError("need at least two regions")
+def _jacobian_differences(states, regions, dt):
     jacobians = [local_jacobian(states, idx, dt=dt) for idx in regions]
     differences = []
     for i in range(len(jacobians)):
@@ -257,8 +281,90 @@ def state_dependent_dynamics(states, theta_state=0.25, dt=1.0, regions=None):
             scale = max(np.linalg.norm(jacobians[i]), np.linalg.norm(jacobians[j]), 1e-12)
             differences.append({"pair": (i, j),
                                 "relative_difference": float(np.linalg.norm(jacobians[i] - jacobians[j]) / scale)})
-    return {"jacobians": jacobians, "differences": differences, "theta_state": theta_state,
-            "passes": any(d["relative_difference"] > theta_state for d in differences)}
+    return jacobians, differences
+
+
+def linear_surrogates(states, n_surrogates, rng):
+    """
+    Series of the same length generated by the best linear model of the data,
+    x[t+1] = A x[t] + c + e[t], with the residuals e resampled with replacement
+    (residual bootstrap). They share the data's linear dynamics and noise level, and
+    their effective Jacobian is the same everywhere in phase space by construction.
+    """
+    states = _finite_array(states, "states").reshape(len(states), -1)
+    x, y = states[:-1], states[1:]
+    design = np.hstack([x, np.ones((len(x), 1))])
+    coeffs = np.linalg.lstsq(design, y, rcond=None)[0]
+    a, c = coeffs[:-1].T, coeffs[-1]
+    residuals = y - design @ coeffs
+    if np.max(np.abs(np.linalg.eigvals(a))) >= 1.0:
+        raise ValueError("the fitted linear model is not stable; the linear null cannot be simulated")
+    surrogates = []
+    for _ in range(n_surrogates):
+        noise = residuals[rng.integers(0, len(residuals), size=len(states) - 1)]
+        s = np.empty_like(states)
+        s[0] = states[0]
+        for t in range(len(states) - 1):
+            s[t + 1] = a @ s[t] + c + noise[t]
+        surrogates.append(s)
+    return surrogates
+
+
+def state_dependent_dynamics(states, theta_state=0.25, dt=1.0, regions=None,
+                             n_null=99, percentile=95.0, seed=0):
+    """
+    Condition 3: the effective Jacobians of three phase-space regions differ.
+
+    Statistic: the largest pairwise relative difference
+        ||J_i - J_j||_F / max(||J_i||_F, ||J_j||_F).
+    Passes if the statistic exceeds both
+      - theta_state, the minimum effect size of the papers (0.25), and
+      - the `percentile` of the same statistic on n_null linear surrogates
+        (linear_surrogates), which have the same Jacobian everywhere: the differences
+        they show are estimation noise only.
+    The papers specify theta_state alone. Without the null, estimation noise passes the
+    threshold for short records: a linear system passed in 20 of 20 runs at 1000 samples.
+    The null is a declared deviation from the papers; n_null = 0 reproduces their criterion.
+    `regions` is a rule that partitions a series into regions: a callable taking the states
+    and returning a list of index arrays, applied to the data and to each surrogate
+    (default: phase_space_regions with three regions). A fixed list of index arrays is
+    accepted only with n_null = 0, because indices of the observed series do not identify
+    the same regions of phase space in a surrogate.
+    """
+    states = _finite_array(states, "states").reshape(len(states), -1)
+    if isinstance(n_null, bool) or not isinstance(n_null, (int, np.integer)) or n_null < 0:
+        raise ValueError(f"n_null must be a non-negative integer, got {n_null!r}")
+    if regions is None:
+        def partition(s):
+            return phase_space_regions(s, 3)
+    elif callable(regions):
+        partition = regions
+    elif n_null > 0:
+        raise ValueError("with n_null > 0, regions must be a callable partition rule, "
+                         "not fixed indices (they do not carry over to the surrogates)")
+    else:
+        fixed = list(regions)
+
+        def partition(s):
+            return fixed
+    regions = partition(states)
+    if len(regions) < 2:
+        raise ValueError("need at least two regions")
+    jacobians, differences = _jacobian_differences(states, regions, dt)
+    statistic = max(d["relative_difference"] for d in differences)
+
+    null_threshold = None
+    if n_null > 0:
+        rng = np.random.default_rng(seed)
+        null = []
+        for s in linear_surrogates(states, n_null, rng):
+            null.append(max(d["relative_difference"] for d in _jacobian_differences(s, partition(s), dt)[1]))
+        null_threshold = float(np.percentile(null, percentile))
+
+    passes = statistic > theta_state and (null_threshold is None or statistic > null_threshold)
+    return {"jacobians": jacobians, "differences": differences, "statistic": statistic,
+            "theta_state": theta_state, "null_threshold": null_threshold, "n_null": n_null,
+            "percentile": percentile, "passes": bool(passes)}
 
 
 def is_candidate(condition_1, condition_2, condition_3):

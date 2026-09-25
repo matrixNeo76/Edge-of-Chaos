@@ -79,11 +79,11 @@ def cmd_demarcation(args):
                            for row in res["per_order"])
         print(f"    {name:28s} {detail} -> {_verdict(res['passes'])}")
 
-    print("\n[3] State-dependent dynamics: relative Jacobian difference > 0.25")
+    print("\n[3] State-dependent dynamics: Jacobian difference > 0.25 and > 95th percentile of linear surrogates")
     for name, states in (("double well", double_well(20000)), ("linear system", linear_2d(20000))):
         res = state_dependent_dynamics(states)
-        largest = max(d["relative_difference"] for d in res["differences"])
-        print(f"    {name:28s} largest difference {largest:.3f} -> {_verdict(res['passes'])}")
+        print(f"    {name:28s} difference {res['statistic']:.3f}, null {res['null_threshold']:.3f} "
+              f"-> {_verdict(res['passes'])}")
     return 0
 
 
@@ -138,8 +138,9 @@ def cmd_test(args):
         "hardware": ["test_hardware_session"],
         "demarcation": ["test_demarcation"],
         "conditions": ["test_necessary_conditions"],
+        "parity": ["test_engine_parity"],
         "all": ["test_thermodynamic_valence", "test_hardware_session",
-                "test_demarcation", "test_necessary_conditions"],
+                "test_demarcation", "test_necessary_conditions", "test_engine_parity"],
     }
     modules = suite_map[args.suite]
     loader = unittest.TestLoader()
@@ -168,7 +169,7 @@ def main(argv=None):
 
     p_test = sub.add_parser("test", help="Runs the test suites")
     p_test.add_argument(
-        "--suite", choices=["metrology", "hardware", "demarcation", "conditions", "all"], default="all",
+        "--suite", choices=["metrology", "hardware", "demarcation", "conditions", "parity", "all"], default="all",
         help="Which suite to run (default: all)",
     )
 

@@ -82,7 +82,9 @@ class TestCausalDegeneracy(unittest.TestCase):
     def test_radius_of_a_known_map(self):
         # F(w) = (w0, w1, |w2|^2 + |w3|^2): J_F at w=0 has null directions w2, w3, and
         # F stays within epsilon of the attractor (0, 0, 0) along them for r <= sqrt(epsilon).
-        F = lambda w: np.array([w[0], w[1], w[2] ** 2 + w[3] ** 2])
+        def F(w):
+            return np.array([w[0], w[1], w[2] ** 2 + w[3] ** 2])
+
         jac = np.array([[1.0, 0, 0, 0], [0, 1.0, 0, 0], [0, 0, 0, 0]])
         result = degeneracy_radius(F, np.zeros(4), np.zeros(3), epsilon=0.04, jacobian_f=jac, delta=1e-9)
         self.assertAlmostEqual(result["rho_deg"], 0.2, delta=2e-3)

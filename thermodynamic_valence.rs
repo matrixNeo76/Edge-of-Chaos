@@ -71,7 +71,7 @@ pub fn simulate_neuromorphic_substrate_sde(
     seed: u64,
 ) -> (Vec<f64>, Vec<f64>, Vec<f64>) {
     assert!(n_steps >= 2, "n_steps must be at least 2, got {}", n_steps);
-    assert!(dt > 0.0, "dt must be positive, got {}", dt);
+    assert!(dt.is_finite() && dt > 0.0, "dt must be positive and finite, got {}", dt);
     let mut rng = FastRng::new(seed);
     let a = -1.2;
     let b = 0.8;
@@ -111,7 +111,16 @@ pub fn simulate_neuromorphic_substrate_sde(
     (x_a1, s_obs, s_pred)
 }
 
-/// Estimate of the Kullback-Leibler divergence D_KL(P || Q) via k-nearest neighbours (k-NN)
+/// Value at position `index` of the sorted slice, by partial selection (reorders `values`)
+fn kth_smallest(values: &mut [f64], index: usize) -> f64 {
+    *values
+        .select_nth_unstable_by(index, |a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+        .1
+}
+
+/// Estimate of the Kullback-Leibler divergence D_KL(P || Q) via k-nearest neighbours (k-NN).
+/// Negative estimates (possible from sampling noise when P and Q are close) are clipped
+/// to 0, as in the Python engine; G_pred, a difference of two estimates, inherits this.
 pub fn estimate_kl_divergence_knn_1d(p_samples: &[f64], q_samples: &[f64], k: usize) -> f64 {
     let n = p_samples.len();
     let m = q_samples.len();
@@ -120,21 +129,22 @@ pub fn estimate_kl_divergence_knn_1d(p_samples: &[f64], q_samples: &[f64], k: us
         return 0.0;
     }
 
-    let mut sorted_q = q_samples.to_vec();
-    sorted_q.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-
     let mut kl_sum = 0.0;
+    let mut p_dists = vec![0.0; n];
+    let mut q_dists = vec![0.0; m];
 
     for &p_i in p_samples.iter() {
-        // Distance to the k-th nearest neighbour in P
-        let mut p_dists: Vec<f64> = p_samples.iter().map(|&x| (x - p_i).abs()).collect();
-        p_dists.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-        let r_k_p = p_dists[k].max(1e-12);
+        // Distance to the k-th nearest neighbour in P (index 0 is the point itself)
+        for (d, &x) in p_dists.iter_mut().zip(p_samples) {
+            *d = (x - p_i).abs();
+        }
+        let r_k_p = kth_smallest(&mut p_dists, k).max(1e-12);
 
         // Distance to the k-th nearest neighbour in Q
-        let mut q_dists: Vec<f64> = sorted_q.iter().map(|&x| (x - p_i).abs()).collect();
-        q_dists.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-        let r_k_q = q_dists[k - 1].max(1e-12);
+        for (d, &x) in q_dists.iter_mut().zip(q_samples) {
+            *d = (x - p_i).abs();
+        }
+        let r_k_q = kth_smallest(&mut q_dists, k - 1).max(1e-12);
 
         kl_sum += (r_k_q / r_k_p).ln();
     }
@@ -162,17 +172,21 @@ pub fn estimate_kl_divergence_knn_2d(p_samples: &[[f64; 2]], q_samples: &[[f64; 
 
     let dist = |a: &[f64; 2], b: &[f64; 2]| ((a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2)).sqrt();
     let mut kl_sum = 0.0;
+    let mut p_dists = vec![0.0; n];
+    let mut q_dists = vec![0.0; m];
 
     for p_i in p_samples.iter() {
         // Distance to the k-th nearest neighbour in P (index 0 is the point itself)
-        let mut p_dists: Vec<f64> = p_samples.iter().map(|x| dist(x, p_i)).collect();
-        p_dists.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-        let r_k_p = p_dists[k].max(1e-12);
+        for (d, x) in p_dists.iter_mut().zip(p_samples) {
+            *d = dist(x, p_i);
+        }
+        let r_k_p = kth_smallest(&mut p_dists, k).max(1e-12);
 
         // Distance to the k-th nearest neighbour in Q
-        let mut q_dists: Vec<f64> = q_samples.iter().map(|x| dist(x, p_i)).collect();
-        q_dists.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-        let r_k_q = q_dists[k - 1].max(1e-12);
+        for (d, x) in q_dists.iter_mut().zip(q_samples) {
+            *d = dist(x, p_i);
+        }
+        let r_k_q = kth_smallest(&mut q_dists, k - 1).max(1e-12);
 
         kl_sum += (r_k_q / r_k_p).ln();
     }
@@ -195,18 +209,42 @@ pub fn calculate_thermodynamic_valence(
     beta: f64,
     gamma: f64,
 ) -> MetrologyResult {
+    // Target distribution for the allostatic niche, N(0, 0.2), from a fixed seed
+    let mut rng = FastRng::new(12345);
+    let niche: Vec<f64> = (0..x_a1.len()).map(|_| rng.next_gaussian() * 0.2).collect();
+    calculate_thermodynamic_valence_with_niche(x_a1, s_obs, s_pred, dt, alpha, beta, gamma, &niche)
+}
+
+/// As calculate_thermodynamic_valence, with the niche samples given explicitly. With the
+/// same niche, the Python engine returns the same numbers (tested in test_engine_parity.py).
+#[allow(clippy::too_many_arguments)]
+pub fn calculate_thermodynamic_valence_with_niche(
+    x_a1: &[f64],
+    s_obs: &[f64],
+    s_pred: &[f64],
+    dt: f64,
+    alpha: f64,
+    beta: f64,
+    gamma: f64,
+    target_samples: &[f64],
+) -> MetrologyResult {
     let tau_steps = 10;
     let n = x_a1.len();
+    assert!(
+        target_samples.len() == n,
+        "the niche must have as many samples as the series, got {} and {}",
+        target_samples.len(), n
+    );
     assert!(
         s_obs.len() == n && s_pred.len() == n,
         "x_a1, s_obs and s_pred must have equal length, got {}, {}, {}",
         n, s_obs.len(), s_pred.len()
     );
-    assert!(dt > 0.0, "dt must be positive, got {}", dt);
+    assert!(dt.is_finite() && dt > 0.0, "dt must be positive and finite, got {}", dt);
     assert!(n >= tau_steps + 7, "series too short: {} samples, need at least {}", n, tau_steps + 7);
     assert!(
-        x_a1.iter().chain(s_obs).chain(s_pred).all(|v| v.is_finite()),
-        "x_a1, s_obs and s_pred must not contain NaN or infinite values"
+        x_a1.iter().chain(s_obs).chain(s_pred).chain(target_samples).all(|v| v.is_finite()),
+        "x_a1, s_obs, s_pred and the niche must not contain NaN or infinite values"
     );
     let mut dx = Vec::with_capacity(n - 1);
     for i in 0..n - 1 {
@@ -225,14 +263,10 @@ pub fn calculate_thermodynamic_valence(
     }
     let sigma_ex = excess_sum / dx.len() as f64;
 
-    // Target distribution for the allostatic niche
-    let mut rng = FastRng::new(12345);
-    let target_samples: Vec<f64> = (0..n).map(|_| rng.next_gaussian() * 0.2).collect();
-
-    let d_kl_allostatic = estimate_kl_divergence_knn_1d(x_a1, &target_samples, 5);
+    let d_kl_allostatic = estimate_kl_divergence_knn_1d(x_a1, target_samples, 5);
 
     // G_pred scores the prediction against the observations, not against the niche.
-    let p_ref = delay_embed(&target_samples, tau_steps);
+    let p_ref = delay_embed(target_samples, tau_steps);
     let obs_embedded = delay_embed(s_obs, tau_steps);
     let pred_embedded = delay_embed(s_pred, tau_steps);
     let d_kl_reference = estimate_kl_divergence_knn_2d(&obs_embedded, &p_ref, 5);
@@ -271,4 +305,94 @@ fn main() {
     println!("Predictive gain of the efference copy G_pred: {:.4}", res.g_pred);
     println!("-> INTEGRATED VALENCE FUNCTIONAL Psi(t): {:.4}", res.psi_valence);
     println!("=========================================================================");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn gaussian(rng: &mut FastRng, n: usize, mean: f64, sd: f64) -> Vec<f64> {
+        (0..n).map(|_| mean + sd * rng.next_gaussian()).collect()
+    }
+
+    fn gaussian_kl(m1: f64, s1: f64, m2: f64, s2: f64) -> f64 {
+        (s2 / s1).ln() + (s1 * s1 + (m1 - m2).powi(2)) / (2.0 * s2 * s2) - 0.5
+    }
+
+    #[test]
+    fn kl_1d_matches_closed_form_gaussian_values() {
+        let mut rng = FastRng::new(1);
+        for &(m1, s1, m2, s2) in &[(0.0, 1.0, 1.0, 1.0), (0.0, 1.0, 0.0, 2.0), (0.5, 0.3, 0.0, 1.0)] {
+            let p = gaussian(&mut rng, 3000, m1, s1);
+            let q = gaussian(&mut rng, 3000, m2, s2);
+            let estimate = estimate_kl_divergence_knn_1d(&p, &q, 5);
+            let expected = gaussian_kl(m1, s1, m2, s2);
+            assert!((estimate - expected).abs() < 0.08, "estimate {} vs {}", estimate, expected);
+        }
+    }
+
+    #[test]
+    fn kl_2d_matches_closed_form_value() {
+        let mut rng = FastRng::new(2);
+        let p: Vec<[f64; 2]> = (0..3000).map(|_| [rng.next_gaussian(), rng.next_gaussian()]).collect();
+        let q: Vec<[f64; 2]> = (0..3000).map(|_| [1.0 + rng.next_gaussian(), 1.0 + rng.next_gaussian()]).collect();
+        let estimate = estimate_kl_divergence_knn_2d(&p, &q, 5);
+        assert!((estimate - 1.0).abs() < 0.1, "estimate {}", estimate);
+    }
+
+    #[test]
+    fn delay_embedding_pairs_each_sample_with_its_past() {
+        let embedded = delay_embed(&[0.0, 1.0, 2.0, 3.0, 4.0], 2);
+        assert_eq!(embedded, vec![[2.0, 0.0], [3.0, 1.0], [4.0, 2.0]]);
+    }
+
+    #[test]
+    fn default_niche_equals_explicit_seeded_niche() {
+        let (x, s_obs, s_pred) = simulate_neuromorphic_substrate_sde(300, 0.001, 3);
+        let mut rng = FastRng::new(12345);
+        let niche: Vec<f64> = (0..x.len()).map(|_| rng.next_gaussian() * 0.2).collect();
+        let a = calculate_thermodynamic_valence(&x, &s_obs, &s_pred, 0.001, 1.0, 0.5, 0.8);
+        let b = calculate_thermodynamic_valence_with_niche(&x, &s_obs, &s_pred, 0.001, 1.0, 0.5, 0.8, &niche);
+        assert_eq!(a.psi_valence, b.psi_valence);
+    }
+
+    #[test]
+    fn efference_ablation_lowers_the_predictive_gain() {
+        let (x, s_obs, s_pred) = simulate_neuromorphic_substrate_sde(1500, 0.001, 42);
+        let mut rng = FastRng::new(2026);
+        let ablated = gaussian(&mut rng, s_pred.len(), 0.0, 1.0);
+        let base = calculate_thermodynamic_valence(&x, &s_obs, &s_pred, 0.001, 1.0, 0.5, 0.8);
+        let abl = calculate_thermodynamic_valence(&x, &s_obs, &ablated, 0.001, 1.0, 0.5, 0.8);
+        assert!(abl.g_pred < base.g_pred);
+        assert!(abl.psi_valence < base.psi_valence);
+    }
+
+    #[test]
+    #[should_panic(expected = "equal length")]
+    fn unequal_lengths_panic() {
+        let (x, s_obs, s_pred) = simulate_neuromorphic_substrate_sde(100, 0.001, 1);
+        calculate_thermodynamic_valence(&x, &s_obs[..90], &s_pred, 0.001, 1.0, 0.5, 0.8);
+    }
+
+    #[test]
+    #[should_panic(expected = "too short")]
+    fn short_series_panic() {
+        let (x, s_obs, s_pred) = simulate_neuromorphic_substrate_sde(12, 0.001, 1);
+        calculate_thermodynamic_valence(&x, &s_obs, &s_pred, 0.001, 1.0, 0.5, 0.8);
+    }
+
+    #[test]
+    #[should_panic(expected = "must not contain NaN")]
+    fn non_finite_niche_panics() {
+        let (x, s_obs, s_pred) = simulate_neuromorphic_substrate_sde(100, 0.001, 1);
+        let mut niche = vec![0.0; x.len()];
+        niche[3] = f64::INFINITY;
+        calculate_thermodynamic_valence_with_niche(&x, &s_obs, &s_pred, 0.001, 1.0, 0.5, 0.8, &niche);
+    }
+
+    #[test]
+    #[should_panic(expected = "dt must be positive")]
+    fn zero_dt_panics() {
+        simulate_neuromorphic_substrate_sde(100, 0.0, 1);
+    }
 }

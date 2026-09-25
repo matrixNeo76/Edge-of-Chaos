@@ -143,6 +143,7 @@ class TestThermodynamicValence(unittest.TestCase):
             "NaN": (np.r_[x_A1[:-1], np.nan], s_obs, s_pred, dt),
             "too short for tau": (x_A1[:12], s_obs[:12], s_pred[:12], dt),
             "zero dt": (x_A1, s_obs, s_pred, 0.0),
+            "infinite dt": (x_A1, s_obs, s_pred, float("inf")),
         }
         for name, args in cases.items():
             with self.subTest(name), self.assertRaises(ValueError):
@@ -153,6 +154,14 @@ class TestThermodynamicValence(unittest.TestCase):
             estimate_kl_divergence_knn(np.ones((20, 2)), np.ones((20, 1)))
         with self.assertRaises(ValueError):
             simulate_neuromorphic_substrate_sde(n_steps=1)
+        with self.assertRaises(ValueError):
+            simulate_neuromorphic_substrate_sde(n_steps=100, dt=float("inf"))
+        # A (2, 100) matrix has 200 values but is not one niche sample per time point
+        with self.assertRaises(ValueError):
+            calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt, niche_samples=np.zeros((2, 100)))
+        column = np.random.default_rng(0).normal(0, 0.2, size=(len(x_A1), 1))
+        self.assertEqual(calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt, niche_samples=column),
+                         calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt, niche_samples=column[:, 0]))
 
 if __name__ == "__main__":
     unittest.main()

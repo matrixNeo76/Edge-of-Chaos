@@ -29,7 +29,9 @@ programme, math glossary, code↔paper map, environment status, knowledge graph 
 
 ```bash
 # Tests
-python -m pytest -q test_thermodynamic_valence.py test_hardware_session.py test_demarcation.py test_necessary_conditions.py
+python -m pytest -q test_thermodynamic_valence.py test_hardware_session.py test_demarcation.py test_necessary_conditions.py test_engine_parity.py
+ruff check .
+cargo test --release
 
 # Rust
 cargo check --all-targets

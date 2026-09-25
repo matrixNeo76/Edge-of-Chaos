@@ -7,6 +7,69 @@ continuously evolving research software.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-25
+
+A second review of the code, with every finding verified by running it, and the
+first change made through a pull request reviewed by CI and CodeRabbit.
+
+### Changed
+- **Condition 3 (state-dependent dynamics) is calibrated against a null.** With
+  the fixed threshold theta_state = 0.25 alone, estimation noise made a linear
+  system pass in 20 of 20 runs at 1000 samples, 14/20 at 3000 and 7/20 at 6000.
+  The statistic must now also exceed the chosen percentile of its distribution on
+  linear surrogates (residual bootstrap of the best linear model). Measured false
+  positives: 2/20, 1/20, 1/20; detection of a double well: 0/20, 9/20, 19/20 at
+  1000, 3000, 6000 samples. This is a declared deviation from the papers, which
+  specify theta_state alone; `n_null=0` reproduces their criterion. Short records
+  cannot support the condition, whatever the threshold.
+- **The k-NN information estimates dither quantized data** (Kraskov et al. 2004).
+  On data with repeated values, as from an ADC, independent variables rounded to
+  0.1 gave 0.19 nats (-3.8 when rounded to 1.0), and a rounded AR(1) process
+  showed 1.5-2.4 nats of spurious memory. With the seeded dither they give about
+  0, while dependence and nonlinear memory are still detected. `jitter=False`
+  disables it.
+- `calculate_thermodynamic_valence` (Python and Rust) accepts explicit niche
+  samples; the PyO3 module exposes `calculate_valence_with_niche_rust`.
+- The Rust k-NN estimators use partial selection instead of full sorts: same
+  results, binary run time from 21 s to 3 s.
+- `simulate_neuromorphic_substrate_sde` uses a local generator: identical output,
+  the caller's global NumPy state is no longer changed.
+- The mock instruments use seeded generators.
+
+### Added
+- Unit tests for the Rust engine (there were none): k-NN KL estimates against
+  closed-form values, delay embedding, ablation, input checks.
+- `test_engine_parity.py`: the Python and Rust engines return the same numbers
+  (9 decimal places) for the same inputs. The two engines draw random numbers from
+  different generators, so they simulate different series for the same seed;
+  "same engine" in the documentation meant same formulas.
+- Tests that the real-instrument paths fail explicitly and release the instruments.
+- CI: ruff, a coverage report, `cargo test`, the parity test against a freshly
+  built wheel, and a Docker build. `.coderabbit.yaml` for automated review.
+
+### Fixed
+- `docker-compose.yml` ran `dashboard_valenza.py`, renamed in v0.2.0.
+- PicoScope with `mock=False` answered "MOCK_PICOSCOPE" and returned None; it now
+  raises NotImplementedError.
+- **The real Keithley path now raises NotImplementedError too.** It had never run
+  against an instrument, and review (CodeRabbit, PR #1) found it wrong: the voltage
+  limit was set with the overvoltage-protection command, which on the 2400 cannot
+  be 1.5 V; `:TRACE:DATA?` was parsed as currents while the default format
+  interleaves five quantities; no acquisition was configured or started; and the
+  instrument stayed open when connect() failed. The class docstring lists what a
+  real driver must do. The interface releases the instruments when initialisation
+  fails.
+- Input checks: infinite `dt`, niche samples of the wrong shape (Python) or not
+  finite (Rust), and non-integer or NaN `n_null` are rejected; fixed region indices
+  are rejected with a surrogate null (they do not carry over to the surrogates;
+  pass a partition rule instead). The dither centres the data first, so it also
+  breaks ties next to large offsets.
+- CI fails if the parity test would be skipped; `build_exe.ps1` stops if
+  PyInstaller fails instead of reporting an older executable as a new build.
+- `paper0 test` in the standalone executable could not find the test modules,
+  which PyInstaller does not detect; `build_exe.ps1` could package a stale wheel
+  left in `dist_wheel`.
+
 ## [0.3.0] - 2026-09-25
 
 This release follows a conformance review of the code against the papers
@@ -225,3 +288,4 @@ programme was not implemented, and that the three functions presented as the
   closed-loop prediction of the protocol.
 - ~~`test_noise_calibration_edge_of_chaos` fails deterministically~~: resolved
   in 0.3.0.
+- No real-instrument driver is implemented (Keithley, PicoScope): only the mocks.

@@ -2,7 +2,7 @@
   "title": "Edge-of-Chaos",
   "upload_type": "software",
   "description": "Falsifiable research programme and digital-twin metrology platform (Python + Rust) testing the necessary physical conditions for primary interoceptive sentience in continuous neuromorphic substrates.",
-  "notes": "v0.3.0 implements the three operational demarcation conditions of the programme (causal non-separability, non-Markovian memory, state-dependent effective dynamics), which were missing, and rewrites the criteria for three necessary conditions (edge of chaos, causal degeneracy, exponent stability) to follow their definitions in the papers: the earlier functions computed different quantities. It also adds input validation, known-answer tests, continuous integration and a demonstration notebook, and makes the PyO3 module call the Rust engine. See CHANGELOG.md for details and known open issues.",
+  "notes": "v0.4.0 calibrates the state-dependence demarcation condition against a linear surrogate null (with the papers' fixed threshold alone, estimation noise passed a linear system in every run at 1000 samples), dithers quantized data before the k-NN information estimates, adds Rust unit tests and a Python/Rust parity test on identical inputs, makes unsupported real-instrument paths fail explicitly and verifies compliance limits, and fixes docker-compose and the standalone executable. See CHANGELOG.md for details and known open issues.",
   "creators": [
     {"name": "Iavarone, Francesco", "affiliation": "Independent Researcher", "orcid": "0009-0005-9773-8187"}
   ],

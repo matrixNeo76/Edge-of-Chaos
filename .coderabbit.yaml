@@ -1,0 +1,43 @@
+# CodeRabbit configuration for the Edge-of-Chaos repository.
+# Reviews are written in Italian for the maintainer; code and commit messages stay in English.
+language: it-IT
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  auto_review:
+    enabled: true
+    drafts: false
+  path_instructions:
+    - path: "{demarcation,necessary_conditions,thermodynamic_valence}.py"
+      instructions: |
+        These modules implement criteria defined in the papers of the research programme
+        (P0/P1: demarcation conditions, necessary conditions, Psi(t); P2: G_pred). Check that
+        each formula matches its docstring and the definition it cites, that interpretation
+        choices and deviations from the papers are stated explicitly, and that statistical
+        criteria control their false-positive rate (null distributions, surrogates, seeds).
+        Flag any path that returns a number silently on invalid input instead of raising.
+    - path: "*.rs"
+      instructions: |
+        thermodynamic_valence.rs must compute the same numbers as thermodynamic_valence.py for
+        the same inputs (test_engine_parity.py). Flag divergences in estimators, clipping,
+        indexing of nearest neighbours, and panics that PyO3 would expose to Python instead of
+        ValueError (lib.rs).
+    - path: "hardware_driver_v2.py"
+      instructions: |
+        Safety matters here: compliance limits must be set and verified before any other
+        instrument command, unsupported real-hardware paths must fail explicitly, and
+        instruments must be released (close / context manager).
+    - path: "test_*.py"
+      instructions: |
+        Tests should use cases whose answer is known in advance and fixed seeds. Flag tests that
+        only check that code runs, thresholds loosened to make a test pass, and flaky tests.
+  path_filters:
+    - "!docs/**"
+    - "!docs_v0.2/**"
+    - "!notebooks/**"
+    - "!*.png"
+    - "!Cargo.lock"
+chat:
+  auto_reply: true

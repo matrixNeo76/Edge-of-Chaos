@@ -65,6 +65,41 @@ class TestNonMarkovianMemory(unittest.TestCase):
         self.assertGreater(conditional_mutual_information(x, y), 0.3)
         self.assertAlmostEqual(conditional_mutual_information(x, y, z), 0.0, delta=0.03)
 
+    def test_quantized_data_do_not_bias_the_estimator(self):
+        """
+        ADC data are quantized. Without dithering, two independent variables rounded to
+        0.1 gave 0.19 nats and rounded to 1.0 gave -3.8; with it they give about 0.
+        """
+        rng = np.random.default_rng(6)
+        x, y = rng.normal(size=3000), rng.normal(size=3000)
+        for step in (0.1, 0.5, 1.0):
+            xq, yq = np.round(x / step) * step, np.round(y / step) * step
+            self.assertAlmostEqual(conditional_mutual_information(xq, yq), 0.0, delta=0.03)
+        self.assertGreater(abs(conditional_mutual_information(np.round(x, 1), np.round(y, 1), jitter=False)), 0.1)
+        # Dependence survives quantization
+        y_dep = 0.8 * x + 0.6 * rng.normal(size=3000)
+        self.assertAlmostEqual(conditional_mutual_information(np.round(x, 1), np.round(y_dep, 1)),
+                               -0.5 * np.log(1 - 0.8 ** 2), delta=0.06)
+
+    def test_quantized_markov_process_has_no_spurious_memory(self):
+        quantized = np.round(ar1(3000), 0)
+        for order in (1, 2):
+            self.assertAlmostEqual(residual_memory(quantized, order, past_lags=3), 0.0, delta=0.03)
+
+    def test_dither_is_reproducible_and_leaves_continuous_data_unchanged(self):
+        rng = np.random.default_rng(7)
+        x, y = rng.normal(size=500), rng.normal(size=500)
+        self.assertEqual(conditional_mutual_information(x, y), conditional_mutual_information(x, y))
+        self.assertAlmostEqual(conditional_mutual_information(x, y), conditional_mutual_information(x, y, jitter=False), places=6)
+
+    def test_dither_works_with_large_offsets(self):
+        """At 1e15 a noise of 1e-10 would be rounded away without centring (CodeRabbit, PR #1)."""
+        tied = np.full(100, 1e15)
+        self.assertAlmostEqual(conditional_mutual_information(tied, tied.copy()), 0.0, delta=0.2)
+        rng = np.random.default_rng(9)
+        x, y = rng.normal(size=2000), rng.normal(size=2000)
+        self.assertAlmostEqual(conditional_mutual_information(x + 1e12, y - 1e12), 0.0, delta=0.03)
+
     def test_residual_memory_identifies_markov_order(self):
         series = nonlinear_lag5(3000)
         for order in (1, 2, 3, 4):
@@ -109,6 +144,38 @@ class TestStateDependentDynamics(unittest.TestCase):
     def test_linear_system_fails_nonlinear_system_passes(self):
         self.assertFalse(state_dependent_dynamics(linear_2d(20000, seed=5))["passes"])
         self.assertTrue(state_dependent_dynamics(double_well(20000, seed=5))["passes"])
+
+    def test_null_controls_false_positives_on_short_records(self):
+        """
+        With theta_state alone, estimation noise passed a linear system in 20 of 20 runs at
+        1000 samples. With the linear-surrogate null (95th percentile) the false positive
+        rate stays near the nominal 5%.
+        """
+        runs = [state_dependent_dynamics(linear_2d(1000, seed=s), n_null=49) for s in range(10)]
+        self.assertLessEqual(sum(r["passes"] for r in runs), 2)
+        # The papers' criterion alone (n_null = 0) is fooled by the same data
+        fooled = [state_dependent_dynamics(linear_2d(1000, seed=s), n_null=0) for s in range(10)]
+        self.assertGreaterEqual(sum(r["passes"] for r in fooled), 8)
+
+    def test_null_threshold_reported(self):
+        result = state_dependent_dynamics(double_well(20000, seed=1), n_null=19)
+        self.assertIsNotNone(result["null_threshold"])
+        self.assertGreater(result["statistic"], result["null_threshold"])
+        with self.assertRaises(ValueError):
+            state_dependent_dynamics(linear_2d(500), n_null=-1)
+
+    def test_invalid_n_null_and_fixed_regions_are_rejected(self):
+        states = linear_2d(2000, seed=2)
+        for bad in (float("nan"), 2.5, -1, True):
+            with self.subTest(n_null=bad), self.assertRaises(ValueError):
+                state_dependent_dynamics(states, n_null=bad)
+        fixed = phase_space_regions(states, 3)
+        with self.assertRaises(ValueError):
+            state_dependent_dynamics(states, regions=fixed, n_null=19)
+        # Fixed regions are allowed without a null, and a callable rule with one
+        self.assertIn("passes", state_dependent_dynamics(states, regions=fixed, n_null=0))
+        result = state_dependent_dynamics(states, regions=lambda s: phase_space_regions(s, 3), n_null=9)
+        self.assertIsNotNone(result["null_threshold"])
 
     def test_candidate_requires_all_three(self):
         yes, no = {"passes": True}, {"passes": False}

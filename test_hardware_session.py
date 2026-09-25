@@ -7,8 +7,6 @@ validating the compliance and safety parameters (P0_Distilled v0.1).
 
 import unittest
 import numpy as np
-import os
-import sys
 
 # Import the metrology and hardware driver v2 modules
 from hardware_driver_v2 import (
@@ -20,6 +18,41 @@ from hardware_driver_v2 import (
     mock_dmm_carrier,
 )
 from thermodynamic_valence import calculate_thermodynamic_valence
+
+
+class TestRealInstrumentPaths(unittest.TestCase):
+    """Only the mock instruments exist; the real paths must fail explicitly."""
+
+    def test_keithley_real_path_is_explicitly_unavailable(self):
+        dmm = KeithleyDMMDriverV2(mock=False)
+        with self.assertRaises(NotImplementedError):
+            dmm.connect()
+        with self.assertRaises(NotImplementedError):
+            dmm.read_current_stream()
+        with self.assertRaises(NotImplementedError):
+            with KeithleyDMMDriverV2(mock=False):
+                pass
+
+    def test_picoscope_real_path_is_explicitly_unavailable(self):
+        pico = PicoScopeOscilloscopeDriverV2(mock=False)
+        with self.assertRaises(NotImplementedError):
+            pico.connect()
+        with self.assertRaises(NotImplementedError):
+            pico.acquire_waveform()
+
+    def test_interface_releases_instruments_when_initialisation_fails(self):
+        hw = NeuromorphicHardwareInterfaceV2(mock=False)
+        with self.assertRaises(NotImplementedError):
+            with hw:
+                pass
+        self.assertFalse(hw.dmm.connected)
+        self.assertFalse(hw.pico.connected)
+
+    def test_mock_acquisition_requires_connection(self):
+        with self.assertRaises(RuntimeError):
+            PicoScopeOscilloscopeDriverV2(mock=True).acquire_waveform()
+        with self.assertRaises(RuntimeError):
+            KeithleyDMMDriverV2(mock=True).read_current_stream()
 
 
 class TestHardwareAcquisitionSession(unittest.TestCase):
@@ -101,7 +134,6 @@ class TestHardwareAcquisitionSession(unittest.TestCase):
         """Integrates the time series acquired from simulated hardware with the valence pipeline Psi(t)."""
         frame = self.hw.get_realtime_frame(n_samples=2000)
         i_t = frame["current_I"]
-        v_t = frame["voltage_V"]
 
         dt = 1.0 / self.config.SAMPLE_RATE_DMM_HZ
         # Normalization of the substrate state

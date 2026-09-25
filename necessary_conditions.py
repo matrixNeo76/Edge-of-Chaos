@@ -144,7 +144,9 @@ def degeneracy_radius(F, w0, attractor, epsilon, jacobian_f, delta,
     if epsilon <= 0 or r_max <= 0:
         raise ValueError("epsilon and r_max must be positive")
 
-    inside = lambda w: np.linalg.norm(np.asarray(F(w), dtype=float) - attractor) <= epsilon
+    def inside(w):
+        return np.linalg.norm(np.asarray(F(w), dtype=float) - attractor) <= epsilon
+
     if not inside(w0):
         raise ValueError("F(w0) is not within epsilon of the attractor")
 

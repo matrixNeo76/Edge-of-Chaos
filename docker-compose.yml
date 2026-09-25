@@ -5,9 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: valenza_metrologia_twin
+    container_name: edge_of_chaos_twin
     volumes:
       - ./output:/app/output
     environment:
       - PYTHONUNBUFFERED=1
-    command: python3 dashboard_valenza.py
+    command: python3 valence_dashboard.py

@@ -10,7 +10,7 @@ authors:
     given-names: Francesco
     affiliation: Independent Researcher
     orcid: "https://orcid.org/0009-0005-9773-8187"
-version: 0.3.0
+version: 0.4.0
 date-released: "2026-09-25"
 license:
   - MIT

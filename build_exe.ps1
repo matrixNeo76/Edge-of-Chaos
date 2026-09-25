@@ -51,7 +51,7 @@ $VenvPython = Join-Path $BuildVenv "Scripts\python.exe"
 Write-Host "[2/5] Installing only the required dependencies..." -ForegroundColor Yellow
 $ErrorActionPreference = "Continue"
 & $VenvPython -m pip install --upgrade pip --quiet
-& $VenvPython -m pip install numpy scipy matplotlib seaborn pyinstaller --quiet
+& $VenvPython -m pip install -r (Join-Path $RepoRoot "requirements.txt") pyinstaller --quiet
 $ErrorActionPreference = "Stop"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] Dependency installation failed (exit $LASTEXITCODE)." -ForegroundColor Red
@@ -66,9 +66,11 @@ if (Get-Command "cargo" -ErrorAction SilentlyContinue) {
     $ErrorActionPreference = "Continue"
     & $VenvPython -m pip install maturin --quiet
     Push-Location $RepoRoot
+    # Start from an empty folder: an older wheel left there would otherwise be installed
+    if (Test-Path "dist_wheel") { Remove-Item "dist_wheel" -Recurse -Force }
     & $VenvPython -m maturin build --release --out dist_wheel
     if ($LASTEXITCODE -eq 0) {
-        $wheel = Get-ChildItem "dist_wheel\*.whl" | Select-Object -First 1
+        $wheel = Get-ChildItem "dist_wheel\*.whl" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
         if ($wheel) {
             & $VenvPython -m pip install --force-reinstall $wheel.FullName --quiet
         }
@@ -84,9 +86,20 @@ if (Get-Command "cargo" -ErrorAction SilentlyContinue) {
 Write-Host "[4/5] Building the executable with PyInstaller (onedir)..." -ForegroundColor Yellow
 $ErrorActionPreference = "Continue"
 Push-Location $RepoRoot
-& $VenvPython -m PyInstaller --onedir --noconfirm --name paper0 paper0_cli.py
+# The test modules are loaded by name by `paper0 test`, which PyInstaller cannot see:
+# they are listed explicitly so that the command works in the executable.
+$TestModules = @("test_thermodynamic_valence", "test_hardware_session", "test_demarcation",
+                 "test_necessary_conditions", "test_engine_parity")
+$HiddenImports = $TestModules | ForEach-Object { "--hidden-import=$_" }
+& $VenvPython -m PyInstaller --onedir --noconfirm --name paper0 @HiddenImports paper0_cli.py
+$PyInstallerExit = $LASTEXITCODE
 Pop-Location
 $ErrorActionPreference = "Stop"
+if ($PyInstallerExit -ne 0) {
+    # An executable left by an earlier build must not pass for a successful one
+    Write-Host "[ERROR] PyInstaller failed (exit $PyInstallerExit)." -ForegroundColor Red
+    exit 1
+}
 
 # 6. Outcome
 $ExePath = Join-Path $RepoRoot "dist\paper0\paper0.exe"
@@ -98,6 +111,7 @@ if (Test-Path $ExePath) {
     Write-Host "    dist\paper0\paper0.exe metrology" -ForegroundColor Green
     Write-Host "    dist\paper0\paper0.exe dashboard" -ForegroundColor Green
     Write-Host "    dist\paper0\paper0.exe hardware" -ForegroundColor Green
+    Write-Host "    dist\paper0\paper0.exe test" -ForegroundColor Green
     Write-Host "  Distribute the entire dist\paper0\ folder (not just the exe)." -ForegroundColor Green
     Write-Host "==========================================================" -ForegroundColor Green
 } else {

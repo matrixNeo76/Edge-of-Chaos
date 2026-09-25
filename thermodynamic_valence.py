@@ -35,9 +35,11 @@ def simulate_neuromorphic_substrate_sde(n_steps=10000, dt=0.001, seed=42):
     """
     if n_steps < 2:
         raise ValueError(f"n_steps must be at least 2, got {n_steps}")
-    if dt <= 0:
-        raise ValueError(f"dt must be positive, got {dt}")
-    np.random.seed(seed)
+    if not (np.isfinite(dt) and dt > 0):
+        raise ValueError(f"dt must be positive and finite, got {dt}")
+    # Local generator: same stream as the former np.random.seed(seed), without touching
+    # the global NumPy state of the caller.
+    rng = np.random.RandomState(seed)
 
     # Material parameters (Mott / diffusive memristor)
     a, b = -1.2, 0.8  # Local activation parameters (edge of chaos)
@@ -54,7 +56,7 @@ def simulate_neuromorphic_substrate_sde(n_steps=10000, dt=0.001, seed=42):
     s_pred[0] = x_val
     for t in range(1, n_steps):
         # SDE for the primary level A1
-        dW = np.random.normal(0, np.sqrt(dt))
+        dW = rng.normal(0, np.sqrt(dt))
         # With additive noise the Milstein correction 0.5*g*g'*(dW**2 - dt) vanishes
         # (g' = 0), so Milstein reduces to Euler-Maruyama (Higham 2001).
         dx = (a * x_val + b * np.tanh(x_val) + np.sin(t * dt * 2.0)) * dt + sigma_noise * dW
@@ -62,7 +64,7 @@ def simulate_neuromorphic_substrate_sde(n_steps=10000, dt=0.001, seed=42):
         x_A1[t] = x_val
 
         # Real sensory reafference
-        s_obs[t] = x_val + np.random.normal(0, 0.05)
+        s_obs[t] = x_val + rng.normal(0, 0.05)
 
         # Efference copy (level A2) - allostatic prediction
         s_pred[t] = x_A1[t-1] + (a * x_A1[t-1] + b * np.tanh(x_A1[t-1])) * dt
@@ -73,6 +75,10 @@ def estimate_kl_divergence_knn(p_samples, q_samples, k=5):
     """
     Non-parametric k-NN estimate of the Kullback-Leibler divergence D_KL(P || Q),
     based on KDTree (Kraskov et al. / Perez-Cruz).
+
+    Negative estimates, which sampling noise produces when P and Q are close, are clipped
+    to 0 (as in the Rust engine). G_pred is a difference of two such estimates and
+    inherits the clipping when both are small.
     """
     p_samples = np.asarray(p_samples, dtype=float)
     q_samples = np.asarray(q_samples, dtype=float)
@@ -117,7 +123,7 @@ def delay_embed(signal, tau_steps):
 
 
 def calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt, alpha=1.0, beta=0.5, gamma=0.8,
-                                    tau_steps=10, niche_seed=12345):
+                                    tau_steps=10, niche_seed=12345, niche_samples=None):
     """
     Computes the valence functional Psi(t) from two heuristic dissipation proxies,
     the allostatic divergence, and the predictive gain of the efference copy.
@@ -126,15 +132,17 @@ def calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt, alpha=1.0, beta=0.5
         G_pred = D_KL(p_obs || p_ref) - D_KL(p_obs || p_pred),
     estimated on delay-embedded densities (tau_steps). The digital twin has no
     actuation, so the free-running reference p_ref is stood in for by the target niche.
-    The niche samples are drawn from a fixed seed, so equal inputs give equal outputs.
+    The niche samples are drawn from a fixed seed, so equal inputs give equal outputs;
+    niche_samples (one per time point) replaces them, e.g. to compare with the Rust engine,
+    which draws its niche from a different generator.
     """
     x_A1, s_obs, s_pred = (np.asarray(a, dtype=float) for a in (x_A1, s_obs, s_pred))
     if not (x_A1.ndim == s_obs.ndim == s_pred.ndim == 1):
         raise ValueError("x_A1, s_obs and s_pred must be one-dimensional")
     if not (len(x_A1) == len(s_obs) == len(s_pred)):
         raise ValueError(f"x_A1, s_obs and s_pred must have equal length, got {len(x_A1)}, {len(s_obs)}, {len(s_pred)}")
-    if dt <= 0:
-        raise ValueError(f"dt must be positive, got {dt}")
+    if not (np.isfinite(dt) and dt > 0):
+        raise ValueError(f"dt must be positive and finite, got {dt}")
     if tau_steps < 1:
         raise ValueError(f"tau_steps must be at least 1, got {tau_steps}")
     min_length = tau_steps + 7  # the k-NN estimators (k = 5) need at least 7 embedded points
@@ -151,8 +159,16 @@ def calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt, alpha=1.0, beta=0.5
 
     # 2. Target allostatic niche p_target ~ N(0, 0.2), from a fixed seed so that it
     # does not add run-to-run noise to the comparison between conditions.
-    niche_rng = np.random.default_rng(niche_seed)
-    p_target = niche_rng.normal(0.0, 0.2, size=(len(x_A1), 1))
+    if niche_samples is None:
+        p_target = np.random.default_rng(niche_seed).normal(0.0, 0.2, size=(len(x_A1), 1))
+    else:
+        p_target = np.asarray(niche_samples, dtype=float)
+        if p_target.ndim == 2 and p_target.shape[1] == 1:
+            p_target = p_target[:, 0]
+        if p_target.ndim != 1 or len(p_target) != len(x_A1) or not np.all(np.isfinite(p_target)):
+            raise ValueError("niche_samples must be a finite one-dimensional array with one sample "
+                             f"per time point ({len(x_A1)}), got shape {np.shape(niche_samples)}")
+        p_target = p_target.reshape(-1, 1)
     x_samples = np.atleast_2d(x_A1).T
 
     d_kl_allostatic = estimate_kl_divergence_knn(x_samples, p_target, k=5)

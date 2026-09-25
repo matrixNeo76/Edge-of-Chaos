@@ -53,9 +53,9 @@ pub fn compute_thermodynamic_valence_rust(
             n_steps
         )));
     }
-    if !(dt > 0.0) {
+    if !(dt.is_finite() && dt > 0.0) {
         return Err(pyo3::exceptions::PyValueError::new_err(format!(
-            "dt must be positive, got {}",
+            "dt must be positive and finite, got {}",
             dt
         )));
     }
@@ -70,9 +70,55 @@ pub fn compute_thermodynamic_valence_rust(
     })
 }
 
+/// Computes the valence proxy on given series and niche samples with the Rust engine.
+/// With the same inputs, thermodynamic_valence.calculate_thermodynamic_valence(...,
+/// niche_samples=niche) returns the same numbers (test_engine_parity.py).
+#[pyfunction]
+#[allow(clippy::too_many_arguments)]
+pub fn calculate_valence_with_niche_rust(
+    x_a1: Vec<f64>,
+    s_obs: Vec<f64>,
+    s_pred: Vec<f64>,
+    dt: f64,
+    alpha: f64,
+    beta: f64,
+    gamma: f64,
+    niche: Vec<f64>,
+) -> PyResult<MetrologyResultsRust> {
+    let n = x_a1.len();
+    if s_obs.len() != n || s_pred.len() != n || niche.len() != n {
+        return Err(pyo3::exceptions::PyValueError::new_err(
+            "x_a1, s_obs, s_pred and niche must have equal length",
+        ));
+    }
+    if n < 17 {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "series too short: {} samples, need at least 17",
+            n
+        )));
+    }
+    if !(dt.is_finite() && dt > 0.0) {
+        return Err(pyo3::exceptions::PyValueError::new_err("dt must be positive and finite"));
+    }
+    if !x_a1.iter().chain(&s_obs).chain(&s_pred).chain(&niche).all(|v| v.is_finite()) {
+        return Err(pyo3::exceptions::PyValueError::new_err("inputs must be finite"));
+    }
+    let res = engine::calculate_thermodynamic_valence_with_niche(
+        &x_a1, &s_obs, &s_pred, dt, alpha, beta, gamma, &niche,
+    );
+    Ok(MetrologyResultsRust {
+        sigma_ex: res.sigma_ex,
+        sigma_hk: res.sigma_hk,
+        d_kl_allostatic: res.d_kl_allostatic,
+        g_pred: res.g_pred,
+        psi_valence: res.psi_valence,
+    })
+}
+
 #[pymodule]
 fn thermodynamic_valence_rust(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<MetrologyResultsRust>()?;
     m.add_function(wrap_pyfunction!(compute_thermodynamic_valence_rust, m)?)?;
+    m.add_function(wrap_pyfunction!(calculate_valence_with_niche_rust, m)?)?;
     Ok(())
 }

@@ -59,5 +59,8 @@ def response_matrices(size=8, noise=0.05, seed=0):
     basis = np.linalg.qr(rng.normal(size=(size, size)))[0]
     r_lin = basis[:, :3] @ np.diag([3.0, 2.0, 1.0]) @ basis[:, :3].T
     r = r_lin + basis[:, 3:5] @ np.diag([0.8, 0.5]) @ basis[:, 3:5].T
-    noisy = lambda m: m + noise * rng.normal(size=m.shape)
+
+    def noisy(m):
+        return m + noise * rng.normal(size=m.shape)
+
     return noisy(r), noisy(r_lin), noise * rng.normal(size=(size, size))
