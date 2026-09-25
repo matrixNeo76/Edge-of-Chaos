@@ -1,0 +1,60 @@
+# Zenodo records of the corpus, checked by tools/zenodo_check.py.
+# `concept` is the concept record ID (the concept DOI is 10.5281/zenodo.<concept>).
+# Update `version_note` (and `version` for the software) after each new version is published.
+
+community = "edge-of-chaos-programme"
+
+[[record]]
+name = "P0"
+concept = 22895484
+file = "P0_Distilled_v0.1.pdf"
+version_note = "Version 6"
+related = ["10.5281/zenodo.22895263"]
+
+[[record]]
+name = "P1"
+concept = 22896026
+file = "P1_Main.pdf"
+version_note = "Version 5"
+
+[[record]]
+name = "P2"
+concept = 22896870
+file = "P2_SelfAgency.pdf"
+version_note = "Version 4"
+
+[[record]]
+name = "P3"
+concept = 22896988
+file = "P3_Critique.pdf"
+version_note = "Version 5"
+
+[[record]]
+name = "C1"
+concept = 22897359
+file = "C1_Philosophy.pdf"
+version_note = "Version 4"
+
+[[record]]
+name = "C2"
+concept = 22897562
+file = "C2_PowerAnalysis.pdf"
+version_note = "Version 3"
+
+[[record]]
+name = "Executive Summary"
+concept = 22897732
+file = "ES_Summary.pdf"
+version_note = "Version 4"
+
+[[record]]
+name = "Explainer article"
+concept = 22898608
+file = "article_p0_distilled_EN.pdf"
+version_note = "Version 2"
+related = ["10.5281/zenodo.22895484"]
+
+[[record]]
+name = "Software"
+concept = 22895263
+version = "v0.4.0"

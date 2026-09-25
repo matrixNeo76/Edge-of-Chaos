@@ -7,6 +7,16 @@ continuously evolving research software.
 
 ## [Unreleased]
 
+### Added
+- `tools/`: checks for the corpus and the repository, used in each revision round.
+  `build_papers.py` (reproducible builds with SOURCE_DATE_EPOCH, log and source checks,
+  MD5 table), `corpus_lint.py` (consistency across papers, shared facts in
+  `corpus_facts.toml`, the theory-to-code map of `PERSONA.md`), `verify_citations.py`
+  (Crossref and DataCite), `zenodo_check.py` (published records) and
+  `check_versions.py` (release version, in CI). Standard library only, no credentials.
+- CI: tests of the tools, version check, weekly scheduled run; Dependabot for GitHub
+  Actions, pip and cargo.
+
 ## [0.4.0] - 2026-09-25
 
 A second review of the code, with every finding verified by running it, and the

@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    # Weekly run, to catch breakage from new versions of dependencies and actions
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
 
 jobs:
   python:
@@ -21,6 +25,10 @@ jobs:
         run: pip install -r requirements.txt pytest pytest-cov ruff==0.15.12
       - name: Lint
         run: ruff check .
+      - name: Release version is consistent
+        run: python -m tools.check_versions
+      - name: Tests of the corpus and repository tools
+        run: python -m pytest -q tools/tests
       - name: Run tests with coverage
         env:
           MPLBACKEND: Agg

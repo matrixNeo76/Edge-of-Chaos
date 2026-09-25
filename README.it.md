@@ -61,6 +61,7 @@ Edge-of-Chaos/
 ├── test_engine_parity.py         # Parità Python/Rust a parità di ingressi (richiede il modulo nativo)
 ├── paper0_cli.py                 # Entry-point unico a sottocomandi
 ├── notebooks/demo.ipynb          # Notebook dimostrativo (eseguibile su Binder)
+├── tools/                        # Build e controlli di coerenza per paper, citazioni, record Zenodo, versioni
 ├── references.bib                # Database BibTeX completo di 49 citazioni (IIT, FEP, Chua, Lakatos)
 │
 ├── install.sh                    # Script di installazione per Linux / macOS
@@ -163,6 +164,12 @@ Per generare la dashboard grafica `valence_dashboard.png`:
 ```bash
 python3 valence_dashboard.py
 ```
+
+### Strumenti per il corpus
+`tools/` contiene i controlli usati in ogni giro di revisione: build riproducibili dei paper,
+lint di coerenza tra paper, verifica delle citazioni su Crossref e DataCite, controllo dei
+record Zenodo pubblicati e della versione di rilascio (in CI). Vedi
+[tools/README.md](tools/README.md) (in inglese).
 
 ### Notebook dimostrativo
 `notebooks/demo.ipynb` esegue su dati simulati il proxy della valenza con l'ablazione della
