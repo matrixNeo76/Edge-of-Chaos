@@ -63,27 +63,60 @@ def mock_dmm_carrier(t):
 
 
 class KeithleyDMMDriverV2:
-    """Advanced driver for the Keithley multimeter (e.g. 2000/2400 SourceMeter) with auto-compliance."""
-    def __init__(self, resource_name="GPIB0::24::INSTR", config=LaboratoryParametersConfig, mock=True, seed=None):
+    """
+    Driver for a Keithley SourceMeter (e.g. 2400) with compliance limits set on connection.
+
+    The real-instrument path (mock=False) has only been tested against a fake VISA resource
+    that records the commands (test_hardware_session.py), not against an instrument. On
+    connection it sets the current compliance and the overvoltage protection before any other
+    command, reads both back, and closes the connection and raises if they do not match.
+    Use it as a context manager, or call close(), to release the instrument.
+    """
+    def __init__(self, resource_name="GPIB0::24::INSTR", config=LaboratoryParametersConfig, mock=True, seed=None,
+                 resource_manager=None):
         self.resource_name = resource_name
         self.config = config
         self.mock = mock
         self.connected = False
+        self.inst = None
         self.rng = np.random.default_rng(seed)
+        self._resource_manager = resource_manager
 
     def connect(self):
         if self.mock:
             self.connected = True
             return f"MOCK_KEITHLEY_2400 (Configured: V_comp={self.config.V_COMPLIANCE_MAX}V, I_comp={self.config.I_COMPLIANCE_MAX*1e3}mA)"
-        else:
+        if self._resource_manager is None:
             import pyvisa
-            rm = pyvisa.ResourceManager()
-            self.inst = rm.open_resource(self.resource_name)
-            # Safety SCPI command pre-configuration
-            self.inst.write(f":SENS:CURR:PROT {self.config.I_COMPLIANCE_MAX}")
-            self.inst.write(f":SOUR:VOLT:PROT {self.config.V_COMPLIANCE_MAX}")
-            self.connected = True
-            return self.inst.query("*IDN?")
+            self._resource_manager = pyvisa.ResourceManager()
+        self.inst = self._resource_manager.open_resource(self.resource_name)
+        # Safety limits first, before any other command
+        self.inst.write(f":SENS:CURR:PROT {self.config.I_COMPLIANCE_MAX}")
+        self.inst.write(f":SOUR:VOLT:PROT {self.config.V_COMPLIANCE_MAX}")
+        current_limit = float(self.inst.query(":SENS:CURR:PROT?"))
+        voltage_limit = float(self.inst.query(":SOUR:VOLT:PROT?"))
+        if current_limit > self.config.I_COMPLIANCE_MAX or voltage_limit > self.config.V_COMPLIANCE_MAX:
+            self.close()
+            raise RuntimeError(
+                f"compliance not applied: instrument reports {current_limit} A / {voltage_limit} V, "
+                f"requested {self.config.I_COMPLIANCE_MAX} A / {self.config.V_COMPLIANCE_MAX} V")
+        self.connected = True
+        return self.inst.query("*IDN?")
+
+    def close(self):
+        """Release the instrument (no-op for the mock)."""
+        if self.inst is not None:
+            self.inst.close()
+            self.inst = None
+        self.connected = False
+
+    def __enter__(self):
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+        return False
 
     def read_current_stream(self, n_samples=1000):
         """Reads a current stream I(t), injecting 1/f percolative noise calibrated at the edge of chaos."""
@@ -104,42 +137,55 @@ class KeithleyDMMDriverV2:
             # Hard compliance protection limit
             i_t = np.clip(i_t, 0, self.config.I_COMPLIANCE_MAX)
             return i_t
-        else:
-            self.inst.write(":TRACE:DATA?")
-            data_str = self.inst.read()
-            return np.array([float(val) for val in data_str.split(',') if val.strip()])
+        data_str = self.inst.query(":TRACE:DATA?")
+        return np.array([float(val) for val in data_str.split(',') if val.strip()])
+
+
+PICOSCOPE_NOT_IMPLEMENTED = (
+    "real PicoScope acquisition is not implemented: only the mock (mock=True) is available. "
+    "A real driver needs the vendor SDK (picosdk)."
+)
 
 
 class PicoScopeOscilloscopeDriverV2:
-    """Driver for a high-sample-rate PicoScope oscilloscope."""
-    def __init__(self, channels=("A", "B"), config=LaboratoryParametersConfig, mock=True):
+    """Driver for a high-sample-rate PicoScope oscilloscope. Only the mock is implemented."""
+    def __init__(self, channels=("A", "B"), config=LaboratoryParametersConfig, mock=True, seed=None):
         self.channels = channels
         self.config = config
         self.mock = mock
         self.connected = False
+        self.rng = np.random.default_rng(seed)
 
     def connect(self):
+        if not self.mock:
+            raise NotImplementedError(PICOSCOPE_NOT_IMPLEMENTED)
         self.connected = True
         return f"MOCK_PICOSCOPE_5000 (Configured: SampleRate={self.config.SAMPLE_RATE_PICO_MHZ}MHz)"
 
+    def close(self):
+        self.connected = False
+
     def acquire_waveform(self, time_window_ms=None):
         """Acquires the voltage waveforms V(t) with Chua band and voltage protection."""
+        if not self.mock:
+            raise NotImplementedError(PICOSCOPE_NOT_IMPLEMENTED)
+        if not self.connected:
+            raise RuntimeError("Device not connected. Call connect() before acquiring.")
         if time_window_ms is None:
             time_window_ms = self.config.TIME_WINDOW_MS
 
-        if self.mock:
-            n_pts = int(time_window_ms * 1e-3 * self.config.SAMPLE_RATE_PICO_MHZ * 1e6)
-            t = np.linspace(0, time_window_ms * 1e-3, n_pts)
+        n_pts = int(time_window_ms * 1e-3 * self.config.SAMPLE_RATE_PICO_MHZ * 1e6)
+        t = np.linspace(0, time_window_ms * 1e-3, n_pts)
 
-            # Voltage signal with edge-of-chaos resonance
-            v_a = self.config.V_OPERATING_NOMINAL * np.cos(2 * np.pi * 50 * t) + np.random.normal(0, 0.05, n_pts)
-            v_b = 0.8 * np.sin(2 * np.pi * 50 * t + np.pi/4) + np.random.normal(0, 0.02, n_pts)
+        # Voltage signal with edge-of-chaos resonance
+        v_a = self.config.V_OPERATING_NOMINAL * np.cos(2 * np.pi * 50 * t) + self.rng.normal(0, 0.05, n_pts)
+        v_b = 0.8 * np.sin(2 * np.pi * 50 * t + np.pi/4) + self.rng.normal(0, 0.02, n_pts)
 
-            # Safety clipping at V_COMPLIANCE_MAX
-            v_a = np.clip(v_a, -self.config.V_COMPLIANCE_MAX, self.config.V_COMPLIANCE_MAX)
-            v_b = np.clip(v_b, -self.config.V_COMPLIANCE_MAX, self.config.V_COMPLIANCE_MAX)
+        # Safety clipping at V_COMPLIANCE_MAX
+        v_a = np.clip(v_a, -self.config.V_COMPLIANCE_MAX, self.config.V_COMPLIANCE_MAX)
+        v_b = np.clip(v_b, -self.config.V_COMPLIANCE_MAX, self.config.V_COMPLIANCE_MAX)
 
-            return {"time": t, "channel_A": v_a, "channel_B": v_b}
+        return {"time": t, "channel_A": v_a, "channel_B": v_b}
 
 
 class NeuromorphicHardwareInterfaceV2:
@@ -150,8 +196,10 @@ class NeuromorphicHardwareInterfaceV2:
         self.pico = PicoScopeOscilloscopeDriverV2(config=config, mock=mock)
 
     def initialize_session(self):
-        info_dmm = self.dmm.connect()
+        # The oscilloscope first: its real path is not implemented, and it must fail before
+        # a real source-meter is opened.
         info_pico = self.pico.connect()
+        info_dmm = self.dmm.connect()
         return (f"=== ADVANCED HARDWARE SESSION INITIALIZED (P0_Distilled v0.1) ===\n"
                 f" - DMM: {info_dmm}\n"
                 f" - PicoScope: {info_pico}\n"
@@ -159,6 +207,18 @@ class NeuromorphicHardwareInterfaceV2:
                 f" - 1/f Noise Calibration: sigma_noise = {self.config.SIGMA_NOISE_OPTIMAL} (edge of chaos)\n"
                 f" - Efference Feedback: Gain gamma = {self.config.EFFERENCE_COPY_GAIN_GAMMA}\n"
                 f"=========================================================================")
+
+    def close(self):
+        self.dmm.close()
+        self.pico.close()
+
+    def __enter__(self):
+        self.initialize_session()
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+        return False
 
     def get_realtime_frame(self, n_samples=1000):
         """Extracts a coordinated frame of current I(t) and voltage V(t), ready for the valence computation."""
