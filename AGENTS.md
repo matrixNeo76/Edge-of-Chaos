@@ -5,6 +5,9 @@ agentic tools (Codex CLI, Cursor, aider, and others). For Claude Code and Gemini
 see `CLAUDE.md` / `GEMINI.md`, which point back here to avoid duplicating and
 drifting the instructions apart.
 
+Read `PERSONA.md` before writing or revising texts of the corpus (identity, voice and content
+rules). If present, `docs_v0.2/WORKFLOW.md` describes the author's internal workflow.
+
 ## What this repository is
 
 **Edge-of-Chaos** is the software platform (Python digital twin + native Rust

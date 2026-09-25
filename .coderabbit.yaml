@@ -39,5 +39,10 @@ reviews:
     - "!notebooks/**"
     - "!*.png"
     - "!Cargo.lock"
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "PERSONA.md"
 chat:
   auto_reply: true
