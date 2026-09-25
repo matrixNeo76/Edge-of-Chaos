@@ -110,6 +110,25 @@ class TestStateDependentDynamics(unittest.TestCase):
         self.assertFalse(state_dependent_dynamics(linear_2d(20000, seed=5))["passes"])
         self.assertTrue(state_dependent_dynamics(double_well(20000, seed=5))["passes"])
 
+    def test_null_controls_false_positives_on_short_records(self):
+        """
+        With theta_state alone, estimation noise passed a linear system in 20 of 20 runs at
+        1000 samples. With the linear-surrogate null (95th percentile) the false positive
+        rate stays near the nominal 5%.
+        """
+        runs = [state_dependent_dynamics(linear_2d(1000, seed=s), n_null=49) for s in range(10)]
+        self.assertLessEqual(sum(r["passes"] for r in runs), 2)
+        # The papers' criterion alone (n_null = 0) is fooled by the same data
+        fooled = [state_dependent_dynamics(linear_2d(1000, seed=s), n_null=0) for s in range(10)]
+        self.assertGreaterEqual(sum(r["passes"] for r in fooled), 8)
+
+    def test_null_threshold_reported(self):
+        result = state_dependent_dynamics(double_well(20000, seed=1), n_null=19)
+        self.assertIsNotNone(result["null_threshold"])
+        self.assertGreater(result["statistic"], result["null_threshold"])
+        with self.assertRaises(ValueError):
+            state_dependent_dynamics(linear_2d(500), n_null=-1)
+
     def test_candidate_requires_all_three(self):
         yes, no = {"passes": True}, {"passes": False}
         self.assertTrue(is_candidate(yes, yes, yes))
