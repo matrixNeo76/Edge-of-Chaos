@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 # Note: the thermodynamic_valence.rs binary is designed to be zero-dependencies
 # (std-only), for maximum execution speed and cross-platform build simplicity.
 # pyo3 is only required by the lib.rs library target (Python extension).
-pyo3 = { version = "0.20", features = ["extension-module"] }
+pyo3 = { version = "0.29", features = ["extension-module"] }
 
 [lib]
 name = "thermodynamic_valence_rust"
