@@ -138,8 +138,9 @@ def cmd_test(args):
         "hardware": ["test_hardware_session"],
         "demarcation": ["test_demarcation"],
         "conditions": ["test_necessary_conditions"],
+        "parity": ["test_engine_parity"],
         "all": ["test_thermodynamic_valence", "test_hardware_session",
-                "test_demarcation", "test_necessary_conditions"],
+                "test_demarcation", "test_necessary_conditions", "test_engine_parity"],
     }
     modules = suite_map[args.suite]
     loader = unittest.TestLoader()
@@ -168,7 +169,7 @@ def main(argv=None):
 
     p_test = sub.add_parser("test", help="Runs the test suites")
     p_test.add_argument(
-        "--suite", choices=["metrology", "hardware", "demarcation", "conditions", "all"], default="all",
+        "--suite", choices=["metrology", "hardware", "demarcation", "conditions", "parity", "all"], default="all",
         help="Which suite to run (default: all)",
     )
 
