@@ -65,6 +65,7 @@ Edge-of-Chaos/
 ├── test_thermodynamic_valence.py  # 验证 SDE 数学与 Psi(t) 的单元测试
 ├── test_demarcation.py           # 在答案已知的系统上测试划界条件
 ├── test_necessary_conditions.py  # 必要条件判据的测试
+├── test_engine_parity.py         # 相同输入下 Python/Rust 结果一致性测试（需要原生模块）
 ├── paper0_cli.py                 # 统一的多子命令 CLI 入口
 ├── notebooks/demo.ipynb          # 演示笔记本（可在 Binder 上运行）
 ├── references.bib                # 完整的 BibTeX 参考文献数据库（49 条引用，涵盖 IIT、FEP、Chua、Lakatos）

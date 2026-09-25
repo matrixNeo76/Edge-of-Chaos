@@ -58,6 +58,7 @@ Edge-of-Chaos/
 ├── test_thermodynamic_valence.py  # Test unitari per la validazione matematica delle SDE e di Psi(t)
 ├── test_demarcation.py           # Test delle condizioni di demarcazione su sistemi con risposta nota
 ├── test_necessary_conditions.py  # Test dei criteri per le condizioni necessarie
+├── test_engine_parity.py         # Parità Python/Rust a parità di ingressi (richiede il modulo nativo)
 ├── paper0_cli.py                 # Entry-point unico a sottocomandi
 ├── notebooks/demo.ipynb          # Notebook dimostrativo (eseguibile su Binder)
 ├── references.bib                # Database BibTeX completo di 49 citazioni (IIT, FEP, Chua, Lakatos)

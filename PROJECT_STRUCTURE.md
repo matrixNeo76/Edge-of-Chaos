@@ -61,7 +61,9 @@ Edge-of-Chaos/
 │
 ├── (root)                                        CODE — DIGITAL TWIN AND METROLOGY
 │   ├── thermodynamic_valence.py                 Python metrology engine (SDE, k-NN D_KL, Psi(t))
-│   ├── thermodynamic_valence.rs                 Same engine, pure Rust (zero-dependency binary)
+│   ├── thermodynamic_valence.rs                 Same formulas in pure Rust (zero-dependency binary); same numbers
+│   │                                            for the same inputs (test_engine_parity.py), different random
+│   │                                            generators, so different simulations for the same seed
 │   ├── lib.rs                                   Native Python extension via PyO3
 │   ├── Cargo.toml / Cargo.lock                  Cargo config (bin + lib PyO3)
 │   ├── demo_pyo3_integration.py                 Demo of the Rust→Python binding
@@ -78,6 +80,7 @@ Edge-of-Chaos/
 │   ├── test_thermodynamic_valence.py            Unit tests for the metrology engine
 │   ├── test_demarcation.py                      Tests of the demarcation conditions
 │   ├── test_necessary_conditions.py             Tests of the necessary-condition criteria
+│   ├── test_engine_parity.py                    Python/Rust parity on identical inputs (needs the native module)
 │   ├── notebooks/demo.ipynb                     Demonstration notebook (runs on Binder)
 │   ├── test_hardware_session.py                 Unit tests for the hardware session
 │   │
