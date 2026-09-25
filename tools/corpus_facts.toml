@@ -1,0 +1,54 @@
+# Facts shared across the papers of the corpus, checked by tools/corpus_lint.py.
+# Each fact: a regular expression with one capture group, and the values allowed for it.
+# `files` restricts a fact to some papers (base names without .tex); without it, all papers.
+# Update a fact here when the programme itself changes, never to silence a real inconsistency.
+
+[[fact]]
+name = "negative controls of Paper I"
+pattern = '\b(one|two|three|four|five|six|seven|eight|nine|ten)\s+negative controls'
+allowed = ["six"]
+
+[[fact]]
+name = "new negative controls of Paper II"
+pattern = '\b(one|two|three|four|five|six)\s+new\s+negative controls'
+allowed = ["two"]
+
+[[fact]]
+name = "numbers of the Paper II controls"
+pattern = 'Controls~?\s?(\d+\s*--\s*\d+)'
+allowed = ["8--9"]
+
+[[fact]]
+name = "auxiliary hypotheses (seven in Paper I, three in Paper II)"
+pattern = '\b(one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:falsifiable\s+)?auxiliary hypotheses'
+allowed = ["seven", "three"]
+
+[[fact]]
+name = "necessary conditions"
+pattern = '\b(one|two|three|four|five|six|seven)\s+necessary (?:physical )?conditions'
+allowed = ["five"]
+
+[[fact]]
+name = "abandonment criteria of P0"
+pattern = '\b(one|two|three|four|five|six|seven|eight|nine|ten)\s+abandonment criteria'
+allowed = ["five"]
+files = ["P0_Distilled_v0.1"]
+
+[[fact]]
+name = "abandonment criteria of Paper I, as reported in the Executive Summary"
+pattern = '\b(one|two|three|four|five|six|seven|eight|nine|ten)\s+abandonment criteria'
+allowed = ["eight"]
+files = ["ES_Summary"]
+
+[[fact]]
+name = "questions examined by the critical assessment"
+# Only the sentences about the current count; "the ten objections examined in v1.0" is history.
+pattern = '\b(ten|eleven|twelve|thirteen|fourteen)\s+(?:foundational and interpretive questions|objections examined in \\S)'
+allowed = ["twelve"]
+files = ["P3_Critique"]
+
+[[fact]]
+name = "structural objections in the critical assessment"
+pattern = '\b(two|three|four|five|six)\s+objections are structural'
+allowed = ["four"]
+files = ["P3_Critique"]
