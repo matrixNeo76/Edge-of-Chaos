@@ -10,7 +10,6 @@ Integrates the optimal laboratory parameters derived from the simulation campaig
   - A1/A2 allostatic feedback and efference-copy injection in hardware/firmware
 """
 
-import time
 import numpy as np
 
 class LaboratoryParametersConfig:

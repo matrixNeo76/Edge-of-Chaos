@@ -7,8 +7,6 @@ validating the compliance and safety parameters (P0_Distilled v0.1).
 
 import unittest
 import numpy as np
-import os
-import sys
 
 # Import the metrology and hardware driver v2 modules
 from hardware_driver_v2 import (
@@ -177,7 +175,6 @@ class TestHardwareAcquisitionSession(unittest.TestCase):
         """Integrates the time series acquired from simulated hardware with the valence pipeline Psi(t)."""
         frame = self.hw.get_realtime_frame(n_samples=2000)
         i_t = frame["current_I"]
-        v_t = frame["voltage_V"]
 
         dt = 1.0 / self.config.SAMPLE_RATE_DMM_HZ
         # Normalization of the substrate state

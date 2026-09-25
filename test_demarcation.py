@@ -73,8 +73,8 @@ class TestNonMarkovianMemory(unittest.TestCase):
         rng = np.random.default_rng(6)
         x, y = rng.normal(size=3000), rng.normal(size=3000)
         for step in (0.1, 0.5, 1.0):
-            quantize = lambda v: np.round(v / step) * step
-            self.assertAlmostEqual(conditional_mutual_information(quantize(x), quantize(y)), 0.0, delta=0.03)
+            xq, yq = np.round(x / step) * step, np.round(y / step) * step
+            self.assertAlmostEqual(conditional_mutual_information(xq, yq), 0.0, delta=0.03)
         self.assertGreater(abs(conditional_mutual_information(np.round(x, 1), np.round(y, 1), jitter=False)), 0.1)
         # Dependence survives quantization
         y_dep = 0.8 * x + 0.6 * rng.normal(size=3000)

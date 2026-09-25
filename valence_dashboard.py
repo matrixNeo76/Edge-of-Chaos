@@ -27,7 +27,7 @@ import seaborn as sns
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.environ.get('OUTPUT_DIR', os.path.join(os.getcwd(), 'output'))
 sys.path.append(BASE_DIR)
-from thermodynamic_valence import simulate_neuromorphic_substrate_sde, calculate_thermodynamic_valence
+from thermodynamic_valence import simulate_neuromorphic_substrate_sde, calculate_thermodynamic_valence  # noqa: E402
 
 def generate_metrology_dashboard():
     os.makedirs(OUTPUT_DIR, exist_ok=True)

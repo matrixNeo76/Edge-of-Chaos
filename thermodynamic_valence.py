@@ -37,7 +37,9 @@ def simulate_neuromorphic_substrate_sde(n_steps=10000, dt=0.001, seed=42):
         raise ValueError(f"n_steps must be at least 2, got {n_steps}")
     if dt <= 0:
         raise ValueError(f"dt must be positive, got {dt}")
-    np.random.seed(seed)
+    # Local generator: same stream as the former np.random.seed(seed), without touching
+    # the global NumPy state of the caller.
+    rng = np.random.RandomState(seed)
 
     # Material parameters (Mott / diffusive memristor)
     a, b = -1.2, 0.8  # Local activation parameters (edge of chaos)
@@ -54,7 +56,7 @@ def simulate_neuromorphic_substrate_sde(n_steps=10000, dt=0.001, seed=42):
     s_pred[0] = x_val
     for t in range(1, n_steps):
         # SDE for the primary level A1
-        dW = np.random.normal(0, np.sqrt(dt))
+        dW = rng.normal(0, np.sqrt(dt))
         # With additive noise the Milstein correction 0.5*g*g'*(dW**2 - dt) vanishes
         # (g' = 0), so Milstein reduces to Euler-Maruyama (Higham 2001).
         dx = (a * x_val + b * np.tanh(x_val) + np.sin(t * dt * 2.0)) * dt + sigma_noise * dW
@@ -62,7 +64,7 @@ def simulate_neuromorphic_substrate_sde(n_steps=10000, dt=0.001, seed=42):
         x_A1[t] = x_val
 
         # Real sensory reafference
-        s_obs[t] = x_val + np.random.normal(0, 0.05)
+        s_obs[t] = x_val + rng.normal(0, 0.05)
 
         # Efference copy (level A2) - allostatic prediction
         s_pred[t] = x_A1[t-1] + (a * x_A1[t-1] + b * np.tanh(x_A1[t-1])) * dt
@@ -73,6 +75,10 @@ def estimate_kl_divergence_knn(p_samples, q_samples, k=5):
     """
     Non-parametric k-NN estimate of the Kullback-Leibler divergence D_KL(P || Q),
     based on KDTree (Kraskov et al. / Perez-Cruz).
+
+    Negative estimates, which sampling noise produces when P and Q are close, are clipped
+    to 0 (as in the Rust engine). G_pred is a difference of two such estimates and
+    inherits the clipping when both are small.
     """
     p_samples = np.asarray(p_samples, dtype=float)
     q_samples = np.asarray(q_samples, dtype=float)

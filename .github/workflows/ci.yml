@@ -12,18 +12,22 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest
-      - name: Run tests
+        run: pip install -r requirements.txt pytest pytest-cov ruff
+      - name: Lint
+        run: ruff check .
+      - name: Run tests with coverage
         env:
           MPLBACKEND: Agg
         run: >
           python -m pytest -q
+          --cov=thermodynamic_valence --cov=demarcation --cov=necessary_conditions
+          --cov=hardware_driver_v2 --cov=synthetic_systems --cov-report=term-missing
           test_thermodynamic_valence.py test_hardware_session.py
           test_demarcation.py test_necessary_conditions.py
       - name: Command-line demonstrations
@@ -38,12 +42,29 @@ jobs:
   rust:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - uses: dtolnay/rust-toolchain@stable
+      - name: Rust unit tests
+        run: cargo test --release --locked
       - name: Build binary and PyO3 library
         run: cargo build --release --locked
       - name: Run binary
         run: ./target/release/thermodynamic_valence
+      - name: Python/Rust parity (native module built with maturin)
+        run: |
+          pip install -r requirements.txt pytest maturin
+          maturin build --release --out dist_wheel
+          pip install dist_wheel/*.whl
+          python -m pytest -q -rs test_engine_parity.py
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build the image (runs the test suites at build time)
+        run: docker build -t edge-of-chaos:ci .
+      - name: docker compose configuration
+        run: docker compose config --quiet

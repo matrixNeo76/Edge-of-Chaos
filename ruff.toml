@@ -1,0 +1,5 @@
+# Lint configuration (run in CI). Default rule set; the virtual environments and
+# build outputs are excluded.
+target-version = "py311"
+line-length = 120
+extend-exclude = ["venv", "venv_build", "build", "dist", "target", "docs", "docs_v0.2", "notebooks"]
