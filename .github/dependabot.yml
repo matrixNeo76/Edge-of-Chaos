@@ -9,6 +9,9 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    # Propose a change only when a new release falls outside the declared range, instead of
+    # raising the minimum versions (which would drop support, e.g. numpy 2.5 needs Python 3.12).
+    versioning-strategy: widen
   - package-ecosystem: cargo
     directory: "/"
     schedule:
