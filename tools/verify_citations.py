@@ -161,8 +161,11 @@ def compare(entry_text, record):
     # contains 2019, but an entry dated (2018) with that DOI is still a year mismatch.
     if record["years"] and not any(re.search(rf"(?<!\d){y}(?!\d)", bare) for y in record["years"]):
         problems.append(f"year differs (record: {record['years']})")
+    # Records may transliterate umlauts the German way (Dürr as "Duerr"), not only drop them.
+    umlauts = re.sub(r"\\\"\{?([aouAOU])\}?", r"\1e", entry_text)
+    umlauts = umlauts.translate(str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue", "Ä": "Ae", "Ö": "Oe", "Ü": "Ue"}))
     author = normalise(record["first_author"])
-    if author and not set(author) <= entry_words:
+    if author and not set(author) <= entry_words | set(normalise(umlauts)):
         problems.append(f"first author differs (record: {record['first_author']})")
     return problems
 

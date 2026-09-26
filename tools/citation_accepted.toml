@@ -8,3 +8,15 @@ key = "kleiner2025newman"
 identifier = "doi:10.33735/phimisci.2025.11827"
 fields = ["year"]
 reason = "Volume 6 (2025) of Philosophy and the Mind Sciences, published online 30 Jan 2026; cited as 2025, vol. 6 (checked on Crossref, round 3)."
+
+[[accepted]]
+key = "sanzperl2021"
+identifier = "arxiv:2012.10792"
+fields = ["year"]
+reason = "The arXiv preprint is from 2020; the entry cites the journal version, Physical Review E 104, 014411, published July 2021 (checked on Crossref, round 4)."
+
+[[accepted]]
+key = "osborn2023"
+identifier = "doi:10.25959/25955899"
+fields = ["year"]
+reason = "PhD thesis issued 15 Dec 2023; the repository record was created in 2024 (checked on DataCite, round 4)."

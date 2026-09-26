@@ -124,6 +124,11 @@ class TestVerify(unittest.TestCase):
         self.assertEqual(compare("Sanz Perl, Y. (2021). Nonequilibrium brain dynamics as a signature of "
                                  "consciousness.", record), [])
 
+    def test_umlaut_transliterated_as_e_matches(self):
+        record = {"title": "Rationally warranted promise", "years": [2025], "first_author": "Duerr", "volume": None}
+        self.assertEqual(compare("D\\\"urr, P. M., \\& Fischer, E. (2025). Rationally warranted promise.", record), [])
+        self.assertEqual(compare("Dürr, P. M. (2025). Rationally warranted promise.", record), [])
+
     def test_year_inside_an_identifier_does_not_count(self):
         # The record says 2019; the entry says 2018 and its DOI contains 2019
         record = {"title": "The unfolding argument", "years": [2019], "first_author": "Doerig", "volume": None}
