@@ -9,6 +9,9 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    # Change a constraint only when a new release falls outside the declared range, instead of
+    # raising the minimum version, which could drop support (e.g. NumPy 2.5 requires Python 3.12).
+    versioning-strategy: increase-if-necessary
   - package-ecosystem: cargo
     directory: "/"
     schedule:
