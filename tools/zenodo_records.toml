@@ -8,38 +8,38 @@ community = "edge-of-chaos-programme"
 name = "P0"
 concept = 22895484
 file = "P0_Distilled_v0.1.pdf"
-version_note = "Version 6"
+version_note = "Version 7"
 related = ["10.5281/zenodo.22895263"]
 
 [[record]]
 name = "P1"
 concept = 22896026
 file = "P1_Main.pdf"
-version_note = "Version 5"
+version_note = "Version 6"
 
 [[record]]
 name = "P2"
 concept = 22896870
 file = "P2_SelfAgency.pdf"
-version_note = "Version 4"
+version_note = "Version 5"
 
 [[record]]
 name = "P3"
 concept = 22896988
 file = "P3_Critique.pdf"
-version_note = "Version 5"
+version_note = "Version 6"
 
 [[record]]
 name = "C1"
 concept = 22897359
 file = "C1_Philosophy.pdf"
-version_note = "Version 4"
+version_note = "Version 5"
 
 [[record]]
 name = "C2"
 concept = 22897562
 file = "C2_PowerAnalysis.pdf"
-version_note = "Version 3"
+version_note = "Version 4"
 
 [[record]]
 name = "Executive Summary"
