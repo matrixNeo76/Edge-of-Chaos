@@ -93,8 +93,28 @@ def phase_post(tmp):
     return results
 
 
+def repo_state(path):
+    """Commit, nearest tag and uncommitted changes of a private repository (docs/, docs_v0.2/).
+
+    The two private folders are separate Git repositories; recording both states in the report
+    ties a revision round to the exact sources and notes it ran on (they also share round tags).
+    """
+    if not (Path(path) / ".git").exists():
+        return "not a Git repository"
+
+    def git(*args):
+        proc = subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True)
+        return proc.stdout.strip() if proc.returncode == 0 else ""
+
+    commit = git("rev-parse", "--short", "HEAD") or "no commit"
+    tag = git("describe", "--tags", "--abbrev=0")
+    dirty = git("status", "--porcelain")
+    return f"{commit}" + (f" (last tag {tag})" if tag else "") + (", uncommitted changes" if dirty else "")
+
+
 def combine(phase, results):
     lines = [f"# Revision round: {phase}", "", f"Run on {datetime.date.today().isoformat()}.", "",
+             f"Sources (`{DOCS}`): {repo_state(DOCS)}. Notes (`{WORK}`): {repo_state(WORK)}.", "",
              "| Step | Result |", "|---|---|"]
     for name, (code, _, _) in results:
         lines.append(f"| {name} | {'ok' if code == 0 else 'errors'} |")

@@ -16,6 +16,10 @@ class RoundTest(unittest.TestCase):
         self.assertIn("# Corpus lint", text)
         self.assertIn("Traceback: network down", text)  # a tool without a report shows its output
 
+    def test_repo_state_outside_git(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(round_tool.repo_state(tmp), "not a Git repository")
+
     def test_graph_status_without_a_graph(self):
         with tempfile.TemporaryDirectory() as tmp:
             cwd = os.getcwd()
