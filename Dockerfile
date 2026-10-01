@@ -1,7 +1,7 @@
-# Dockerfile for the Digital Twin and Metrology, P0_Distilled v0.1
+# Dockerfile for the Edge-of-Chaos digital twin and metrology
 FROM python:3.11-slim
 
-LABEL maintainer="Lakatosian Research Programme"
+LABEL maintainer="Francesco Iavarone"
 LABEL description="Container for Neuromorphic Substrate Metrology and Valence Computation"
 
 # Install system tools and the Rust compiler

@@ -2,7 +2,7 @@
 
 *Leggi in: [English](README.md) | **Italiano** | [中文](README.zh.md)*
 
-> **Piattaforma di Metrologia Computazionale e Hardware-in-the-Loop** per la verifica sperimentale della senzienza primaria, della valenza termodinamica $\Psi(t)$ e delle condizioni di demarcazione operativa nei substrati materiali continui (*Mortal Computation*), sviluppata secondo il programma di ricerca Lakatosiano (*P0_Distilled v0.1*).
+> **Piattaforma di Metrologia Computazionale e Hardware-in-the-Loop** per la verifica sperimentale della senzienza primaria, della valenza termodinamica $\Psi(t)$ e delle condizioni di demarcazione operativa nei substrati materiali continui (*Mortal Computation*), sviluppata secondo il programma di ricerca Lakatosiano (*Necessary Conditions for Primary Interoceptive Sentience in Continuous Substrates*).
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22895263.svg)](https://doi.org/10.5281/zenodo.22895263)
 
@@ -27,7 +27,7 @@
 
 ## 🔬 Inquadramento Scientifico
 
-Il **Paper 0 (P0_Distilled_v0.1)** propone un modello di demarcazione fisica e termodinamica per valutare la candidatura di substrati fisici continui (array di memristori diffusivi ionici $SiO_x{:}Ag$, memristori di Mott $VO_2$, e reti percolative di nanofili d'argento) a supportare la senzienza primaria interocettiva.
+Il **Paper 0 (il paper d'ingresso)** propone un modello di demarcazione fisica e termodinamica per valutare la candidatura di substrati fisici continui (array di memristori diffusivi ionici $SiO_x{:}Ag$, memristori di Mott $VO_2$, e reti percolative di nanofili d'argento) a supportare la senzienza primaria interocettiva.
 
 A differenza delle intelligenze artificiali digitali su architetture von Neumann/GPU (*Immortal Computation*), soggette al *No-Go Theorem for Consciousness on a Chip* (Kleiner & Ludwig, 2024), la piattaforma valuta il substrato direttamente *in materia* verificando:
 * **Non-separabilità causale** tra la fisica del materiale e la computazione.
@@ -213,12 +213,12 @@ docker-compose up --build
 ## 📚 Pubblicazioni Correlate
 
 Questo software è la piattaforma di metrologia digital-twin che accompagna il corpus
-del programma di ricerca **P0_Distilled**, pubblicato su Zenodo. Il paper distillato è
+del programma di ricerca, pubblicato su Zenodo. Il paper d'ingresso (P0) è
 il punto d'ingresso consigliato; gli altri sono companion/versioni estese.
 
 | Paper | DOI |
 |---|---|
-| **P0_Distilled_v0.1** (punto d'ingresso principale) | [10.5281/zenodo.22895484](https://doi.org/10.5281/zenodo.22895484) |
+| **P0: Necessary Conditions for Primary Interoceptive Sentience in Continuous Substrates** (punto d'ingresso principale) | [10.5281/zenodo.22895484](https://doi.org/10.5281/zenodo.22895484) |
 | P1_Main (versione estesa/definitiva) | [10.5281/zenodo.22896026](https://doi.org/10.5281/zenodo.22896026) |
 | P2_SelfAgency (estensione self-agency) | [10.5281/zenodo.22896870](https://doi.org/10.5281/zenodo.22896870) |
 | P3_Critique (valutazione critica esterna) | [10.5281/zenodo.22896988](https://doi.org/10.5281/zenodo.22896988) |

@@ -2,7 +2,7 @@
 test_hardware_session.py
 ========================
 Test suite for verifying the extended hardware acquisition session and for
-validating the compliance and safety parameters (P0_Distilled v0.1).
+validating the compliance and safety parameters (Edge-of-Chaos).
 """
 
 import unittest

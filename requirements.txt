@@ -1,4 +1,4 @@
-# Runtime dependencies of Edge-of-Chaos (P0_Distilled v0.1).
+# Runtime dependencies of Edge-of-Chaos.
 # Versions checked on 2026-09-22 (Python 3.12, Windows 11); tested in CI on
 # Python 3.11 and 3.12 (Linux). For development/build (maturin, pyinstaller) see
 # requirements-dev.txt.

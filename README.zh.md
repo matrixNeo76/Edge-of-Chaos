@@ -5,7 +5,7 @@
 > **计算与硬件在环（Hardware-in-the-Loop）计量平台**，用于对连续物质基底
 > （*可朽计算*，Mortal Computation）中的原初感受性、热力学效价 $\Psi(t)$
 > 以及运行性划界条件进行实验验证，作为拉卡托斯研究纲领
-> （*P0_Distilled v0.1*）的一部分开发。
+> （*Necessary Conditions for Primary Interoceptive Sentience in Continuous Substrates*）的一部分开发。
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22895263.svg)](https://doi.org/10.5281/zenodo.22895263)
 
@@ -30,7 +30,7 @@
 
 ## 🔬 科学框架
 
-**Paper 0（P0_Distilled_v0.1）** 提出了一种物理与热力学划界模型，用于评估连续物理基底
+**Paper 0（入口论文）** 提出了一种物理与热力学划界模型，用于评估连续物理基底
 （扩散型离子忆阻器阵列 $SiO_x{:}Ag$、Mott 型忆阻器 $VO_2$、以及银纳米线渗流网络）
 是否具备支持原初内感受性（interoceptive sentience）的候选资格。
 
@@ -207,12 +207,12 @@ docker-compose up --build
 
 ## 📚 相关出版物
 
-本软件是 **P0_Distilled** 研究纲领语料库的配套数字孪生计量平台，已发布于 Zenodo。
+本软件是该研究纲领语料库的配套数字孪生计量平台，已发布于 Zenodo。
 建议从蒸馏版论文开始阅读；其余为配套/扩展论文。
 
 | 论文 | DOI |
 |---|---|
-| **P0_Distilled_v0.1**（主要入口） | [10.5281/zenodo.22895484](https://doi.org/10.5281/zenodo.22895484) |
+| **P0：Necessary Conditions for Primary Interoceptive Sentience in Continuous Substrates**（主要入口） | [10.5281/zenodo.22895484](https://doi.org/10.5281/zenodo.22895484) |
 | P1_Main（扩展/权威版本） | [10.5281/zenodo.22896026](https://doi.org/10.5281/zenodo.22896026) |
 | P2_SelfAgency（自我能动性扩展） | [10.5281/zenodo.22896870](https://doi.org/10.5281/zenodo.22896870) |
 | P3_Critique（外部批判性评估） | [10.5281/zenodo.22896988](https://doi.org/10.5281/zenodo.22896988) |

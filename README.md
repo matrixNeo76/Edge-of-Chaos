@@ -6,7 +6,7 @@
 > verification of primary sentience, the thermodynamic valence $\Psi(t)$, and the
 > operational demarcation conditions in continuous material substrates (*Mortal
 > Computation*), developed as part of the Lakatosian research programme
-> (*P0_Distilled v0.1*).
+> *Necessary Conditions for Primary Interoceptive Sentience in Continuous Substrates*.
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22895263.svg)](https://doi.org/10.5281/zenodo.22895263)
 [![CI](https://github.com/matrixNeo76/Edge-of-Chaos/actions/workflows/ci.yml/badge.svg)](https://github.com/matrixNeo76/Edge-of-Chaos/actions/workflows/ci.yml)
@@ -33,7 +33,7 @@
 
 ## 🔬 Scientific Framing
 
-**Paper 0 (P0_Distilled_v0.1)** proposes a physical and thermodynamic demarcation
+**Paper 0 (the entry-point paper)** proposes a physical and thermodynamic demarcation
 model to evaluate the candidacy of continuous physical substrates (diffusive ionic
 memristor arrays $SiO_x{:}Ag$, Mott memristors $VO_2$, and percolative silver-nanowire
 networks) to support primary interoceptive sentience.
@@ -235,13 +235,13 @@ docker-compose up --build
 
 ## 📚 Related Publications
 
-This software is the digital-twin metrology platform accompanying the **P0_Distilled**
-research programme corpus, published on Zenodo. The distilled paper is the recommended
+This software is the digital-twin metrology platform accompanying the research
+programme corpus, published on Zenodo. The entry-point paper (P0) is the recommended
 entry point; the others are companion/extended papers.
 
 | Paper | DOI |
 |---|---|
-| **P0_Distilled_v0.1** (main entry point) | [10.5281/zenodo.22895484](https://doi.org/10.5281/zenodo.22895484) |
+| **P0: Necessary Conditions for Primary Interoceptive Sentience in Continuous Substrates** (main entry point) | [10.5281/zenodo.22895484](https://doi.org/10.5281/zenodo.22895484) |
 | P1_Main (extended, definitive version) | [10.5281/zenodo.22896026](https://doi.org/10.5281/zenodo.22896026) |
 | P2_SelfAgency (self-agency extension) | [10.5281/zenodo.22896870](https://doi.org/10.5281/zenodo.22896870) |
 | P3_Critique (external critical assessment) | [10.5281/zenodo.22896988](https://doi.org/10.5281/zenodo.22896988) |

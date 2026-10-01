@@ -1,7 +1,7 @@
 """
 test_thermodynamic_valence.py
 ===============================
-Unit and E2E test suite for the metrology script (P0_Distilled v0.1)
+Unit and E2E test suite for the metrology script (Edge-of-Chaos)
 
 Author: Lakatosian Research Programme
 Description:

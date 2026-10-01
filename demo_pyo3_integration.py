@@ -2,7 +2,7 @@
 demo_pyo3_integration.py
 ========================
 Example of PyO3 integration: how to call the native Rust module from Python
-for high-performance analysis of neuromorphic substrates (P0_Distilled v0.1).
+for high-performance analysis of neuromorphic substrates (Edge-of-Chaos).
 """
 
 import time

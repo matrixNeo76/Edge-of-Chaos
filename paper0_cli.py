@@ -1,7 +1,7 @@
 """
 paper0_cli.py
 =============
-Single subcommand entry point for the P0_Distilled v0.1 metrology platform.
+Single subcommand entry point for the Edge-of-Chaos metrology platform.
 
 Does not duplicate the logic of the existing scripts: it imports their functions
 and calls them. Each script (`thermodynamic_valence.py`, `valence_dashboard.py`,
@@ -27,7 +27,7 @@ def cmd_metrology(_args):
     from thermodynamic_valence import simulate_neuromorphic_substrate_sde, calculate_thermodynamic_valence
     import numpy as np
 
-    print("=== RUNNING ADVANCED DIGITAL TWIN METROLOGY (P0_Distilled v0.1) ===")
+    print("=== RUNNING ADVANCED DIGITAL TWIN METROLOGY (Edge-of-Chaos) ===")
     x_A1, s_obs, s_pred, dt = simulate_neuromorphic_substrate_sde(n_steps=10000)
     res = calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt)
     print(f"Time points processed: {len(x_A1)}")
@@ -154,7 +154,7 @@ def cmd_test(args):
 def main(argv=None):
     parser = argparse.ArgumentParser(
         prog="paper0",
-        description="Metrology Platform for Neuromorphic Substrates (P0_Distilled v0.1)",
+        description="Metrology Platform for Neuromorphic Substrates (Edge-of-Chaos)",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 

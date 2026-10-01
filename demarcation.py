@@ -1,7 +1,7 @@
 """
 demarcation.py
 ==============
-The three operational demarcation conditions of the programme (P0_Distilled_v0.1.tex,
+The three operational demarcation conditions of the programme (entry-point paper P0,
 section 3; P1_Main.tex, section 2.1 and Appendix A). A substrate is a candidate if and
 only if all three hold:
 

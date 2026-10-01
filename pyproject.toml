@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+# One test command everywhere: `python -m pytest -q` finds the code tests (test_*.py in the root)
+# and the tests of tools/. The private folders and build outputs are never collected.
+testpaths = [".", "tools/tests"]
+python_files = ["test_*.py"]
+norecursedirs = [".*", "docs", "docs_v0.2", "media", "notebooks", "output", "target", "build", "dist",
+                 "dist_wheel", "venv", "venv_build", "__pycache__"]

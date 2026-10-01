@@ -11,7 +11,7 @@ rules). If present, `docs_v0.2/WORKFLOW.md` describes the author's internal work
 ## What this repository is
 
 **Edge-of-Chaos** is the software platform (Python digital twin + native Rust
-extension via PyO3) supporting the research programme *P0_Distilled v0.1* on
+extension via PyO3) supporting the research programme on
 primary interoceptive sentience in continuous neuromorphic substrates. The
 repository contains **only the software**: the scientific manuscripts live in
 `docs/` (if present in your checkout — not part of the public repository, see
