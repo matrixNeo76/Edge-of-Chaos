@@ -26,6 +26,7 @@ Usage
 """
 
 import argparse
+import datetime
 import http.client
 import json
 import re
@@ -47,6 +48,9 @@ BS = "\\"
 TITLE_THRESHOLD = 0.8
 STOPWORDS = {"a", "an", "the", "of", "and", "in", "on", "for", "to", "with", "as", "by", "at", "from", "is"}
 
+
+# German transliteration of umlauts (Dürr as "Duerr"); a str -> str | int | None mapping for maketrans
+UMLAUTS: dict[str, str | int | None] = {"ä": "ae", "ö": "oe", "ü": "ue", "Ä": "Ae", "Ö": "Oe", "Ü": "Ue"}
 
 def normalise(text):
     """Lower-case ASCII words, with LaTeX accents, LaTeX and HTML markup removed."""
@@ -163,7 +167,7 @@ def compare(entry_text, record):
         problems.append(f"year differs (record: {record['years']})")
     # Records may transliterate umlauts the German way (Dürr as "Duerr"), not only drop them.
     umlauts = re.sub(r"\\\"\{?([aouAOU])\}?", r"\1e", entry_text)
-    umlauts = umlauts.translate(str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue", "Ä": "Ae", "Ö": "Oe", "Ü": "Ue"}))
+    umlauts = umlauts.translate(str.maketrans(UMLAUTS))
     author = normalise(record["first_author"])
     if author and not set(author) <= entry_words | set(normalise(umlauts)):
         problems.append(f"first author differs (record: {record['first_author']})")
@@ -195,9 +199,25 @@ def load_accepted(path):
     return accepted
 
 
-def verify(entries, cache, get=http_get, pause=1.0, accepted=None):
-    """entries: (source, key, text). Returns one result per entry and updates the cache."""
+def is_stale(cache, cache_key, max_age_days, today):
+    """True when a cached record is older than max_age_days, or has no fetch date (older caches)."""
+    if max_age_days is None:
+        return False
+    fetched = cache.get("_fetched", {}).get(cache_key)
+    if fetched is None:
+        return True
+    return (today - datetime.date.fromisoformat(fetched)).days > max_age_days
+
+
+def verify(entries, cache, get=http_get, pause=1.0, accepted=None, max_age_days=None, today=None):
+    """entries: (source, key, text). Returns one result per entry and updates the cache.
+
+    Records older than max_age_days are fetched again: metadata change (a new title in a later
+    version of a Zenodo record, a correction on Crossref), and a cache that never expires would
+    keep reporting the old values.
+    """
     accepted = accepted or {}
+    today = today or datetime.date.today()
     results = []
     for source, key, text in entries:
         kind, identifier = identifier_of(text)
@@ -206,10 +226,11 @@ def verify(entries, cache, get=http_get, pause=1.0, accepted=None):
             continue
         cache_key = f"{kind}:{identifier}"
         record = cache.get(cache_key)
-        if record is None:
+        if record is None or is_stale(cache, cache_key, max_age_days, today):
             try:
                 record = fetch_record(kind, identifier, get=get)
                 cache[cache_key] = record
+                cache.setdefault("_fetched", {})[cache_key] = today.isoformat()
             except urllib.error.HTTPError as error:
                 status = "not found" if error.code == 404 else "unverifiable now"
                 results.append({"source": source, "key": key, "status": status, "details": f"{cache_key}: HTTP {error.code}"})
@@ -231,7 +252,7 @@ def verify(entries, cache, get=http_get, pause=1.0, accepted=None):
 
 
 def report(results):
-    counts = {}
+    counts: dict[str, int] = {}
     for r in results:
         counts[r["status"]] = counts.get(r["status"], 0) + 1
     lines = ["# Citation verification", "", ", ".join(f"{k}: {v}" for k, v in sorted(counts.items())), "",
@@ -248,6 +269,8 @@ def main(argv=None):
     parser.add_argument("--papers", nargs="+", default=DEFAULT_PAPERS)
     parser.add_argument("--bib", type=Path, nargs="*", default=[])
     parser.add_argument("--cache", type=Path)
+    parser.add_argument("--max-age-days", type=int, default=60,
+                        help="fetch cached records again after this many days (default 60; -1 never)")
     parser.add_argument("--accepted", type=Path, help="TOML of reviewed, accepted discrepancies")
     parser.add_argument("--report", type=Path)
     args = parser.parse_args(argv)
@@ -263,7 +286,8 @@ def main(argv=None):
 
     cache = json.loads(args.cache.read_text(encoding="utf-8")) if args.cache and args.cache.exists() else {}
     try:
-        results = verify(entries, cache, accepted=load_accepted(args.accepted))
+        max_age = None if args.max_age_days < 0 else args.max_age_days
+        results = verify(entries, cache, accepted=load_accepted(args.accepted), max_age_days=max_age)
     finally:  # keep what was fetched even if the run stops
         if args.cache:
             args.cache.write_text(json.dumps(cache, indent=1, sort_keys=True), encoding="utf-8")

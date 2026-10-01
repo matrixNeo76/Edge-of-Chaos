@@ -12,9 +12,11 @@ need no credentials. Run them from the repository root.
 |---|---|---|
 | `build_papers.py` | Backs up, compiles (3 pdflatex passes), checks control characters, LaTeX errors, undefined citations/references and new overfull boxes; writes pages, sizes (decimal kB, as Zenodo shows them) and MD5. Builds are reproducible (`SOURCE_DATE_EPOCH`). | `python -m tools.build_papers --docs-dir docs --backup-suffix _pre_round4` |
 | `corpus_lint.py` | Citations not in the bibliography, revision numbers that disagree, shared facts outside their allowed values (`corpus_facts.toml`), theory-to-code map of `PERSONA.md`; warnings for uncited entries, American spellings, avoid-list expressions. | `python -m tools.corpus_lint --docs-dir docs --facts tools/corpus_facts.toml --persona PERSONA.md` |
-| `verify_citations.py` | DOIs and arXiv IDs against Crossref and DataCite: title, year, first author. Cached; reviewed discrepancies accepted with a reason in `citation_accepted.toml`. | `python -m tools.verify_citations --docs-dir docs --bib references.bib --cache <cache.json> --accepted tools/citation_accepted.toml` |
+| `verify_citations.py` | DOIs and arXiv IDs against Crossref and DataCite: title, year, first author. Cached, with records fetched again after 60 days (`--max-age-days`), since metadata change; reviewed discrepancies accepted with a reason in `citation_accepted.toml`. | `python -m tools.verify_citations --docs-dir docs --bib references.bib --cache <cache.json> --accepted tools/citation_accepted.toml` |
 | `zenodo_check.py` | Latest version of each record in `zenodo_records.toml`: file and MD5 against the local copy, version note, community, related identifiers, software version. | `python -m tools.zenodo_check --config tools/zenodo_records.toml --docs-dir docs` |
-| `check_versions.py` | Same release version in `Cargo.toml`, `Cargo.lock`, `CITATION.cff`, `.zenodo.json`, with a released `CHANGELOG.md` section. Runs in CI. | `python -m tools.check_versions` |
+| `check_versions.py` | Same release version in `Cargo.toml`, `Cargo.lock`, `CITATION.cff`, `.zenodo.json`, with a released `CHANGELOG.md` section; title, ORCID and licence agree between `CITATION.cff` and `.zenodo.json` (Zenodo reads the latter). Runs in CI. | `python -m tools.check_versions` |
+| `public_guard.py` | Internal names, the author's employer and names of confidential files in tracked files; rules and allowed paths in `public_guard.toml`. Runs in CI and as a pre-commit hook. | `python -m tools.public_guard` |
+| `round.py` | One command per phase of a revision round (`pre`, `build`, `post`): runs the tools above in order, writes one combined report, and in `post` says whether the knowledge graph needs an update. | `python -m tools.round pre --report round.md` |
 
 Each tool accepts `--report <file.md>` (except `check_versions`) and exits with 1 when it finds
 errors, so it can run in CI. Tests: `python -m pytest -q tools/tests` (fixtures and simulated HTTP
@@ -22,9 +24,13 @@ responses; no network, no LaTeX).
 
 ## In a revision round
 
-1. Before writing the spec: `corpus_lint` and `verify_citations`; their findings enter the spec.
-2. After applying the approved texts: `build_papers` (backup, build, checks, MD5 table).
-3. After the new versions are published: update `zenodo_records.toml` and run `zenodo_check`.
+`python -m tools.round <phase>` runs the steps below in order and writes one report:
+
+1. `pre`, before writing the spec: `corpus_lint` and `verify_citations`; their findings enter the spec.
+2. `build --backup-suffix _pre_roundN`, after applying the approved texts: `build_papers` (backup,
+   build, checks, MD5 table).
+3. `post`, after the new versions are published (and `zenodo_records.toml` is updated):
+   `zenodo_check`, then the status of the knowledge graph (if present in the checkout).
 
 ## Configuration files
 
@@ -32,3 +38,4 @@ responses; no network, no LaTeX).
   Change a fact only when the programme changes, never to silence an inconsistency.
 - `citation_accepted.toml`: discrepancies checked by a person, with the reason.
 - `zenodo_records.toml`: concept record IDs, file names and expected version notes.
+- `public_guard.toml`: forbidden text in public files, with the reason and the paths where it is legitimate.

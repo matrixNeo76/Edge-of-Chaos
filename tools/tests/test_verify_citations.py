@@ -1,5 +1,6 @@
 """Tests for tools/verify_citations.py with simulated Crossref and DataCite responses (no network)."""
 
+import email.message
 import http.client
 import json
 import unittest
@@ -53,7 +54,7 @@ def fake_get(url, timeout=30):
         return json.dumps(DATACITE_ARXIV)
     if "datacite" in url and "zenodo" in url:
         return json.dumps(DATACITE_ZENODO)
-    raise urllib.error.HTTPError(url, 404, "Not Found", None, None)
+    raise urllib.error.HTTPError(url, 404, "Not Found", email.message.Message(), None)
 
 
 class TestExtraction(unittest.TestCase):
@@ -104,7 +105,7 @@ class TestVerify(unittest.TestCase):
         entries.append(("refs.bib", "Doerig2019", extract_bib_entries(BIB)[0][1]))
         entries.append(("P0", "iavarone2026a", "Iavarone, F. (2026). Necessary physical conditions for primary "
                                                "interoceptive sentience. Zenodo. doi:10.5281/zenodo.22896026"))
-        cache = {}
+        cache: dict = {}
         results = {r["key"]: r["status"] for r in verify(entries, cache, get=fake_get, pause=0)}
         # arXiv through DataCite; the Zenodo DOI is unknown to Crossref (404) and found on DataCite
         self.assertEqual(results, {"kleiner2024": "verified", "butlin2023": "verified",
@@ -117,6 +118,30 @@ class TestVerify(unittest.TestCase):
             raise AssertionError("network used despite the cache")
         again = verify(entries[:2], cache, get=no_network, pause=0)
         self.assertEqual([r["status"] for r in again], ["verified", "verified"])
+
+    def test_stale_cache_entries_are_fetched_again(self):
+        import datetime
+        entries = [("P0", key, text) for key, text in extract_bibitems(TEX)][:1]
+        day0 = datetime.date(2026, 1, 1)
+        cache: dict = {}
+        verify(entries, cache, get=fake_get, pause=0, max_age_days=60, today=day0)
+        self.assertEqual(cache["_fetched"], {"doi:10.1093/nc/niae037": "2026-01-01"})
+
+        def no_network(url, timeout=30):
+            raise AssertionError("network used for a fresh record")
+        # within the age limit: no request
+        verify(entries, cache, get=no_network, pause=0, max_age_days=60, today=day0 + datetime.timedelta(days=60))
+        # past the limit, or a record without a fetch date: fetched again
+        verify(entries, cache, get=fake_get, pause=0, max_age_days=60, today=day0 + datetime.timedelta(days=61))
+        self.assertEqual(cache["_fetched"]["doi:10.1093/nc/niae037"], "2026-03-03")
+        del cache["_fetched"]
+        calls: list[str] = []
+
+        def recording_get(url, timeout=30):
+            calls.append(url)
+            return fake_get(url)
+        verify(entries, cache, get=recording_get, pause=0, max_age_days=60, today=day0)
+        self.assertTrue(calls)
 
     def test_hyphenated_and_joined_spellings_match(self):
         record = {"title": "Non-equilibrium brain dynamics as a signature of consciousness", "years": [2021],

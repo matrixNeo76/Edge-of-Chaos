@@ -21,4 +21,4 @@ allowed = []
 name = "confidential review history"
 pattern = 'AR_RESPONSE_SYNTHESIS'
 reason = "docs_v0.2/13_AR_RESPONSE_SYNTHESIS.md is confidential; public files may say that a confidential file exists, not reference it by name."
-allowed = ["AGENTS.md"]  # until AGENTS.md is rewritten
+allowed = []

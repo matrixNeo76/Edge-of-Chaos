@@ -66,7 +66,7 @@ def split_bibliography(text):
 
 
 def check_citations(body, bibliography):
-    cited = {}
+    cited: dict[str, int] = {}
     for match in CITE.finditer(body):
         for key in (k.strip() for k in match.group(1).split(",")):
             if key:

@@ -39,6 +39,8 @@ jobs:
         run: uv sync --locked
       - name: Lint
         run: uv run ruff check .
+      - name: Types of tools/ (mypy)
+        run: uv run mypy
       - name: Public files contain no internal names
         run: uv run python -m tools.public_guard
       - name: Release version is consistent
