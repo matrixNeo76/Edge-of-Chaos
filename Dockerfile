@@ -17,7 +17,7 @@ WORKDIR /app
 
 # Dependencies first, so that a change to the Python code does not rebuild them
 COPY requirements.txt requirements-dev.txt ./
-RUN pip install --no-cache-dir -r requirements-dev.txt pytest
+RUN pip install --no-cache-dir -r requirements-dev.txt pytest hypothesis
 
 # Native module from the locked Cargo dependencies
 COPY pyproject.toml Cargo.toml Cargo.lock lib.rs thermodynamic_valence.rs ./

@@ -7,11 +7,15 @@ explores the same cases (as the fixed seeds of the other tests do).
 import unittest
 
 import numpy as np
-from hypothesis import given, settings
-from hypothesis import strategies as st
 
 from demarcation import numerical_rank
 from thermodynamic_valence import estimate_kl_divergence_knn
+
+try:  # hypothesis is a development dependency (uv sync); pip installs without it skip these tests
+    from hypothesis import given, settings
+    from hypothesis import strategies as st
+except ImportError:  # pragma: no cover
+    raise unittest.SkipTest("hypothesis is not installed") from None
 
 SETTINGS = settings(max_examples=40, deadline=None, derandomize=True)
 
