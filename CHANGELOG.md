@@ -32,7 +32,19 @@ continuously evolving research software.
 - CI: Python 3.11-3.14 with uv; an `audit` job (pip-audit on the locked dependencies, zizmor
   on the workflows); weekly link check of the public documents (lychee, `links.yml`).
 
+- `tools/round.py`: one command per phase of a revision round (`pre`, `build`, `post`), with
+  one combined report and, after publication, the status of the knowledge graph.
+- `test_properties.py`: property-based tests (hypothesis, derandomized) of the k-NN KL
+  estimator (translation and scale invariance, non-negativity) and of the numerical rank.
+- `tools/AGENTS.md`: rules for the tools; mypy on `tools/` (in CI).
+
 ### Changed
+- `AGENTS.md` rewritten: setup with uv, one block of commands, definition of done per kind of
+  change, commit and PR rules, boundaries without names of private files; the scientific
+  determinism rules are unchanged.
+- `verify_citations`: cached records are fetched again after 60 days (`--max-age-days`); a
+  cache that never expired kept reporting the pre-correction title of the technical companion.
+- `check_versions` also compares title, ORCID and licence of `CITATION.cff` and `.zenodo.json`.
 - CI hardening: actions pinned to commit SHAs (Dependabot updates them), read-only token,
   `persist-credentials: false`, superseded runs cancelled.
 - Ruff rules: bugbear, pyupgrade, import order, NumPy and pytest checks added; tests use

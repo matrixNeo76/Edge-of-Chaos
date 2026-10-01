@@ -44,5 +44,34 @@ class TestCheckVersions(unittest.TestCase):
             self.assertIn(".zenodo.json (notes)=0.4.01", problems[0])  # read in full, so it disagrees
 
 
+class TestCitationMetadata(unittest.TestCase):
+
+    def write_metadata(self, directory, zenodo_title="Edge-of-Chaos", zenodo_licence="MIT", zenodo_orcid="0000-0001"):
+        make_repo(directory)
+        (directory / "Cargo.toml").write_text(
+            '[package]\nname = "thermodynamic_valence"\nversion = "0.4.0"\nlicense = "MIT OR Apache-2.0"\n', encoding="utf-8")
+        (directory / "CITATION.cff").write_text(
+            "cff-version: 1.2.0\ntitle: Edge-of-Chaos\nauthors:\n  - family-names: Doe\n"
+            '    orcid: "https://orcid.org/0000-0001"\nversion: 0.4.0\nlicense:\n  - MIT\n  - Apache-2.0\n',
+            encoding="utf-8")
+        (directory / ".zenodo.json").write_text(json.dumps({
+            "title": zenodo_title, "license": zenodo_licence, "notes": "v0.4.0 fixes things.",
+            "creators": [{"name": "Doe", "orcid": zenodo_orcid}]}), encoding="utf-8")
+
+    def test_agreeing_metadata(self):
+        with TemporaryDirectory() as tmp:
+            self.write_metadata(Path(tmp))
+            self.assertEqual(check(Path(tmp)), ("0.4.0", []))
+
+    def test_each_disagreement_is_reported(self):
+        with TemporaryDirectory() as tmp:
+            self.write_metadata(Path(tmp), zenodo_title="Other", zenodo_licence="GPL-3.0", zenodo_orcid="0000-0002")
+            _, problems = check(Path(tmp))
+            self.assertEqual(len(problems), 3)
+            self.assertIn("title differs", problems[0])
+            self.assertIn("ORCIDs differ", problems[1])
+            self.assertIn("GPL-3.0 is not one of", problems[2])
+
+
 if __name__ == "__main__":
     unittest.main()

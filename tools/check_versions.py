@@ -3,7 +3,10 @@ check_versions.py
 =================
 The release version must be the same in Cargo.toml, Cargo.lock (package thermodynamic_valence),
 CITATION.cff and .zenodo.json (the "vX.Y.Z" at the start of the notes), and it must have a
-released section in CHANGELOG.md. Run in CI; exits 1 on a mismatch.
+released section in CHANGELOG.md. The citation metadata must also agree where both files state
+it: title, author ORCID, and a .zenodo.json licence that is one of the licences of the software
+(Zenodo reads .zenodo.json and ignores CITATION.cff when both exist). Run in CI; exits 1 on a
+mismatch.
 
 Usage
     python -m tools.check_versions [--repo-root .]
@@ -37,6 +40,38 @@ def released_versions(changelog_text):
     return set(re.findall(r"^## \[(\d+\.\d+\.\d+)\]", changelog_text, re.M))
 
 
+def citation_metadata(root):
+    """Title, ORCIDs and licences stated by CITATION.cff, .zenodo.json and Cargo.toml (None if absent)."""
+    cff = (root / "CITATION.cff").read_text(encoding="utf-8")
+    zen = json.loads((root / ".zenodo.json").read_text(encoding="utf-8"))
+    cargo = tomllib.loads((root / "Cargo.toml").read_text(encoding="utf-8"))["package"]
+    title = re.search(r"^title:\s*['\"]?(.+?)['\"]?\s*$", cff, re.M)
+    # "license: MIT" on one line, or "license:" followed by an indented list of identifiers
+    block = re.search(r"^license:[ \t]*(\S.*)?\n((?:[ \t]+-[ \t]*\S.*\n?)*)", cff, re.M)
+    cff_licences = set()
+    if block:
+        cff_licences = {block.group(1).strip()} if block.group(1) else set(re.findall(r"-[ \t]*(\S+)", block.group(2)))
+    return {
+        "cff_title": title.group(1) if title else None,
+        "zenodo_title": zen.get("title"),
+        "cff_orcids": {o.rsplit("/", 1)[-1] for o in re.findall(r"orcid:\s*['\"]?(\S+?)['\"]?$", cff, re.M)},
+        "zenodo_orcids": {c["orcid"] for c in zen.get("creators", []) if c.get("orcid")},
+        "licences": cff_licences | (set(re.split(r"\s+OR\s+", cargo.get("license", ""))) - {""}),
+        "zenodo_licence": zen.get("license"),
+    }
+
+
+def check_metadata(root):
+    meta, problems = citation_metadata(root), []
+    if meta["cff_title"] and meta["zenodo_title"] and meta["cff_title"] != meta["zenodo_title"]:
+        problems.append(f"title differs: CITATION.cff '{meta['cff_title']}', .zenodo.json '{meta['zenodo_title']}'")
+    if meta["cff_orcids"] and meta["zenodo_orcids"] and meta["cff_orcids"] != meta["zenodo_orcids"]:
+        problems.append(f"ORCIDs differ: CITATION.cff {sorted(meta['cff_orcids'])}, .zenodo.json {sorted(meta['zenodo_orcids'])}")
+    if meta["zenodo_licence"] and meta["licences"] and meta["zenodo_licence"] not in meta["licences"]:
+        problems.append(f".zenodo.json licence {meta['zenodo_licence']} is not one of {sorted(meta['licences'])}")
+    return problems
+
+
 def check(root):
     versions = read_versions(root)
     problems = []
@@ -46,6 +81,7 @@ def check(root):
     version = versions["Cargo.toml"]
     if version not in released_versions((root / "CHANGELOG.md").read_text(encoding="utf-8")):
         problems.append(f"CHANGELOG.md has no released section for {version}")
+    problems += check_metadata(root)
     return version, problems
 
 
