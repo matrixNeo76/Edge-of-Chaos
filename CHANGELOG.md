@@ -19,7 +19,14 @@ continuously evolving research software.
 - `pyproject.toml` with the pytest configuration: `python -m pytest -q` now runs the code tests
   and the tests of `tools/` everywhere, without lists of files to keep in sync.
 
+- CI: `cargo fmt --check`, `cargo clippy -D warnings` and `cargo audit` (RustSec advisories);
+  `rust-toolchain.toml` with the rustfmt and clippy components.
+
 ### Changed
+- PyO3 0.20.3 -> 0.29.3: 0.20 is affected by RUSTSEC-2025-0020 and 0.29 fixes two further
+  advisories. `lib.rs` uses the `Bound` module API; Rust edition 2024 (minimum Rust 1.85).
+  The Python/Rust parity tests pass with the new module. `thermodynamic_valence.rs` and
+  `lib.rs` are now formatted with rustfmt (layout only).
 - Public files no longer use the internal name of the entry-point paper; they cite its title.
   Author fields (`Cargo.toml`, module headers, Dockerfile) name the author instead of a
   placeholder.
