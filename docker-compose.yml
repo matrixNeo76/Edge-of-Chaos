@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   metrology-twin:
@@ -10,4 +9,4 @@ services:
       - ./output:/app/output
     environment:
       - PYTHONUNBUFFERED=1
-    command: python3 valence_dashboard.py
+    command: python valence_dashboard.py

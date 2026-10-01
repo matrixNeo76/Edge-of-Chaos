@@ -1,0 +1,19 @@
+# Private folders, build outputs and environments never enter the image
+docs/
+docs_v0.2/
+media/
+notebooks/
+output/
+target/
+build/
+dist/
+dist_wheel/
+venv/
+venv_build/
+.venv/
+.git/
+**/__pycache__/
+.pytest_cache/
+.ruff_cache/
+# The image installs Rust with the minimal profile; the toolchain file would pull rustfmt/clippy
+rust-toolchain.toml

@@ -9,19 +9,21 @@ Description:
   constraints of the `thermodynamic_valence.py` script.
 """
 
-import unittest
-import numpy as np
-import sys
 import os
+import sys
+import unittest
+
+import numpy as np
 
 # Import the functions from the thermodynamic_valence script
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from thermodynamic_valence import (
-    simulate_neuromorphic_substrate_sde,
+    calculate_thermodynamic_valence,
     estimate_kl_divergence_knn,
-    calculate_thermodynamic_valence
+    simulate_neuromorphic_substrate_sde,
 )
+
 
 class TestThermodynamicValence(unittest.TestCase):
 
@@ -43,18 +45,18 @@ class TestThermodynamicValence(unittest.TestCase):
 
     def test_kl_divergence_knn_properties(self):
         """Verifies the fundamental properties of the k-NN Kullback-Leibler divergence estimate."""
-        np.random.seed(42)
+        rng = np.random.default_rng(42)
 
         # 1. D_KL between two samples of the same distribution N(0, 1) should be close to 0
-        p_samples = np.random.normal(0, 1, size=1000)
-        q_identical = np.random.normal(0, 1, size=1000)
+        p_samples = rng.normal(0, 1, size=1000)
+        q_identical = rng.normal(0, 1, size=1000)
         d_kl_zero = estimate_kl_divergence_knn(p_samples, q_identical, k=5)
 
         self.assertGreaterEqual(d_kl_zero, 0.0)
         self.assertLess(d_kl_zero, 0.2, f"D_KL between identical distributions should be close to 0, got {d_kl_zero}")
 
         # 2. D_KL between two different distributions N(0, 1) and N(2, 1) should be clearly > 0
-        q_shifted = np.random.normal(2, 1, size=1000)
+        q_shifted = rng.normal(2, 1, size=1000)
         d_kl_positive = estimate_kl_divergence_knn(p_samples, q_shifted, k=5)
 
         self.assertGreater(d_kl_positive, 1.0, f"D_KL between shifted distributions should be significantly positive, got {d_kl_positive}")
@@ -96,14 +98,14 @@ class TestThermodynamicValence(unittest.TestCase):
         Verifies the system's sensitivity: a completely random efference copy (white noise)
         should degrade or nullify the predictive gain G_pred relative to an informed copy.
         """
-        np.random.seed(99)
+        rng = np.random.default_rng(99)
         x_A1, s_obs, s_pred, dt = simulate_neuromorphic_substrate_sde(n_steps=3000, seed=99)
 
         # Valence with a normal efference copy
         res_normal = calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt)
 
         # Valence with an ablated efference copy (disconnected random noise)
-        s_pred_ablated = np.random.normal(5.0, 2.0, size=len(s_pred))
+        s_pred_ablated = rng.normal(5.0, 2.0, size=len(s_pred))
         res_ablated = calculate_thermodynamic_valence(x_A1, s_obs, s_pred_ablated, dt)
 
         # The predictive gain with the random copy should be lower

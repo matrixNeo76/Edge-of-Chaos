@@ -5,63 +5,75 @@ on:
     branches: [main]
   pull_request:
   schedule:
-    # Weekly run, to catch breakage from new versions of dependencies and actions
+    # Weekly run, to catch breakage from new versions of dependencies, actions and Rust stable
     - cron: "17 6 * * 1"
   workflow_dispatch:
 
+# Read-only token for every job; no job needs to write.
+permissions:
+  contents: read
+
+# A new push to the same branch cancels the run it supersedes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Actions are pinned to a commit (a moved tag cannot change the code that runs); Dependabot
+# updates the pins and the version comments.
 jobs:
   python:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
-      - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov ruff==0.15.12
+          enable-cache: true
+      - name: Install from the lockfile
+        run: uv sync --locked
       - name: Lint
-        run: ruff check .
+        run: uv run ruff check .
+      - name: Public files contain no internal names
+        run: uv run python -m tools.public_guard
       - name: Release version is consistent
-        run: python -m tools.check_versions
-      - name: Tests of the corpus and repository tools
-        run: python -m pytest -q tools/tests
-      - name: Run tests with coverage
+        run: uv run python -m tools.check_versions
+      - name: Tests (code and tools) with coverage
         env:
           MPLBACKEND: Agg
         run: >
-          python -m pytest -q
+          uv run pytest -q
           --cov=thermodynamic_valence --cov=demarcation --cov=necessary_conditions
-          --cov=hardware_driver_v2 --cov=synthetic_systems --cov-report=term-missing
-          test_thermodynamic_valence.py test_hardware_session.py
-          test_demarcation.py test_necessary_conditions.py
+          --cov=hardware_driver_v2 --cov=synthetic_systems --cov=tools --cov-report=term-missing
       - name: Command-line demonstrations
         env:
           MPLBACKEND: Agg
           OUTPUT_DIR: ci_output
         run: |
-          python paper0_cli.py metrology
-          python paper0_cli.py conditions
-          python paper0_cli.py dashboard
+          uv run python paper0_cli.py metrology
+          uv run python paper0_cli.py conditions
+          uv run python paper0_cli.py dashboard
 
   rust:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: "3.12"
-      - uses: dtolnay/rust-toolchain@stable
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
+          toolchain: stable
           components: rustfmt, clippy
       - name: Formatting
         run: cargo fmt --check
       - name: Lints
         run: cargo clippy --release --all-targets --locked -- -D warnings
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
         with:
           tool: cargo-audit
       - name: Security advisories (RustSec)
@@ -72,19 +84,42 @@ jobs:
         run: cargo build --release --locked
       - name: Run binary
         run: ./target/release/thermodynamic_valence
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
       - name: Python/Rust parity (native module built with maturin)
         run: |
-          pip install -r requirements.txt pytest maturin
-          maturin build --release --out dist_wheel
-          pip install dist_wheel/*.whl
+          uv sync --locked --group build
+          uv run maturin build --release --locked --out dist_wheel
+          uv pip install dist_wheel/*.whl
           # The parity test skips itself without the native module; here it must run.
-          python -c "import thermodynamic_valence_rust as m; assert hasattr(m, 'calculate_valence_with_niche_rust')"
-          python -m pytest -q -rs test_engine_parity.py
+          uv run python -c "import thermodynamic_valence_rust as m; assert hasattr(m, 'calculate_valence_with_niche_rust')"
+          uv run pytest -q -rs test_engine_parity.py
+
+  audit:
+    # Known vulnerabilities in the locked Python dependencies, and a static check of the workflows.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.12"
+      - name: Python dependencies (pip-audit, PyPI advisory database)
+        run: |
+          uv export --locked --no-hashes --all-groups --format requirements-txt -o locked-requirements.txt
+          uvx pip-audit --strict -r locked-requirements.txt
+      - name: Workflows (zizmor)
+        run: uvx zizmor --min-severity medium .github/workflows
 
   docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Build the image (runs the test suites at build time)
         run: docker build -t edge-of-chaos:ci .
       - name: docker compose configuration

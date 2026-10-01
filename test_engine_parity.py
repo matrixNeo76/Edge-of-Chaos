@@ -10,9 +10,10 @@ Skipped when the native module is not installed (build it with
 """
 
 import unittest
+
 import numpy as np
 
-from thermodynamic_valence import simulate_neuromorphic_substrate_sde, calculate_thermodynamic_valence
+from thermodynamic_valence import calculate_thermodynamic_valence, simulate_neuromorphic_substrate_sde
 
 try:
     import thermodynamic_valence_rust

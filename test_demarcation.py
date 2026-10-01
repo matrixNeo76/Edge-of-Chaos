@@ -6,21 +6,22 @@ answer is known in advance.
 """
 
 import unittest
+
 import numpy as np
 
 from demarcation import (
-    numerical_rank,
-    noise_floor_from_recordings,
     causal_non_separability,
     conditional_mutual_information,
-    residual_memory,
     iaaft_surrogate,
-    non_markovian_memory,
-    phase_space_regions,
-    state_dependent_dynamics,
     is_candidate,
+    noise_floor_from_recordings,
+    non_markovian_memory,
+    numerical_rank,
+    phase_space_regions,
+    residual_memory,
+    state_dependent_dynamics,
 )
-from synthetic_systems import ar1, nonlinear_lag5, linear_2d, double_well, response_matrices
+from synthetic_systems import ar1, double_well, linear_2d, nonlinear_lag5, response_matrices
 
 
 class TestCausalNonSeparability(unittest.TestCase):

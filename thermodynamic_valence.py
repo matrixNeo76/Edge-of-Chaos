@@ -28,6 +28,7 @@ Description:
 import numpy as np
 from scipy.spatial import KDTree
 
+
 def simulate_neuromorphic_substrate_sde(n_steps=10000, dt=0.001, seed=42):
     """
     Simulates the stochastic dynamics of a two-level neuromorphic substrate (A1/A2)

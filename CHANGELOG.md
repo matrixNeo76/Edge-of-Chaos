@@ -22,7 +22,27 @@ continuously evolving research software.
 - CI: `cargo fmt --check`, `cargo clippy -D warnings` and `cargo audit` (RustSec advisories);
   `rust-toolchain.toml` with the rustfmt and clippy components.
 
+- `pyproject.toml` is the single source of the Python dependencies, with `uv.lock` for
+  reproducible environments (`uv sync`); `requirements*.txt` keep the same ranges for pip
+  users, and `tools/tests/test_dependency_sync.py` fails if they drift.
+- `tools/public_guard.py` (rules in `public_guard.toml`): internal names, the author's
+  employer and names of confidential files must not appear in public files. Runs in CI and as
+  a pre-commit hook.
+- `.pre-commit-config.yaml`: ruff, YAML/TOML checks, the public guard and `cargo fmt`.
+- CI: Python 3.11-3.14 with uv; an `audit` job (pip-audit on the locked dependencies, zizmor
+  on the workflows); weekly link check of the public documents (lychee, `links.yml`).
+
 ### Changed
+- CI hardening: actions pinned to commit SHAs (Dependabot updates them), read-only token,
+  `persist-credentials: false`, superseded runs cancelled.
+- Ruff rules: bugbear, pyupgrade, import order, NumPy and pytest checks added; tests use
+  seeded `numpy.random.Generator` instead of the legacy global random state.
+- Dependabot updates `pyproject.toml`/`uv.lock` (uv) instead of `requirements.txt` (pip).
+- Dockerfile: dependencies from `requirements*.txt`, native module from the locked Cargo
+  dependencies, tests with pytest, unprivileged user, no unused packages or exposed port;
+  `.dockerignore` keeps private folders and build outputs out of the image.
+- Install scripts install the declared ranges instead of unpinned packages; CONTRIBUTING.md
+  lists the current checks.
 - PyO3 0.20.3 -> 0.29.3: 0.20 is affected by RUSTSEC-2025-0020 and 0.29 fixes two further
   advisories. `lib.rs` uses the `Bound` module API; Rust edition 2024 (minimum Rust 1.85).
   The Python/Rust parity tests pass with the new module. `thermodynamic_valence.rs` and

@@ -13,8 +13,10 @@ Generates:
 
 import os
 import sys
-import numpy as np
+
 import matplotlib
+import numpy as np
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -27,7 +29,8 @@ import seaborn as sns
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.environ.get('OUTPUT_DIR', os.path.join(os.getcwd(), 'output'))
 sys.path.append(BASE_DIR)
-from thermodynamic_valence import simulate_neuromorphic_substrate_sde, calculate_thermodynamic_valence  # noqa: E402
+from thermodynamic_valence import calculate_thermodynamic_valence, simulate_neuromorphic_substrate_sde  # noqa: E402
+
 
 def generate_metrology_dashboard():
     os.makedirs(OUTPUT_DIR, exist_ok=True)

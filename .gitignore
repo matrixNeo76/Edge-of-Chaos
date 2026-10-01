@@ -23,3 +23,6 @@ output/
 docs/
 docs_v0.2/
 media/
+
+# uv environment
+.venv/

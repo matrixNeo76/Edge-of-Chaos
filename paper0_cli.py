@@ -24,8 +24,9 @@ import unittest
 
 
 def cmd_metrology(_args):
-    from thermodynamic_valence import simulate_neuromorphic_substrate_sde, calculate_thermodynamic_valence
     import numpy as np
+
+    from thermodynamic_valence import calculate_thermodynamic_valence, simulate_neuromorphic_substrate_sde
 
     print("=== RUNNING ADVANCED DIGITAL TWIN METROLOGY (Edge-of-Chaos) ===")
     x_A1, s_obs, s_pred, dt = simulate_neuromorphic_substrate_sde(n_steps=10000)
@@ -57,9 +58,13 @@ def cmd_demarcation(args):
     uses reduced settings for speed; the protocol uses 100 surrogates and the 99th
     percentile (--surrogates 100 --percentile 99).
     """
-    from demarcation import (causal_non_separability, noise_floor_from_recordings,
-                             non_markovian_memory, state_dependent_dynamics)
-    from synthetic_systems import ar1, nonlinear_lag5, linear_2d, double_well, response_matrices
+    from demarcation import (
+        causal_non_separability,
+        noise_floor_from_recordings,
+        non_markovian_memory,
+        state_dependent_dynamics,
+    )
+    from synthetic_systems import ar1, double_well, linear_2d, nonlinear_lag5, response_matrices
 
     print("=== OPERATIONAL DEMARCATION (synthetic illustration, not a substrate) ===")
 
@@ -90,8 +95,15 @@ def cmd_demarcation(args):
 def cmd_conditions(_args):
     """Criteria for three of the necessary conditions (P1 section 3, Appendices B and D)."""
     import numpy as np
-    from necessary_conditions import (edge_of_chaos, first_order_admittance, causal_degeneracy,
-                                      degeneracy_radius, degeneracy_prediction, exponent_stability)
+
+    from necessary_conditions import (
+        causal_degeneracy,
+        degeneracy_prediction,
+        degeneracy_radius,
+        edge_of_chaos,
+        exponent_stability,
+        first_order_admittance,
+    )
 
     print("=== NECESSARY CONDITIONS (synthetic illustration, not a substrate) ===")
 
@@ -120,8 +132,9 @@ def cmd_conditions(_args):
 
 
 def cmd_hardware(_args):
-    from hardware_driver_v2 import NeuromorphicHardwareInterfaceV2
     import numpy as np
+
+    from hardware_driver_v2 import NeuromorphicHardwareInterfaceV2
 
     hw = NeuromorphicHardwareInterfaceV2(mock=True)
     print(hw.initialize_session())

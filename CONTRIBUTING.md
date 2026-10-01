@@ -20,30 +20,35 @@ the research programme itself (for that, see the paper's own channels).
 1. **Bug reports**: open an issue describing the command you ran, the expected vs.
    actual output, and your environment (OS, Python version, Rust version if relevant).
 2. **Pull requests**: fork, create a branch, make your change, and make sure the
-   existing test suites pass:
+   checks pass (the same ones CI runs):
    ```bash
-   python -m unittest test_valenza_metrologia -v
-   python -m unittest test_hardware_session -v
-   cargo check --all-targets
+   uv sync                       # environment from pyproject.toml and uv.lock
+   uv run ruff check .
+   uv run pytest -q              # code tests and tools/ tests
+   uv run python -m tools.public_guard
+   cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test --release
    ```
-3. **Development setup**: see [install.sh](install.sh) / [install.ps1](install.ps1)
-   for a scripted setup, or [requirements-dev.txt](requirements-dev.txt) for the
-   pinned dependency versions this project was last verified against.
+   Optional: `uvx pre-commit install` runs the fast checks before every commit.
+3. **Development setup**: `uv sync` (recommended), or `pip install -r requirements-dev.txt`
+   for pip users; [install.sh](install.sh) / [install.ps1](install.ps1) script the pip
+   setup and build the native module with maturin. Dependencies are declared once in
+   `pyproject.toml`; `requirements*.txt` keep the same ranges.
+4. **Commits**: Conventional Commits in English (`fix:`, `feat:`, `build:`, `ci:`, `docs:`,
+   `chore:`), with the reason in the body; add an entry to `CHANGELOG.md`.
 
 ## Code style
 
-- Python: no enforced formatter yet: match the existing style of the file you're
-  editing (docstrings in Italian are the existing convention for this codebase — keep
-  it consistent within a file rather than mixing languages mid-file).
-- Rust: standard `rustfmt` conventions.
+- Python: lint with Ruff (rules in `pyproject.toml`); no formatter is enforced, so match
+  the style of the file you are editing. Docstrings and comments are in English.
+- Rust: `rustfmt` and `clippy` (warnings are errors in CI).
+- Tests use cases whose answer is known in advance and fixed seeds.
 - Comments explain *why*, not *what* — avoid restating what the code already makes
   obvious from naming.
 
 ## Known limitations to be aware of
 
 Before proposing a fix, check
-[docs_v0.2/03_CODE_ARCHITECTURE_MAP.md](docs_v0.2/03_CODE_ARCHITECTURE_MAP.md) (if
-present in your checkout) or the project's own issue tracker — several scripts are
+the docstrings of the module and the project's issue tracker — several scripts are
 intentionally simplified digital-twin prototypes, not the final preregistered
 experimental implementation (see the paper's Declarations section).
 

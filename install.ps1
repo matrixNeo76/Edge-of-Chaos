@@ -26,7 +26,7 @@ python -m venv venv
 # 3. Install dependencies
 Write-Host "[2/4] Upgrading pip and installing dependencies..." -ForegroundColor Yellow
 python -m pip install --upgrade pip
-python -m pip install numpy scipy matplotlib seaborn maturin
+python -m pip install -r requirements.txt "maturin>=1.5,<2"
 
 # 4. Rust build
 if (Get-Command "cargo" -ErrorAction SilentlyContinue) {

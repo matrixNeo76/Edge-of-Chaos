@@ -1,0 +1,28 @@
+# Local checks before each commit (the same ones CI runs, minus the slow ones).
+# Install once: `uvx pre-commit install` (or `prek install`: same configuration, faster).
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.9
+    hooks:
+      - id: ruff-check
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+        exclude: '\.(png|whl)$'
+  - repo: local
+    hooks:
+      - id: public-guard
+        name: public files contain no internal names
+        entry: python -m tools.public_guard
+        language: system
+        pass_filenames: true
+      - id: cargo-fmt
+        name: cargo fmt --check
+        entry: cargo fmt --check
+        language: system
+        files: '\.rs$'
+        pass_filenames: false

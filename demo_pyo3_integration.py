@@ -6,7 +6,9 @@ for high-performance analysis of neuromorphic substrates (Edge-of-Chaos).
 """
 
 import time
+
 import numpy as np
+
 
 def run_python_fallback_simulation():
     """Native Python comparison simulation."""
@@ -17,8 +19,9 @@ def run_python_fallback_simulation():
     # Vectorized computation run in Python
     x = np.zeros(n_steps)
     x_val = 0.1
+    rng = np.random.default_rng(0)
     for t in range(1, n_steps):
-        dx = (-1.2 * x_val + 0.8 * np.tanh(x_val)) * dt + 0.15 * np.random.normal(0, np.sqrt(dt))
+        dx = (-1.2 * x_val + 0.8 * np.tanh(x_val)) * dt + 0.15 * rng.normal(0, np.sqrt(dt))
         x_val += dx
         x[t] = x_val
 
