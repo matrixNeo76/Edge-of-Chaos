@@ -8,14 +8,14 @@ community = "edge-of-chaos-programme"
 name = "P0"
 concept = 22895484
 file = "P0_Distilled_v0.1.pdf"
-version_note = "Version 7"
+version_note = "Version 8"
 related = ["10.5281/zenodo.22895263"]
 
 [[record]]
 name = "P1"
 concept = 22896026
 file = "P1_Main.pdf"
-version_note = "Version 6"
+version_note = "Version 7"
 
 [[record]]
 name = "P2"
@@ -27,7 +27,7 @@ version_note = "Version 5"
 name = "P3"
 concept = 22896988
 file = "P3_Critique.pdf"
-version_note = "Version 6"
+version_note = "Version 7"
 
 [[record]]
 name = "C1"
@@ -39,20 +39,26 @@ version_note = "Version 5"
 name = "C2"
 concept = 22897562
 file = "C2_PowerAnalysis.pdf"
-version_note = "Version 4"
+version_note = "Version 5"
 
 [[record]]
 name = "Executive Summary"
 concept = 22897732
 file = "ES_Summary.pdf"
-version_note = "Version 4"
+version_note = "Version 5"
 
 [[record]]
-name = "Explainer article"
+name = "Interdisciplinary guide"
 concept = 22898608
-file = "article_p0_distilled_EN.pdf"
-version_note = "Version 2"
+file = "guide_EN.pdf"
+version_note = "Version 3"
 related = ["10.5281/zenodo.22895484"]
+
+[[record]]
+name = "Open questions"
+concept = 23062298
+file = "OQ_OpenQuestions.pdf"
+related = ["10.5281/zenodo.22895484", "10.5281/zenodo.22897359", "10.5281/zenodo.22896988", "10.5281/zenodo.22898608"]
 
 [[record]]
 name = "Software"
