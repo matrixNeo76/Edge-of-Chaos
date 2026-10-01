@@ -11,7 +11,7 @@ use pyo3::wrap_pyfunction;
 #[path = "thermodynamic_valence.rs"]
 mod engine;
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 #[derive(Clone, Debug)]
 pub struct MetrologyResultsRust {
     #[pyo3(get)]
@@ -60,7 +60,8 @@ pub fn compute_thermodynamic_valence_rust(
         )));
     }
     let (x_a1, s_obs, s_pred) = engine::simulate_neuromorphic_substrate_sde(n_steps, dt, seed);
-    let res = engine::calculate_thermodynamic_valence(&x_a1, &s_obs, &s_pred, dt, alpha, beta, gamma);
+    let res =
+        engine::calculate_thermodynamic_valence(&x_a1, &s_obs, &s_pred, dt, alpha, beta, gamma);
     Ok(MetrologyResultsRust {
         sigma_ex: res.sigma_ex,
         sigma_hk: res.sigma_hk,
@@ -98,10 +99,20 @@ pub fn calculate_valence_with_niche_rust(
         )));
     }
     if !(dt.is_finite() && dt > 0.0) {
-        return Err(pyo3::exceptions::PyValueError::new_err("dt must be positive and finite"));
+        return Err(pyo3::exceptions::PyValueError::new_err(
+            "dt must be positive and finite",
+        ));
     }
-    if !x_a1.iter().chain(&s_obs).chain(&s_pred).chain(&niche).all(|v| v.is_finite()) {
-        return Err(pyo3::exceptions::PyValueError::new_err("inputs must be finite"));
+    if !x_a1
+        .iter()
+        .chain(&s_obs)
+        .chain(&s_pred)
+        .chain(&niche)
+        .all(|v| v.is_finite())
+    {
+        return Err(pyo3::exceptions::PyValueError::new_err(
+            "inputs must be finite",
+        ));
     }
     let res = engine::calculate_thermodynamic_valence_with_niche(
         &x_a1, &s_obs, &s_pred, dt, alpha, beta, gamma, &niche,
@@ -116,7 +127,7 @@ pub fn calculate_valence_with_niche_rust(
 }
 
 #[pymodule]
-fn thermodynamic_valence_rust(_py: Python, m: &PyModule) -> PyResult<()> {
+fn thermodynamic_valence_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<MetrologyResultsRust>()?;
     m.add_function(wrap_pyfunction!(compute_thermodynamic_valence_rust, m)?)?;
     m.add_function(wrap_pyfunction!(calculate_valence_with_niche_rust, m)?)?;

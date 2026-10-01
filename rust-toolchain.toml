@@ -1,0 +1,5 @@
+# Same toolchain components locally and in CI. The channel follows stable on purpose: the
+# weekly CI run catches breakage from a new release, and no pin has to be bumped by hand.
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]

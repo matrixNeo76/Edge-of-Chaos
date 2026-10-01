@@ -39,7 +39,11 @@ impl FastRng {
     pub fn new(seed: u64) -> Self {
         let s0 = seed ^ 0x9E3779B97F4A7C15;
         let s1 = (seed.wrapping_add(0xBF58476D1CE4E5B9)) ^ 0x94D049BB133111EB;
-        let (s0, s1) = if s0 == 0 && s1 == 0 { (1, s1) } else { (s0, s1) };
+        let (s0, s1) = if s0 == 0 && s1 == 0 {
+            (1, s1)
+        } else {
+            (s0, s1)
+        };
         Self { s: [s0, s1] }
     }
 
@@ -71,7 +75,11 @@ pub fn simulate_neuromorphic_substrate_sde(
     seed: u64,
 ) -> (Vec<f64>, Vec<f64>, Vec<f64>) {
     assert!(n_steps >= 2, "n_steps must be at least 2, got {}", n_steps);
-    assert!(dt.is_finite() && dt > 0.0, "dt must be positive and finite, got {}", dt);
+    assert!(
+        dt.is_finite() && dt > 0.0,
+        "dt must be positive and finite, got {}",
+        dt
+    );
     let mut rng = FastRng::new(seed);
     let a = -1.2;
     let b = 0.8;
@@ -94,8 +102,7 @@ pub fn simulate_neuromorphic_substrate_sde(
 
         // With additive noise the Milstein correction 0.5*g*g'*(dw^2 - dt) vanishes
         // (g' = 0), so Milstein reduces to Euler-Maruyama (Higham 2001).
-        let dx = (a * x_val + b * x_val.tanh() + (time_val * 2.0).sin()) * dt
-            + sigma_noise * dw;
+        let dx = (a * x_val + b * x_val.tanh() + (time_val * 2.0).sin()) * dt + sigma_noise * dw;
 
         x_val += dx;
         x_a1[t] = x_val;
@@ -114,7 +121,9 @@ pub fn simulate_neuromorphic_substrate_sde(
 /// Value at position `index` of the sorted slice, by partial selection (reorders `values`)
 fn kth_smallest(values: &mut [f64], index: usize) -> f64 {
     *values
-        .select_nth_unstable_by(index, |a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+        .select_nth_unstable_by(index, |a, b| {
+            a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)
+        })
         .1
 }
 
@@ -162,7 +171,11 @@ pub fn delay_embed(signal: &[f64], tau_steps: usize) -> Vec<[f64; 2]> {
 
 /// Estimate of D_KL(P || Q) via k-nearest neighbours for two-dimensional samples
 /// (Euclidean distance), matching estimate_kl_divergence_knn in thermodynamic_valence.py
-pub fn estimate_kl_divergence_knn_2d(p_samples: &[[f64; 2]], q_samples: &[[f64; 2]], k: usize) -> f64 {
+pub fn estimate_kl_divergence_knn_2d(
+    p_samples: &[[f64; 2]],
+    q_samples: &[[f64; 2]],
+    k: usize,
+) -> f64 {
     let n = p_samples.len();
     let m = q_samples.len();
 
@@ -233,17 +246,33 @@ pub fn calculate_thermodynamic_valence_with_niche(
     assert!(
         target_samples.len() == n,
         "the niche must have as many samples as the series, got {} and {}",
-        target_samples.len(), n
+        target_samples.len(),
+        n
     );
     assert!(
         s_obs.len() == n && s_pred.len() == n,
         "x_a1, s_obs and s_pred must have equal length, got {}, {}, {}",
-        n, s_obs.len(), s_pred.len()
+        n,
+        s_obs.len(),
+        s_pred.len()
     );
-    assert!(dt.is_finite() && dt > 0.0, "dt must be positive and finite, got {}", dt);
-    assert!(n >= tau_steps + 7, "series too short: {} samples, need at least {}", n, tau_steps + 7);
     assert!(
-        x_a1.iter().chain(s_obs).chain(s_pred).chain(target_samples).all(|v| v.is_finite()),
+        dt.is_finite() && dt > 0.0,
+        "dt must be positive and finite, got {}",
+        dt
+    );
+    assert!(
+        n >= tau_steps + 7,
+        "series too short: {} samples, need at least {}",
+        n,
+        tau_steps + 7
+    );
+    assert!(
+        x_a1.iter()
+            .chain(s_obs)
+            .chain(s_pred)
+            .chain(target_samples)
+            .all(|v| v.is_finite()),
         "x_a1, s_obs, s_pred and the niche must not contain NaN or infinite values"
     );
     let mut dx = Vec::with_capacity(n - 1);
@@ -278,7 +307,8 @@ pub fn calculate_thermodynamic_valence_with_niche(
     // normalized entropy-production rates against a hardware-calibrated S_crit_dot).
     // The two forms are NOT algebraically equivalent -- see Appendix F before
     // treating this as ground truth.
-    let psi = alpha * (1.0 + (sigma_ex / (sigma_hk + 1e-8))).ln() - beta * d_kl_allostatic + gamma * g_pred;
+    let psi = alpha * (1.0 + (sigma_ex / (sigma_hk + 1e-8))).ln() - beta * d_kl_allostatic
+        + gamma * g_pred;
 
     MetrologyResult {
         sigma_ex,
@@ -298,12 +328,27 @@ fn main() {
     let res = calculate_thermodynamic_valence(&x_a1, &s_obs, &s_pred, dt, 1.0, 0.5, 0.8);
 
     println!("Time points processed: {}", n_steps);
-    println!("Mean state of substrate A1 x(t): {:.4}", x_a1.iter().sum::<f64>() / n_steps as f64);
+    println!(
+        "Mean state of substrate A1 x(t): {:.4}",
+        x_a1.iter().sum::<f64>() / n_steps as f64
+    );
     println!("Excess-dissipation proxy sigma_ex: {:.4}", res.sigma_ex);
-    println!("Housekeeping-dissipation proxy sigma_hk (dt-dependent): {:.4}", res.sigma_hk);
-    println!("Allostatic divergence D_KL(P||P_target): {:.4}", res.d_kl_allostatic);
-    println!("Predictive gain of the efference copy G_pred: {:.4}", res.g_pred);
-    println!("-> INTEGRATED VALENCE FUNCTIONAL Psi(t): {:.4}", res.psi_valence);
+    println!(
+        "Housekeeping-dissipation proxy sigma_hk (dt-dependent): {:.4}",
+        res.sigma_hk
+    );
+    println!(
+        "Allostatic divergence D_KL(P||P_target): {:.4}",
+        res.d_kl_allostatic
+    );
+    println!(
+        "Predictive gain of the efference copy G_pred: {:.4}",
+        res.g_pred
+    );
+    println!(
+        "-> INTEGRATED VALENCE FUNCTIONAL Psi(t): {:.4}",
+        res.psi_valence
+    );
     println!("=========================================================================");
 }
 
@@ -322,20 +367,33 @@ mod tests {
     #[test]
     fn kl_1d_matches_closed_form_gaussian_values() {
         let mut rng = FastRng::new(1);
-        for &(m1, s1, m2, s2) in &[(0.0, 1.0, 1.0, 1.0), (0.0, 1.0, 0.0, 2.0), (0.5, 0.3, 0.0, 1.0)] {
+        for &(m1, s1, m2, s2) in &[
+            (0.0, 1.0, 1.0, 1.0),
+            (0.0, 1.0, 0.0, 2.0),
+            (0.5, 0.3, 0.0, 1.0),
+        ] {
             let p = gaussian(&mut rng, 3000, m1, s1);
             let q = gaussian(&mut rng, 3000, m2, s2);
             let estimate = estimate_kl_divergence_knn_1d(&p, &q, 5);
             let expected = gaussian_kl(m1, s1, m2, s2);
-            assert!((estimate - expected).abs() < 0.08, "estimate {} vs {}", estimate, expected);
+            assert!(
+                (estimate - expected).abs() < 0.08,
+                "estimate {} vs {}",
+                estimate,
+                expected
+            );
         }
     }
 
     #[test]
     fn kl_2d_matches_closed_form_value() {
         let mut rng = FastRng::new(2);
-        let p: Vec<[f64; 2]> = (0..3000).map(|_| [rng.next_gaussian(), rng.next_gaussian()]).collect();
-        let q: Vec<[f64; 2]> = (0..3000).map(|_| [1.0 + rng.next_gaussian(), 1.0 + rng.next_gaussian()]).collect();
+        let p: Vec<[f64; 2]> = (0..3000)
+            .map(|_| [rng.next_gaussian(), rng.next_gaussian()])
+            .collect();
+        let q: Vec<[f64; 2]> = (0..3000)
+            .map(|_| [1.0 + rng.next_gaussian(), 1.0 + rng.next_gaussian()])
+            .collect();
         let estimate = estimate_kl_divergence_knn_2d(&p, &q, 5);
         assert!((estimate - 1.0).abs() < 0.1, "estimate {}", estimate);
     }
@@ -352,7 +410,9 @@ mod tests {
         let mut rng = FastRng::new(12345);
         let niche: Vec<f64> = (0..x.len()).map(|_| rng.next_gaussian() * 0.2).collect();
         let a = calculate_thermodynamic_valence(&x, &s_obs, &s_pred, 0.001, 1.0, 0.5, 0.8);
-        let b = calculate_thermodynamic_valence_with_niche(&x, &s_obs, &s_pred, 0.001, 1.0, 0.5, 0.8, &niche);
+        let b = calculate_thermodynamic_valence_with_niche(
+            &x, &s_obs, &s_pred, 0.001, 1.0, 0.5, 0.8, &niche,
+        );
         assert_eq!(a.psi_valence, b.psi_valence);
     }
 
@@ -387,7 +447,9 @@ mod tests {
         let (x, s_obs, s_pred) = simulate_neuromorphic_substrate_sde(100, 0.001, 1);
         let mut niche = vec![0.0; x.len()];
         niche[3] = f64::INFINITY;
-        calculate_thermodynamic_valence_with_niche(&x, &s_obs, &s_pred, 0.001, 1.0, 0.5, 0.8, &niche);
+        calculate_thermodynamic_valence_with_niche(
+            &x, &s_obs, &s_pred, 0.001, 1.0, 0.5, 0.8, &niche,
+        );
     }
 
     #[test]
