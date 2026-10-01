@@ -1,0 +1,24 @@
+# Text that must not appear in files of the public repository (rules of PERSONA.md and of the
+# author's workflow). Each rule: a case-insensitive regular expression, the reason, and the paths
+# (glob patterns, relative to the repository root) where it is legitimate.
+# Add a rule when a new kind of leak is possible; never widen `allowed` to silence a real one.
+
+[[rule]]
+name = "internal name of the entry-point paper"
+pattern = 'P0[_ ]Distilled'
+reason = "PERSONA.md: never 'P0_Distilled' externally; cite the paper by its title."
+# tools/ refers to the source file name P0_Distilled_v0.1.tex; the changelog records history;
+# PERSONA.md states the rule itself.
+allowed = ["tools/*", "tools/tests/*", "CHANGELOG.md", "PERSONA.md"]
+
+[[rule]]
+name = "employer of the author"
+pattern = 'aure\s*system'
+reason = "The public voice describes the author as an independent researcher only."
+allowed = []
+
+[[rule]]
+name = "confidential review history"
+pattern = 'AR_RESPONSE_SYNTHESIS'
+reason = "docs_v0.2/13_AR_RESPONSE_SYNTHESIS.md is confidential; public files may say that a confidential file exists, not reference it by name."
+allowed = ["AGENTS.md"]  # until AGENTS.md is rewritten

@@ -17,15 +17,15 @@ import warnings
 
 from demarcation import (  # noqa: F401
     causal_non_separability,
+    is_candidate,
     non_markovian_memory,
     state_dependent_dynamics,
-    is_candidate,
 )
 from necessary_conditions import (  # noqa: F401
-    edge_of_chaos,
     causal_degeneracy,
-    degeneracy_radius,
     degeneracy_prediction,
+    degeneracy_radius,
+    edge_of_chaos,
     exponent_stability,
 )
 

@@ -1,7 +1,6 @@
-# Runtime dependencies of Edge-of-Chaos.
-# Versions checked on 2026-09-22 (Python 3.12, Windows 11); tested in CI on
-# Python 3.11 and 3.12 (Linux). For development/build (maturin, pyinstaller) see
-# requirements-dev.txt.
+# Runtime dependencies of Edge-of-Chaos, for pip users (install.sh, install.ps1, Dockerfile).
+# The source of truth is pyproject.toml ([project] dependencies); uv users run `uv sync`.
+# tools/tests/test_dependency_sync.py fails if the ranges here and there differ.
 
 numpy>=1.24,<3
 scipy>=1.10,<2

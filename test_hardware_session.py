@@ -6,14 +6,15 @@ validating the compliance and safety parameters (Edge-of-Chaos).
 """
 
 import unittest
+
 import numpy as np
 
 # Import the metrology and hardware driver v2 modules
 from hardware_driver_v2 import (
-    LaboratoryParametersConfig,
     KeithleyDMMDriverV2,
-    PicoScopeOscilloscopeDriverV2,
+    LaboratoryParametersConfig,
     NeuromorphicHardwareInterfaceV2,
+    PicoScopeOscilloscopeDriverV2,
     generate_1f_noise,
     mock_dmm_carrier,
 )
@@ -120,7 +121,7 @@ class TestHardwareAcquisitionSession(unittest.TestCase):
         i_means = []
         v_stds = []
 
-        for f in range(n_frames):
+        for _ in range(n_frames):
             frame = self.hw.get_realtime_frame(n_samples=1000)
             i_means.append(np.mean(frame["current_I"]))
             v_stds.append(np.std(frame["voltage_V"]))
@@ -138,7 +139,7 @@ class TestHardwareAcquisitionSession(unittest.TestCase):
         dt = 1.0 / self.config.SAMPLE_RATE_DMM_HZ
         # Normalization of the substrate state
         x_A1 = (i_t - np.mean(i_t)) / (np.std(i_t) + 1e-12)
-        s_obs = x_A1 + np.random.normal(0, 0.05, len(x_A1))
+        s_obs = x_A1 + np.random.default_rng(7).normal(0, 0.05, len(x_A1))
         s_pred = np.roll(x_A1, 1) * self.config.EFFERENCE_COPY_GAIN_GAMMA
 
         res = calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt)

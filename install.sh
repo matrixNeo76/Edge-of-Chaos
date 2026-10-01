@@ -26,7 +26,7 @@ source venv/bin/activate
 # 3. Install Python dependencies
 echo "[2/4] Upgrading pip and installing dependencies (numpy, scipy, maturin)..."
 pip install --upgrade pip
-pip install numpy scipy matplotlib seaborn maturin
+pip install -r requirements.txt "maturin>=1.5,<2"
 
 # 4. Native Rust build via Maturin
 if command -v cargo &> /dev/null; then

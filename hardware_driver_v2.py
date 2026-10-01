@@ -14,6 +14,7 @@ NotImplementedError (see KeithleyDMMDriverV2 for what a real driver needs).
 
 import numpy as np
 
+
 class LaboratoryParametersConfig:
     """Preregistered optimal laboratory parameters according to the entry-point paper (P0)."""
     # Voltage and compliance

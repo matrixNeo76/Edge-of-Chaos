@@ -1,11 +1,14 @@
 # Weekly update proposals, as pull requests that go through CI and review like any other.
 version: 2
 updates:
+  # Also keeps the commit pins of the workflows current (with their version comments).
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: weekly
-  - package-ecosystem: pip
+  # pyproject.toml and uv.lock. requirements*.txt mirror the ranges of pyproject.toml for pip
+  # users; tools/tests/test_dependency_sync.py fails until they are updated to match.
+  - package-ecosystem: uv
     directory: "/"
     schedule:
       interval: weekly

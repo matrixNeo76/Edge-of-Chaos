@@ -28,10 +28,10 @@ Usage
 import argparse
 import http.client
 import json
-import tomllib
 import re
 import sys
 import time
+import tomllib
 import unicodedata
 import urllib.error
 import urllib.parse

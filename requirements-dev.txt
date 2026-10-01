@@ -1,5 +1,5 @@
-# Additional dependencies for building and packaging (not needed to run the
-# scripts). See build_exe.ps1 and install.sh / install.ps1.
+# Build and packaging dependencies (maturin, PyInstaller), for pip users.
+# Same ranges as the "build" group of pyproject.toml (checked by tools/tests/test_dependency_sync.py).
 
 -r requirements.txt
 maturin>=1.5,<2

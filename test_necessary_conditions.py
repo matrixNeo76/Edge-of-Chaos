@@ -6,16 +6,17 @@ on cases whose answer is known in advance.
 """
 
 import unittest
+
 import numpy as np
 
 from necessary_conditions import (
-    edge_of_chaos,
-    first_order_admittance,
     causal_degeneracy,
-    degenerate_directions,
-    degeneracy_radius,
     degeneracy_prediction,
+    degeneracy_radius,
+    degenerate_directions,
+    edge_of_chaos,
     exponent_stability,
+    first_order_admittance,
 )
 
 
