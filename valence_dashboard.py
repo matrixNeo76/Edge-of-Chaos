@@ -1,7 +1,7 @@
 """
 valence_dashboard.py
 =====================
-Metrology visualization dashboard generator (Digital Twin P0_Distilled v0.1)
+Metrology visualization dashboard generator (Edge-of-Chaos digital twin)
 
 Generates:
 1. Time series of the valence functional Psi(t) and of the Ex/Hk dissipation proxies.

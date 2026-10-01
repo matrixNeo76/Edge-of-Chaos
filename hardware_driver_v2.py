@@ -3,7 +3,7 @@ hardware_driver_v2.py
 ======================
 Advanced module for real-time (in-matter) hardware interfacing, v2.
 Integrates the optimal laboratory parameters derived from the simulation campaign
-(P0_Distilled v0.1):
+(entry-point paper P0):
   - Compliance voltage/current to avoid device breakdown (SiO2:Ag / VO2 Mott)
   - 1/f percolative noise calibrated at the edge of chaos (sigma_noise = 0.10, alpha = 1.0)
   - Automatic pre-configuration for Keithley DMM, PicoScope, and SCPI function generator
@@ -15,7 +15,7 @@ NotImplementedError (see KeithleyDMMDriverV2 for what a real driver needs).
 import numpy as np
 
 class LaboratoryParametersConfig:
-    """Preregistered optimal laboratory parameters according to P0_Distilled v0.1."""
+    """Preregistered optimal laboratory parameters according to the entry-point paper (P0)."""
     # Voltage and compliance
     V_OPERATING_NOMINAL = 1.0       # Volts (nominal stimulus voltage)
     V_COMPLIANCE_MAX = 1.5          # Volts (maximum safety voltage)
@@ -196,7 +196,7 @@ class NeuromorphicHardwareInterfaceV2:
         # a real source-meter is opened.
         info_pico = self.pico.connect()
         info_dmm = self.dmm.connect()
-        return (f"=== ADVANCED HARDWARE SESSION INITIALIZED (P0_Distilled v0.1) ===\n"
+        return (f"=== ADVANCED HARDWARE SESSION INITIALIZED (Edge-of-Chaos) ===\n"
                 f" - DMM: {info_dmm}\n"
                 f" - PicoScope: {info_pico}\n"
                 f" - Compliance V/I: Max {self.config.V_COMPLIANCE_MAX}V / {self.config.I_COMPLIANCE_MAX*1e3}mA\n"

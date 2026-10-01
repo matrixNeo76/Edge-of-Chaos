@@ -1,8 +1,8 @@
 //! thermodynamic_valence.rs
 //! ==========================
-//! High-Performance Metrology Module in Rust for Neuromorphic Substrates & Digital Twin (P0_Distilled v0.1)
+//! High-Performance Metrology Module in Rust for Neuromorphic Substrates & Digital Twin (Edge-of-Chaos)
 //!
-//! Author: Lakatosian Research Programme (P0_Distilled v0.1)
+//! Author: Francesco Iavarone
 //! Description:
 //!   High-performance metrology module written in Rust for real-time processing
 //!   of physical time series extracted from analog neuromorphic substrates.
@@ -290,7 +290,7 @@ pub fn calculate_thermodynamic_valence_with_niche(
 }
 
 fn main() {
-    println!("=== RUNNING RUST DIGITAL TWIN METROLOGY (P0_Distilled v0.1) ===");
+    println!("=== RUNNING RUST DIGITAL TWIN METROLOGY (Edge-of-Chaos) ===");
     let n_steps = 10000;
     let dt = 0.001;
     let (x_a1, s_obs, s_pred) = simulate_neuromorphic_substrate_sde(n_steps, dt, 42);

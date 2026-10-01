@@ -1,7 +1,7 @@
 # Contributing to Edge-of-Chaos
 
 Thanks for your interest in this project. Edge-of-Chaos is the digital-twin metrology
-platform supporting the P0_Distilled research programme (see [README.md](README.md)
+platform supporting the research programme on primary interoceptive sentience (see [README.md](README.md)
 and [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)). It is research software, not a
 finished product — contributions are welcome, but please read this before opening an
 issue or a pull request.

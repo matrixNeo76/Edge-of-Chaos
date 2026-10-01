@@ -1,9 +1,9 @@
 """
 thermodynamic_valence.py
 =========================
-Metrology script for neuromorphic substrates and digital twin (P0_Distilled v0.1)
+Metrology script for neuromorphic substrates and digital twin (Edge-of-Chaos)
 
-Author: Lakatosian Research Programme (P0_Distilled v0.1)
+Author: Francesco Iavarone
 Description:
   This script acts as a "metrological ruler" for processing physical time series
   measured from analog substrates (or simulated via SDE in a digital twin).
@@ -203,7 +203,7 @@ def calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt, alpha=1.0, beta=0.5
     }
 
 if __name__ == "__main__":
-    print("=== RUNNING ADVANCED DIGITAL TWIN METROLOGY (P0_Distilled v0.1) ===")
+    print("=== RUNNING ADVANCED DIGITAL TWIN METROLOGY (Edge-of-Chaos) ===")
     x_A1, s_obs, s_pred, dt = simulate_neuromorphic_substrate_sde(n_steps=10000)
     res = calculate_thermodynamic_valence(x_A1, s_obs, s_pred, dt)
 

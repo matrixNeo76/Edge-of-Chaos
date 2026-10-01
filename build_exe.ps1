@@ -1,6 +1,6 @@
 # ==============================================================================
 # build_exe.ps1 — Standalone packaging (PyInstaller) for lab use
-# Project: Thermodynamic Valence & Digital Twin (P0_Distilled v0.1)
+# Project: Thermodynamic Valence & Digital Twin (Edge-of-Chaos)
 #
 # Produces a standalone Windows executable (onedir) that does not require
 # Python installed on the target machine. Intended for the lab PC that runs
@@ -26,7 +26,7 @@ $ErrorActionPreference = "Stop"
 # an explicit $LASTEXITCODE check.
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "  Standalone Executable Build (PyInstaller) - P0_Distilled" -ForegroundColor Cyan
+Write-Host "  Standalone Executable Build (PyInstaller) - Edge-of-Chaos" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 $RepoRoot = $PSScriptRoot

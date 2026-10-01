@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Automated Installation Script for Linux
-# Project: Thermodynamic Valence & Digital Twin (P0_Distilled v0.1)
+# Project: Thermodynamic Valence & Digital Twin (Edge-of-Chaos)
 # ==============================================================================
 set -e
 

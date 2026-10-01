@@ -16,6 +16,18 @@ continuously evolving research software.
   `check_versions.py` (release version, in CI). Standard library only, no credentials.
 - CI: tests of the tools, version check, weekly scheduled run; Dependabot for GitHub
   Actions, pip and cargo.
+- `pyproject.toml` with the pytest configuration: `python -m pytest -q` now runs the code tests
+  and the tests of `tools/` everywhere, without lists of files to keep in sync.
+
+### Changed
+- Public files no longer use the internal name of the entry-point paper; they cite its title.
+  Author fields (`Cargo.toml`, module headers, Dockerfile) name the author instead of a
+  placeholder.
+- `references.bib`: the six papers of the corpus are cited as Zenodo preprints with their DOIs,
+  and the technical companion with its current title (a design; the Monte Carlo study has not
+  been run).
+- `PROJECT_STRUCTURE.md` describes the public repository only; the PR template lists the
+  current checks.
 
 ## [0.4.0] - 2026-09-25
 
